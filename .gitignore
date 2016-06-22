@@ -1,0 +1,15 @@
+bin
+obj
+.vs
+*.user
+Debug
+Release
+*.pdb
+*.db
+ipch
+*.filters
+UpgradeLog.htm
+*.zip
+*.tar.gz
+*.lib
+*.dll

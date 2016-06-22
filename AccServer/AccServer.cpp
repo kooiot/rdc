@@ -1,0 +1,59 @@
+﻿// AccServer.cpp : 定义控制台应用程序的入口点。
+//
+#include <iostream>
+#include <sstream>
+#include <cassert>
+#include <zmq.h>
+
+#include "StreamServerMgr.h"
+#include "ClientMgr.h"
+
+int main(int argc, char* argv[])
+{
+	char* sip = "*";
+	int port_rep = 6600;
+	int port_pub = 6601;
+	int port_stream = 6602;
+
+	if (argc >= 2)
+		sip = argv[1];
+	if (argc >= 3)
+		port_rep = atoi(argv[2]);
+	if (argc >= 4)
+		port_pub = atoi(argv[3]);
+	if (argc >= 5)
+		port_stream = atoi(argv[4]);
+
+	std::cout << "Server_IP: \t" << sip << std::endl;
+	std::cout << "Port_REP: \t" << port_rep << std::endl;
+	std::cout << "Port_PUB: \t" << port_pub << std::endl;
+	std::cout << "Port_STREAM: \t" << port_stream << std::endl;
+
+	void* ctx = zmq_ctx_new();
+
+	CStreamServerMgr StreamMgr;
+	CClientMgr ClientMgr(StreamMgr);
+	void* sm_skt = StreamMgr.Init(ctx, sip, port_stream);
+	void* cli_skt = ClientMgr.Init(ctx, sip, port_rep, port_pub);
+
+	while (true) {
+		zmq_pollitem_t items[] = {
+			{ sm_skt,   0, ZMQ_POLLIN, 0 },
+			{ cli_skt,   0, ZMQ_POLLIN, 0 },
+		};
+		zmq_poll(items, 2, -1);
+		if (items[0].revents & ZMQ_POLLIN) {
+			StreamMgr.OnRecv();
+		}
+		if (items[0].revents & ZMQ_POLLIN) {
+			ClientMgr.OnRecv();
+		}
+	}
+
+	StreamMgr.Close();
+	ClientMgr.Close();
+	zmq_term(ctx);
+
+    return 0;
+}
+
