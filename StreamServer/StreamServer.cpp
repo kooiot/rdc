@@ -5,7 +5,10 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstdio>
+#include <sstream>
 #include <enet\enet.h>
+#include <zmq.h>
+#include <koo_zmq_helpers.h>
 
 #define MAX_CONNECTION_PER_SERVER 128
 #define MAX_CHANNEL_PER_SERVER 32
@@ -15,24 +18,70 @@
 
 ENetPeer* MapperPeers[MAX_CONNECTION_PER_SERVER];
 ENetPeer* ClientPeers[MAX_CONNECTION_PER_SERVER];
+
+bool send_add_stream(int id, void* socket, const StreamProcess& sp) {
+	CMD add;
+	std::stringstream ss;
+	ss << id;
+	add.id = ss.str();
+	add.cmd = "ADD";
+	add.data = std::string((char*)&sp, sizeof(StreamProcess));
+	int rc = send_cmd(socket, add);
+	if (rc != 0)
+		return false;
+	CMD result;
+	rc = recv_cmd(socket, result);
+	if (rc != 0)
+		return false;
+
+	return result.data == "SUCCESS";
+}
+bool send_remove_stream(int id, void* socket) {
+	CMD add;
+	std::stringstream ss;
+	ss << id;
+	add.id = ss.str();
+	add.cmd = "REMOVE";
+	int rc = send_cmd(socket, add);
+	if (rc != 0)
+		return false;
+	CMD result;
+	rc = recv_cmd(socket, result);
+	if (rc != 0)
+		return false;
+
+	return result.data == "SUCCESS";
+}
 int main(int argc, char* argv[])
 {
+	int id = 10000;
+	char* sip = "127.0.0.1";
+	int sport = 6602;
 	char* bip = "*";
 	int port = 6800;
 
 	if (argc >= 2)
-		bip = argv[1];
+		id = atoi(argv[1]);
 	if (argc >= 3)
-		port = atoi(argv[2]);
+		sip = argv[2];
+	if (argc >= 4)
+		sport = atoi(argv[3]);
+	if (argc >= 5)
+		bip = argv[4];
+	if (argc >= 6)
+		port = atoi(argv[5]);
 
-	std::cout << "Server IP: \t" << bip << std::endl;
-	std::cout << "Server Port: \t" << port << std::endl;
+	std::cout << "StreamServer ID: \t" << id << std::endl;
+	std::cout << "Server IP: \t" << sip << std::endl;
+	std::cout << "Server Port: \t" << sport << std::endl;
+	std::cout << "Bind IP: \t" << bip << std::endl;
+	std::cout << "Bind Port: \t" << port << std::endl;
 
 	enet_initialize();
 
 	ENetAddress address;
 	ENetHost * server;
-	if (bip == "*") {
+	if (strcmp(bip, "*") == 0) {
 		address.host = ENET_HOST_ANY;
 	}
 	else {
@@ -52,9 +101,24 @@ int main(int argc, char* argv[])
 		exit(EXIT_FAILURE);
 	}
 
+	void* ctx = zmq_ctx_new();
+	void* req = zmq_socket(ctx, ZMQ_REQ);
+	std::stringstream ss;
+	ss << "tcp://" << sip << ":" << sport;
+	int rc = zmq_connect(req, ss.str().c_str());
+	if (rc != 0)
+		goto CLOSE;
+
+	StreamProcess sp;
+	sp.Counter = 0;
+	sp.Port = port;
+	sprintf(sp.StreamIP, "%s", bip);
+	if (!send_add_stream(id, req, sp))
+		goto CLOSE;
+
 	ENetEvent event;
 	/* Wait up to 1000 milliseconds for an event. */
-	while (enet_host_service(server, &event, 1000) > 0)
+	while (enet_host_service(server, &event, 1000) >= 0)
 	{
 		switch (event.type)
 		{
@@ -150,8 +214,16 @@ int main(int argc, char* argv[])
 		}
 	}
 
+CLOSE:
+	send_remove_stream(id, req);
+
+	zmq_close(req);
+	zmq_ctx_shutdown(ctx);
+	zmq_ctx_term(ctx);
+
 	enet_host_destroy(server);
 	enet_deinitialize();
+	system("pause");
     return 0;
 }
 

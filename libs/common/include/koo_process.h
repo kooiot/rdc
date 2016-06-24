@@ -4,7 +4,6 @@
 
 #pragma once
 #include "pre_std_basic.h"
-#include "koo_file_util.h"
 #ifdef _WIN32
 #include <windows.h>
 #else

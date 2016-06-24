@@ -7,9 +7,28 @@
 
 #include "StreamServerMgr.h"
 #include "ClientMgr.h"
+#include "koo_process.h"
+
+
+void* ctx = NULL;
+CStreamServerMgr StreamMgr;
+CClientMgr ClientMgr(StreamMgr);
+koo_process *process = NULL;
+
+void on_close() {
+	printf("Exit function called\n");
+	if (process)
+		process->stop();
+	StreamMgr.Close();
+	ClientMgr.Close();
+	zmq_ctx_shutdown(ctx);
+	zmq_ctx_term(ctx);
+}
 
 int main(int argc, char* argv[])
 {
+	int r = atexit(on_close);
+
 	char* sip = "*";
 	int port_rep = 6600;
 	int port_pub = 6601;
@@ -28,13 +47,17 @@ int main(int argc, char* argv[])
 	std::cout << "Port_REP: \t" << port_rep << std::endl;
 	std::cout << "Port_PUB: \t" << port_pub << std::endl;
 	std::cout << "Port_STREAM: \t" << port_stream << std::endl;
+	
+	ctx = zmq_ctx_new();
 
-	void* ctx = zmq_ctx_new();
-
-	CStreamServerMgr StreamMgr;
-	CClientMgr ClientMgr(StreamMgr);
 	void* sm_skt = StreamMgr.Init(ctx, sip, port_stream);
 	void* cli_skt = ClientMgr.Init(ctx, sip, port_rep, port_pub);
+
+	k_kill_process("StreamServer.exe");
+	std::stringstream args;
+	//args << "* 6800";
+	process = new koo_process("StreamServer", "", "StreamServer.exe", args.str(), true);
+	process->start();
 
 	while (true) {
 		zmq_pollitem_t items[] = {
@@ -50,9 +73,7 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	StreamMgr.Close();
-	ClientMgr.Close();
-	zmq_term(ctx);
+	on_close();
 
     return 0;
 }

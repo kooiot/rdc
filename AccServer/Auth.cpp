@@ -16,6 +16,11 @@ int CAuth::Init()
 	return 0;
 }
 
+int CAuth::IsValidMapper(const std::string & mapper_id)
+{
+	return 0;
+}
+
 int CAuth::Login(const std::string & id, const std::string & password)
 {
 	return 0;

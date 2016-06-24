@@ -13,3 +13,4 @@ UpgradeLog.htm
 *.tar.gz
 *.lib
 *.dll
+*.opendb

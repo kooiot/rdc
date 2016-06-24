@@ -2,14 +2,7 @@
 
 #include <map>
 #include <list>
-
-
-struct StreamProcess {
-	int Counter;
-	const std::string StreamIP;
-	int MapperPort;
-	int ClientPort;
-};
+#include <koo_zmq_helpers.h>
 
 class CStreamServerMgr
 {
@@ -20,6 +13,8 @@ public:
 	void* Init(void* ctx, const char* bip, int port);
 	void Close();
 	void OnRecv();
+private:
+	void HandleCMD(const CMD & cmd, void * rep);
 
 public:
 	StreamProcess* Alloc();

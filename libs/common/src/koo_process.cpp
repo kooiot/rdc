@@ -123,13 +123,14 @@ void koo_process::_close_process()
 
 int koo_process::_open_process()
 {
-    boost::filesystem::path w = boost::filesystem::path(m_workpath);
+	std::string cmd = m_execname;
+	if (!m_arguments.empty())
+		cmd += " " + m_arguments;
+
 #ifdef _WIN32
-    boost::filesystem::path p = w / (m_execname + " " + m_arguments);
     STARTUPINFO si = {sizeof (si)};
     si.dwFlags = STARTF_USESHOWWINDOW;
 
-    std::wstring cmd = p.native();
     DWORD creationFlag = 0;
     if (m_create_new_window)
     {
@@ -141,24 +142,21 @@ int koo_process::_open_process()
 		//si.dwFlags |= STARTF_USESTDHANDLES;
 	}
 #ifdef _DEBUG
-	std::cout << "DEBUG_INFO: begin to exec command: " << k_wstr_to_str(cmd) << std::endl;
-    //wcout << "DEBUG_INFO: begin to exec command: " << cmd << endl;
+	std::cout << "DEBUG_INFO: begin to exec command: " << cmd << std::endl;
 #endif
-
-    //cout << "begin to exec command: " << cmd.c_str() << endl;
-    bool result = CreateProcess(NULL, (LPSTR)k_wstr_to_str(cmd).c_str(), NULL, NULL, FALSE, creationFlag, NULL, k_wstr_to_str(w.native()).c_str(), &si, &m_proc_info);
+	bool result = CreateProcess(NULL, (LPSTR)cmd.c_str(), NULL, NULL, FALSE, creationFlag, NULL, m_workpath.empty() ? NULL : m_workpath.c_str(), &si, &m_proc_info);
     if (result)
     {
         return K_OK;
     }
     else
     {
+		DWORD e = GetLastError();
         return K_ERR_PROCESS_OPEN_FAILURE;
     }
 #else
-    boost::filesystem::path p = w / (m_execname);
     vector<string> arg_list;
-    arg_list.push_back(p.leaf().string());
+    arg_list.push_back(m_execname);
     k_str_split(m_arguments, arg_list, " ");
     char* argv[64] = {0};
 
@@ -174,8 +172,8 @@ int koo_process::_open_process()
     }
     else if (pid == 0)
     {
-        chdir(p.parent_path().string().c_str());
-        execv(p.string().c_str(), argv);
+        chdir(m_workpath.c_str());
+        execv(m_execname.c_str(), argv);
     }
     else
     {

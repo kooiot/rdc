@@ -46,6 +46,9 @@ void * CClientMgr::Init(void * ctx, const char * bip, int port_rep, int port_pub
 
 	m_pReply = rep;
 	m_pPublish = pub;
+
+	m_Auth.Init();
+
 	return rep;
 }
 
@@ -55,94 +58,51 @@ void CClientMgr::Close()
 	zmq_close(m_pPublish);
 }
 
-
-bool recv_string(void* skt, std::string& str, bool more) {
-	zmq_msg_t part;
-	int rc = zmq_msg_init(&part);
-	assert(rc == 0);
-	rc = zmq_msg_recv(&part, skt, 0);
-	assert(rc != -1);
-	if (more) {
-		int more;
-		size_t more_size = sizeof(more);
-		rc = zmq_getsockopt(skt, ZMQ_RCVMORE, &more, &more_size);
-		assert(rc == 0);
-
-		if (!more) {
-			zmq_msg_close(&part);
-			return false;
-		}
-	}
-	str = std::string((char*)zmq_msg_data(&part), zmq_msg_size(&part));
-
-	zmq_msg_close(&part);
-	return true;
-}
-#define RECV_STRING(skt, x, more) \
-	if (!recv_string(skt, x, more)) \
-		return -1;
-
-int recv_cmd(void* skt, CMD& cmd) {
-	RECV_STRING(skt, cmd.id, true);
-	RECV_STRING(skt, cmd.cmd, true);
-	RECV_STRING(skt, cmd.data, false);
-	return 0;
-}
-
-int send_msg(void* skt, const std::string& data, bool more) {
-	zmq_msg_t msg;
-	zmq_msg_init_data(&msg, (void*)data.c_str(), data.length(), NULL, NULL);
-	int rc = zmq_msg_send(&msg, skt, more ? ZMQ_MORE : 0);
-	zmq_msg_close(&msg);
-	return rc;
-}
-
-#define SEND_MSG(skt, data, more) \
-	if (!send_msg(skt, data, more)) \
-		return -1;
-
-int send_reply(void* skt, const CMD& cmd, const std::string& rep) {
-	SEND_MSG(skt, cmd.id, true);
-	SEND_MSG(skt, cmd.cmd, true);
-	SEND_MSG(skt, rep, false);
-	return 0;
-}
-
 void CClientMgr::HandleCMD(const CMD& cmd, void* rep, void* pub)
 {
+	bool bSuccess = false;
 	if (cmd.cmd == "LOGIN") {
-		if (cmd.id == "TEST" && cmd.data == "PASSWORD") {
-			send_reply(rep, cmd, "SUCCESS"); // FIXME: WITH ID
+		if (cmd.id == "@DEVICE@") {
+			// Check for valid device sn
+			if (m_Auth.IsValidMapper(cmd.data) == 0) {
+				AddMapper(cmd.data);
+				bSuccess = true;
+			}
 		}
-		else {
-			send_reply(rep, cmd, "FAILURE"); // FIXME: WITH ID
+		else if (m_Auth.Login(cmd.id, cmd.data) == 0) {
+			AddClient(cmd.id);
+			bSuccess = true;
 		}
 	}
 	if (cmd.cmd == "HEARTBEAT") {
-		send_reply(rep, cmd, "SUCCESS");
+		bSuccess = true;
+		if (cmd.id == "@DEVICE@")
+			UpdateMapperHearbeat(cmd.data);
+		else
+			UpdateClientHearbeat(cmd.id);
 	}
 	if (cmd.cmd == "LOGOUT") {
-		send_reply(rep, cmd, "SUCCESS");
-		// FIXME:
+		bSuccess = true;
+		if (cmd.id == "@DEVICE@")
+			RemoveMapper(cmd.data);
+		else
+			RemoveClient(cmd.id);
 	}
 	if (cmd.cmd == "CREATE") {
-		// Check for permissions
 		std::string dest_id = cmd.data.substr(0, cmd.data.find(" "));
-		// FIXME:Check for dest online or not
-		// Forwarding request
-		send_msg(pub, cmd.data, false);
-
-		send_reply(rep, cmd, "SUCCESS");
+		if (m_Auth.Access(cmd.id, dest_id) == 0) {
+			send_msg(pub, cmd.data, false);
+			bSuccess = true;
+		}
 	}
 	if (cmd.cmd == "DESTROY") {
-		// Check for permissions
 		std::string dest_id = cmd.data.substr(0, cmd.data.find(" "));
-		// FIXME:Check for dest online or not
-		// Forwarding request
-		send_msg(pub, cmd.data, false);
-
-		send_reply(rep, cmd, "SUCCESS");
+		if (m_Auth.Access(cmd.id, dest_id) == 0) {
+			send_msg(pub, cmd.data, false);
+			bSuccess = true;
+		}
 	}
+	send_reply(rep, cmd, bSuccess ? "SUCCESS" : "FAILURE");
 }
 
 void CClientMgr::OnRecv()
@@ -154,7 +114,7 @@ void CClientMgr::OnRecv()
 	}
 }
 
-int CClientMgr::AddMapper(const std::string & id, ResourceMap Resources)
+int CClientMgr::AddMapper(const std::string & id)
 {
 	if (m_Mappers.find(id) != m_Mappers.end()) {
 		RemoveMapper(id);
@@ -163,7 +123,6 @@ int CClientMgr::AddMapper(const std::string & id, ResourceMap Resources)
 
 	pData->ID = id;
 	pData->Heartbeat = ::GetCurrentTime();
-	pData->Resources = Resources;
 
 	return 0;
 }

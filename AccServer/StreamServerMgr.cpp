@@ -22,7 +22,6 @@ void * CStreamServerMgr::Init(void * ctx, const char* bip, int port)
 	ss << "tcp://" << bip << ":" << port;
 	int rc = zmq_bind(s, ss.str().c_str());
 	if (rc != 0) {
-		//std::cout << "Reply Socket Cannot bind to " << ss.str() << std::endl;
 		zmq_close(s);
 		return NULL;
 	}
@@ -35,10 +34,34 @@ void CStreamServerMgr::Close()
 	zmq_close(m_pSocket);
 }
 
-void CStreamServerMgr::OnRecv()
+
+void CStreamServerMgr::HandleCMD(const CMD& cmd, void* rep)
 {
+	bool bSuccess = false;
+	if (cmd.cmd == "ADD") {
+		printf("Add event %s\n", cmd.id.c_str());
+		StreamProcess* sp = new StreamProcess();
+		memcpy(sp, cmd.data.c_str(), sizeof(StreamProcess));
+		AddStream(atoi(cmd.id.c_str()), sp);
+		bSuccess = true;
+	}
+	else if (cmd.cmd == "REMOVE") {
+		printf("Remove event %s\n", cmd.id.c_str());
+		bSuccess = true;
+		RemoveStream(atoi(cmd.id.c_str()));
+	}
+	
+	send_reply(rep, cmd, bSuccess ? "SUCCESS" : "FAILURE");
 }
 
+void CStreamServerMgr::OnRecv()
+{
+	CMD cmd;
+	int rc = recv_cmd(m_pSocket, cmd);
+	if (rc == 0) {
+		HandleCMD(cmd, m_pSocket);
+	}
+}
 StreamProcess * CStreamServerMgr::Alloc()
 {
 	StreamProcess* pData = nullptr;
