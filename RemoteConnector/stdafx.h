@@ -54,3 +54,4 @@
 #endif
 
 
+#include "../RemoteConnectorApi/RemoteConnectorApi.h"

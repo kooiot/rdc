@@ -45,7 +45,7 @@ public:
 	void OnTimer(int nTime);
 
 private:
-	void HandleCMD(const CMD& cmd, void* rep, void* pub);
+	void HandleKZPacket(const KZPacket& cmd, void* rep, void* pub);
 
 private:
 	int AddMapper(const std::string& id);

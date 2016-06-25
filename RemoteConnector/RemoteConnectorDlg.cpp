@@ -7,6 +7,7 @@
 #include "RemoteConnectorDlg.h"
 #include "afxdialogex.h"
 
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -58,12 +59,18 @@ CRemoteConnectorDlg::CRemoteConnectorDlg(CWnd* pParent /*=NULL*/)
 void CRemoteConnectorDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_EDIT_IP, m_editIP);
+	DDX_Control(pDX, IDC_EDIT_PORT, m_editPort);
 }
 
 BEGIN_MESSAGE_MAP(CRemoteConnectorDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	ON_BN_CLICKED(IDC_BUTTON_CONNECT, &CRemoteConnectorDlg::OnBnClickedButtonConnect)
+	ON_BN_CLICKED(IDC_BUTTON_DISCONNECT, &CRemoteConnectorDlg::OnBnClickedButtonDisconnect)
+	ON_BN_CLICKED(IDC_BUTTON_LISTDEV, &CRemoteConnectorDlg::OnBnClickedButtonListdev)
+	ON_WM_CLOSE()
 END_MESSAGE_MAP()
 
 
@@ -99,6 +106,9 @@ BOOL CRemoteConnectorDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
+	m_editIP.SetWindowText("127.0.0.1");
+	m_editPort.SetWindowText("6600");
+	RC_Init();
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -145,6 +155,15 @@ void CRemoteConnectorDlg::OnPaint()
 	}
 }
 
+void CRemoteConnectorDlg::OnClose()
+{
+	// TODO: 在此添加消息处理程序代码和/或调用默认值
+	if (m_hApi != NULL)
+		RC_Disconnect(m_hApi);
+	RC_Close();
+	CDialogEx::OnClose();
+}
+
 //当用户拖动最小化窗口时系统调用此函数取得光标
 //显示。
 HCURSOR CRemoteConnectorDlg::OnQueryDragIcon()
@@ -152,3 +171,43 @@ HCURSOR CRemoteConnectorDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+
+
+void CRemoteConnectorDlg::OnBnClickedButtonConnect()
+{
+	CString ip;
+	m_editIP.GetWindowText(ip);
+	CString port;
+	m_editPort.GetWindowText(port);
+
+	m_hApi = RC_Connect(ip, atoi(port), "admin", "admin");
+	if (m_hApi != 0) {
+		MessageBox("Connected");
+	}
+	else {
+		MessageBox("Failed");
+	}
+}
+
+
+void CRemoteConnectorDlg::OnBnClickedButtonDisconnect()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	RC_Disconnect(m_hApi);
+	m_hApi = NULL;
+	MessageBox("Disconnected");
+}
+
+
+void CRemoteConnectorDlg::OnBnClickedButtonListdev()
+{
+	DeviceInfo* pInfo = new DeviceInfo[1024];
+	int num = RC_ListDevices(m_hApi, pInfo, 1024);
+	if (num >= 0) {
+		MessageBox("OK");
+	}
+	else {
+		MessageBox("Failed");
+	}
+	delete[] pInfo;
+}

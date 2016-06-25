@@ -6,6 +6,8 @@
 #include "ServerCP.h"
 #include "ServerCPDlg.h"
 #include "afxdialogex.h"
+#include <koo_process.h>
+#include <zmq.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -50,7 +52,8 @@ END_MESSAGE_MAP()
 
 
 CServerCPDlg::CServerCPDlg(CWnd* pParent /*=NULL*/)
-	: CDialogEx(IDD_SERVERCP_DIALOG, pParent)
+	: CDialogEx(IDD_SERVERCP_DIALOG, pParent),
+	m_pProcess(NULL)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -64,6 +67,8 @@ BEGIN_MESSAGE_MAP(CServerCPDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	ON_BN_CLICKED(IDC_BUTTON_START, &CServerCPDlg::OnBnClickedButtonStart)
+	ON_WM_CLOSE()
 END_MESSAGE_MAP()
 
 
@@ -145,10 +150,28 @@ void CServerCPDlg::OnPaint()
 	}
 }
 
+void CServerCPDlg::OnClose()
+{
+	// TODO: 在此添加消息处理程序代码和/或调用默认值
+	if (m_pProcess)
+		m_pProcess->stop();
+	k_kill_process("StreamServer.exe");
+	CDialogEx::OnClose();
+}
+
 //当用户拖动最小化窗口时系统调用此函数取得光标
 //显示。
 HCURSOR CServerCPDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
+}
+
+
+
+void CServerCPDlg::OnBnClickedButtonStart()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	m_pProcess = new koo_process("AccServer", "", "AccServer.exe", "", true);
+	m_pProcess->start();
 }
 

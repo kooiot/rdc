@@ -21,21 +21,22 @@ void on_close() {
 		process->stop();
 	StreamMgr.Close();
 	ClientMgr.Close();
-	zmq_ctx_shutdown(ctx);
 	zmq_ctx_term(ctx);
 }
+
+
 
 int main(int argc, char* argv[])
 {
 	int r = atexit(on_close);
 
-	char* sip = "*";
+	char* bip = "127.0.0.1";
 	int port_rep = 6600;
 	int port_pub = 6601;
 	int port_stream = 6602;
 
 	if (argc >= 2)
-		sip = argv[1];
+		bip = argv[1];
 	if (argc >= 3)
 		port_rep = atoi(argv[2]);
 	if (argc >= 4)
@@ -43,19 +44,24 @@ int main(int argc, char* argv[])
 	if (argc >= 5)
 		port_stream = atoi(argv[4]);
 
-	std::cout << "Server_IP: \t" << sip << std::endl;
+	std::cout << "Bind IP: \t" << bip << std::endl;
 	std::cout << "Port_REP: \t" << port_rep << std::endl;
 	std::cout << "Port_PUB: \t" << port_pub << std::endl;
 	std::cout << "Port_STREAM: \t" << port_stream << std::endl;
 	
 	ctx = zmq_ctx_new();
 
-	void* sm_skt = StreamMgr.Init(ctx, sip, port_stream);
-	void* cli_skt = ClientMgr.Init(ctx, sip, port_rep, port_pub);
+	void* sm_skt = StreamMgr.Init(ctx, bip, port_stream);
+	void* cli_skt = ClientMgr.Init(ctx, bip, port_rep, port_pub);
 
 	k_kill_process("StreamServer.exe");
 	std::stringstream args;
-	//args << "* 6800";
+	args << 10000 << " ";
+	args << bip << " ";
+	args << port_stream << " ";
+	args << bip << " ";
+	args << 6800 << " ";
+
 	process = new koo_process("StreamServer", "", "StreamServer.exe", args.str(), true);
 	process->start();
 
@@ -68,7 +74,7 @@ int main(int argc, char* argv[])
 		if (items[0].revents & ZMQ_POLLIN) {
 			StreamMgr.OnRecv();
 		}
-		if (items[0].revents & ZMQ_POLLIN) {
+		if (items[1].revents & ZMQ_POLLIN) {
 			ClientMgr.OnRecv();
 		}
 	}

@@ -76,8 +76,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <ExecutablePath>D:\boost_1_61_0;$(IncludePath)</ExecutablePath>
     <LibraryPath>D:\boost_1_61_0\stage\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\boost_1_61_0;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -86,8 +86,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <ExecutablePath>D:\boost_1_61_0;$(IncludePath)</ExecutablePath>
     <LibraryPath>D:\boost_1_61_0\stage\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\boost_1_61_0;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -96,7 +96,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;REMOTECONNECTORAPI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include;../libs/common/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -112,7 +112,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;_USRDLL;REMOTECONNECTORAPI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include;../libs/common/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -128,7 +128,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;REMOTECONNECTORAPI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include;../libs/common/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -148,7 +148,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;_USRDLL;REMOTECONNECTORAPI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include;../libs/common/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -162,6 +162,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AccApi.h" />
+    <ClInclude Include="DataDefs.h" />
     <ClInclude Include="RemoteConnectorApi.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="StreamApi.h" />

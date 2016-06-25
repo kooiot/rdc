@@ -95,9 +95,9 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include;../libs/common/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include;../libs/common/include;../libs/sqlite3</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -112,9 +112,9 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include;../libs/common/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include;../libs/common/include;../libs/sqlite3</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -131,9 +131,9 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include;../libs/common/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include;../libs/common/include;../libs/sqlite3</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -152,9 +152,9 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>ZMQ_STATIC;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;ZMQ_STATIC;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include;../libs/common/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include;../libs/common/include;../libs/sqlite3</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -187,6 +187,9 @@
   <ItemGroup>
     <ProjectReference Include="..\libs\common\common.vcxproj">
       <Project>{ff5c36d8-7d75-4997-b83a-c1ef1619f8e9}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\libs\sqlite3\sqlite3.vcxproj">
+      <Project>{5dc00bb8-6d7e-4c95-8a27-969f268bdab7}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

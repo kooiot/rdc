@@ -4,7 +4,7 @@
 
 #pragma once
 
-
+class koo_process;
 // CServerCPDlg 对话框
 class CServerCPDlg : public CDialogEx
 {
@@ -24,11 +24,15 @@ public:
 // 实现
 protected:
 	HICON m_hIcon;
+	koo_process* m_pProcess;
 
 	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnPaint();
+	afx_msg void OnClose();
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
+public:
+	afx_msg void OnBnClickedButtonStart();
 };

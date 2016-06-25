@@ -1,6 +1,11 @@
 
 #ifndef koo_string_util_h__
 #define koo_string_util_h__
+#include <vector>
+#include <string>
+#ifdef _DEBUG
+#include <iostream>
+#endif
 
 #define USE_BOOST_LOCALE
 //#define GB_ALPHA_CONVERT(start, end, code, letter) if(code >= start && code <= end) return letter

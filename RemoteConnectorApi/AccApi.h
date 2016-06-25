@@ -1,10 +1,11 @@
 #pragma once
 
-#include "RemoteConnectorApi.h"
+#include <string>
+#include "DataDefs.h"
 
 class CAccApi {
 public:
-	CAccApi();
+	CAccApi(void* ctx);
 	~CAccApi();
 
 public:
@@ -20,4 +21,8 @@ public:
 	int ConnectUDP(const char*  id, const char*  devid, const UDPInfo& info);
 	int CloseUDP(const char*  id);
 
+private:
+	void* m_CTX;
+	void* m_Socket;
+	std::string m_ID;
 };

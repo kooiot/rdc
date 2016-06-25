@@ -9,6 +9,7 @@
 #include <enet\enet.h>
 #include <zmq.h>
 #include <koo_zmq_helpers.h>
+#include "../RemoteConnectorApi/DataDefs.h"
 
 #define MAX_CONNECTION_PER_SERVER 128
 #define MAX_CHANNEL_PER_SERVER 32
@@ -20,44 +21,44 @@ ENetPeer* MapperPeers[MAX_CONNECTION_PER_SERVER];
 ENetPeer* ClientPeers[MAX_CONNECTION_PER_SERVER];
 
 bool send_add_stream(int id, void* socket, const StreamProcess& sp) {
-	CMD add;
+	KZPacket add;
 	std::stringstream ss;
 	ss << id;
 	add.id = ss.str();
 	add.cmd = "ADD";
 	add.data = std::string((char*)&sp, sizeof(StreamProcess));
-	int rc = send_cmd(socket, add);
+	int rc = koo_zmq_send_cmd(socket, add);
 	if (rc != 0)
 		return false;
-	CMD result;
-	rc = recv_cmd(socket, result);
+	KZPacket result;
+	rc = koo_zmq_recv_cmd(socket, result);
 	if (rc != 0)
 		return false;
 
-	return result.data == "SUCCESS";
+	return result.data == S_SUCCESS;
 }
 bool send_remove_stream(int id, void* socket) {
-	CMD add;
+	KZPacket add;
 	std::stringstream ss;
 	ss << id;
 	add.id = ss.str();
 	add.cmd = "REMOVE";
-	int rc = send_cmd(socket, add);
+	int rc = koo_zmq_send_cmd(socket, add);
 	if (rc != 0)
 		return false;
-	CMD result;
-	rc = recv_cmd(socket, result);
+	KZPacket result;
+	rc = koo_zmq_recv_cmd(socket, result);
 	if (rc != 0)
 		return false;
 
-	return result.data == "SUCCESS";
+	return result.data == S_SUCCESS;
 }
 int main(int argc, char* argv[])
 {
 	int id = 10000;
 	char* sip = "127.0.0.1";
 	int sport = 6602;
-	char* bip = "*";
+	char* bip = "127.0.0.1";
 	int port = 6800;
 
 	if (argc >= 2)
@@ -218,12 +219,10 @@ CLOSE:
 	send_remove_stream(id, req);
 
 	zmq_close(req);
-	zmq_ctx_shutdown(ctx);
 	zmq_ctx_term(ctx);
 
 	enet_host_destroy(server);
 	enet_deinitialize();
-	system("pause");
     return 0;
 }
 

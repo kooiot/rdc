@@ -4,20 +4,15 @@
 #include <string>
 #include <cassert>
 
-struct CMD {
+struct KZPacket {
 	std::string id;
 	std::string cmd;
 	std::string data;
 };
 
-struct StreamProcess {
-	int Counter;
-	char StreamIP[128];
-	int Port;
-};
-
-bool recv_string(void* skt, std::string& str, bool more);
-int recv_cmd(void* skt, CMD& cmd);
-int send_msg(void* skt, const std::string& data, bool more);
-int send_reply(void* skt, const CMD& cmd, const std::string& rep);
-int send_cmd(void* skt, const CMD& cmd);
+bool koo_zmq_recv_string(void* skt, std::string& str, bool more);
+int koo_zmq_recv_cmd(void* skt, KZPacket& cmd);
+int koo_zmq_send_msg(void* skt, const std::string& data, bool more);
+int koo_zmq_send_reply(void* skt, const KZPacket& cmd, const std::string& rep);
+int koo_zmq_send_reply(void* skt, const KZPacket& cmd, void* data, int len);
+int koo_zmq_send_cmd(void* skt, const KZPacket& cmd);

@@ -4,6 +4,7 @@
 #include <list>
 #include <koo_zmq_helpers.h>
 
+struct StreamProcess;
 class CStreamServerMgr
 {
 public:
@@ -14,7 +15,7 @@ public:
 	void Close();
 	void OnRecv();
 private:
-	void HandleCMD(const CMD & cmd, void * rep);
+	void HandleKZPacket(const KZPacket & cmd, void * rep);
 
 public:
 	StreamProcess* Alloc();

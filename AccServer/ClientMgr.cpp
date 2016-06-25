@@ -1,9 +1,11 @@
 #include "ClientMgr.h"
+#include "../RemoteConnectorApi/DataDefs.h"
 #include <zmq.h>
 
 #include <list>
 #include <sstream>
 #include <cassert>
+#include <iostream>
 
 #ifdef WIN32
 #include <Windows.h>
@@ -54,14 +56,18 @@ void * CClientMgr::Init(void * ctx, const char * bip, int port_rep, int port_pub
 
 void CClientMgr::Close()
 {
+	m_Auth.Close();
 	zmq_close(m_pReply);
 	zmq_close(m_pPublish);
 }
 
-void CClientMgr::HandleCMD(const CMD& cmd, void* rep, void* pub)
+void CClientMgr::HandleKZPacket(const KZPacket& cmd, void* rep, void* pub)
 {
+	std::cout << __FUNCTION__ << ": " << cmd.id << "\t" << cmd.cmd << std::endl;
+
 	bool bSuccess = false;
 	if (cmd.cmd == "LOGIN") {
+		std::cout << "LOGIN: " << cmd.id << "\t" << cmd.data << std::endl;
 		if (cmd.id == "@DEVICE@") {
 			// Check for valid device sn
 			if (m_Auth.IsValidMapper(cmd.data) == 0) {
@@ -74,43 +80,99 @@ void CClientMgr::HandleCMD(const CMD& cmd, void* rep, void* pub)
 			bSuccess = true;
 		}
 	}
-	if (cmd.cmd == "HEARTBEAT") {
+	else if (cmd.cmd == "HEARTBEAT") {
 		bSuccess = true;
 		if (cmd.id == "@DEVICE@")
 			UpdateMapperHearbeat(cmd.data);
 		else
 			UpdateClientHearbeat(cmd.id);
 	}
-	if (cmd.cmd == "LOGOUT") {
+	else if (cmd.cmd == "LOGOUT") {
 		bSuccess = true;
 		if (cmd.id == "@DEVICE@")
 			RemoveMapper(cmd.data);
 		else
 			RemoveClient(cmd.id);
 	}
-	if (cmd.cmd == "CREATE") {
+	else if (cmd.cmd == "CREATE") {
 		std::string dest_id = cmd.data.substr(0, cmd.data.find(" "));
 		if (m_Auth.Access(cmd.id, dest_id) == 0) {
-			send_msg(pub, cmd.data, false);
+			koo_zmq_send_msg(pub, cmd.data, false);
 			bSuccess = true;
 		}
 	}
-	if (cmd.cmd == "DESTROY") {
+	else if (cmd.cmd == "DESTROY") {
 		std::string dest_id = cmd.data.substr(0, cmd.data.find(" "));
 		if (m_Auth.Access(cmd.id, dest_id) == 0) {
-			send_msg(pub, cmd.data, false);
+			koo_zmq_send_msg(pub, cmd.data, false);
 			bSuccess = true;
 		}
 	}
-	send_reply(rep, cmd, bSuccess ? "SUCCESS" : "FAILURE");
+	else if (cmd.cmd == "LIST_DEV") {
+		std::string data;
+		MapperMap::iterator ptr = m_Mappers.begin();
+		for (; ptr != m_Mappers.end(); ++ptr, data += "|") {
+			data += ptr->first;
+		}
+		int rc = koo_zmq_send_reply(rep, cmd, data);
+		assert(rc == 0);
+		return;
+	}
+	else if (cmd.cmd == "DEV_INFO") {
+		std::string dev_id = cmd.data;
+		MapperMap::iterator ptr = m_Mappers.find(dev_id);
+		if (ptr != m_Mappers.end()) {
+			DeviceInfo info;
+			memset(&info, 0, sizeof(DeviceInfo));
+			snprintf(info.ID, RC_MAX_ID_LEN, "%s", dev_id.c_str());
+			snprintf(info.Name, RC_MAX_NAME_LEN, "%s", ptr->second->ID.c_str());
+			snprintf(info.Desc, RC_MAX_NAME_LEN, "%s", "Mapper Device");
+			info.IsOnline = true;
+			info.LastUpdate = ptr->second->Heartbeat;
+			koo_zmq_send_reply(rep, cmd, &info, sizeof(DeviceInfo));
+			return;
+		}
+		else {
+			// TODO: Find in database;
+		}
+	}
+	else if (cmd.cmd == "LIST_CLIENT") {
+		std::string data;
+		ClientMap::iterator ptr = m_Clients.begin();
+		for (; ptr != m_Clients.end(); ++ptr, data += "|") {
+			data += ptr->first;
+		}
+		koo_zmq_send_reply(rep, cmd, data);
+		return;
+	}
+	else if (cmd.cmd == "CLIENT_INFO") {
+		std::string id = cmd.data;
+		ClientMap::iterator ptr = m_Clients.find(id);
+		if (ptr != m_Clients.end()) {
+			UserInfo info;
+			memset(&info, 0, sizeof(UserInfo));
+			snprintf(info.ID, RC_MAX_ID_LEN, "%s", id.c_str());
+			snprintf(info.Name, RC_MAX_NAME_LEN, "%s", ptr->second->ID.c_str());
+			snprintf(info.Desc, RC_MAX_NAME_LEN, "%s", "Mapper Device");
+			snprintf(info.Desc, RC_MAX_NAME_LEN, "%s", "Unknown");
+			info.IsOnline = true;
+			koo_zmq_send_reply(rep, cmd, &info, sizeof(UserInfo));
+			return;
+		}
+		else {
+			// TODO: Find in database;
+		}
+	}
+	std::cout << "SEND REPLY: " << cmd.id << "\t" << cmd.cmd << "\t" << (bSuccess ? S_SUCCESS : S_FAILED) << std::endl;
+	koo_zmq_send_reply(rep, cmd, bSuccess ? S_SUCCESS : S_FAILED);
 }
 
 void CClientMgr::OnRecv()
 {
-	CMD cmd;
-	int rc = recv_cmd(m_pReply, cmd);
+	KZPacket cmd;
+	int rc = koo_zmq_recv_cmd(m_pReply, cmd);
 	if (rc == 0) {
-		HandleCMD(cmd, m_pReply, m_pPublish);
+		HandleKZPacket(cmd, m_pReply, m_pPublish);
 	}
 }
 

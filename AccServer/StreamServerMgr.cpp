@@ -2,6 +2,7 @@
 #include "ClientMgr.h"
 #include <zmq.h>
 #include <sstream>
+#include "../RemoteConnectorApi/DataDefs.h"
 
 #define MAX_CONNECTION_PER_SERVER 128
 
@@ -35,7 +36,7 @@ void CStreamServerMgr::Close()
 }
 
 
-void CStreamServerMgr::HandleCMD(const CMD& cmd, void* rep)
+void CStreamServerMgr::HandleKZPacket(const KZPacket& cmd, void* rep)
 {
 	bool bSuccess = false;
 	if (cmd.cmd == "ADD") {
@@ -51,15 +52,15 @@ void CStreamServerMgr::HandleCMD(const CMD& cmd, void* rep)
 		RemoveStream(atoi(cmd.id.c_str()));
 	}
 	
-	send_reply(rep, cmd, bSuccess ? "SUCCESS" : "FAILURE");
+	koo_zmq_send_reply(rep, cmd, bSuccess ? S_SUCCESS : S_FAILED);
 }
 
 void CStreamServerMgr::OnRecv()
 {
-	CMD cmd;
-	int rc = recv_cmd(m_pSocket, cmd);
+	KZPacket cmd;
+	int rc = koo_zmq_recv_cmd(m_pSocket, cmd);
 	if (rc == 0) {
-		HandleCMD(cmd, m_pSocket);
+		HandleKZPacket(cmd, m_pSocket);
 	}
 }
 StreamProcess * CStreamServerMgr::Alloc()

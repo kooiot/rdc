@@ -222,7 +222,17 @@
   <ItemGroup>
     <Image Include="res\RemoteConnector.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\RemoteConnectorApi\RemoteConnectorApi.vcxproj">
+      <Project>{32697b75-21ca-424e-a680-e748130241b4}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties RESOURCE_FILE="RemoteConnector.rc" />
+    </VisualStudio>
+  </ProjectExtensions>
 </Project>
