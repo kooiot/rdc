@@ -16,31 +16,42 @@ extern "C" {
 #define RC_MAX_ID_LEN 32
 #define RC_MAX_NAME_LEN 64
 #define RC_MAX_DESC_LEN 128
+#define RC_MAX_PASSWD_LEN 32
+#define RC_MAX_EMAIL_LEN 128
+#define RC_MAX_PHONE_LEN 128
+#define RC_MAX_SN_LEN 128
 #define RC_MAX_IP_LEN 128
+
 #define RC_MAX_MAX_USER_CONNECTION 16
 
 	struct DeviceInfo
 	{
-		char ID[RC_MAX_ID_LEN];
+		int Index;
+		char SN[RC_MAX_SN_LEN];
 		char Name[RC_MAX_NAME_LEN];
 		char Desc[RC_MAX_DESC_LEN];
-		bool IsOnline;
-		int LastUpdate;
+		time_t CreateTime; // In UTC
+		time_t ValidTime; // In UTC
 	};
 
 	struct ConnectionInfo
 	{
 		char Name[RC_MAX_NAME_LEN];
 		char Desc[RC_MAX_DESC_LEN];
-		char DevID[RC_MAX_ID_LEN];
+		char DevSN[RC_MAX_SN_LEN];
 	};
 	struct UserInfo
 	{
+		int Index;
+		int Level;
 		char ID[RC_MAX_ID_LEN];
 		char Name[RC_MAX_NAME_LEN];
 		char Desc[RC_MAX_DESC_LEN];
-		char IP[RC_MAX_IP_LEN];
-		bool IsOnline;
+		char Passwd[RC_MAX_PASSWD_LEN];
+		char Email[RC_MAX_EMAIL_LEN];
+		char Phone[RC_MAX_PHONE_LEN];
+		time_t CreateTime; // In UTC
+		time_t ValidTime; // In UTC
 		ConnectionInfo Connections[RC_MAX_MAX_USER_CONNECTION];
 	};
 

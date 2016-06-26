@@ -3,7 +3,7 @@
 #include <map>
 #include <string>
 #include "StreamServerMgr.h"
-#include "Auth.h"
+#include "AccDatabase.h"
 #include <koo_zmq_helpers.h>
 
 #define MAX_CLIENT_CONNECTION 32
@@ -64,6 +64,6 @@ private:
 	MapperMap m_Mappers;
 
 	CStreamServerMgr& m_StreamMgr;
-	CAuth m_Auth;
+	CAccDatabase m_Database;
 };
 

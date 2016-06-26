@@ -175,12 +175,12 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Auth.cpp" />
+    <ClCompile Include="AccDatabase.cpp" />
     <ClCompile Include="ClientMgr.cpp" />
     <ClCompile Include="StreamServerMgr.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Auth.h" />
+    <ClInclude Include="AccDatabase.h" />
     <ClInclude Include="ClientMgr.h" />
     <ClInclude Include="StreamServerMgr.h" />
   </ItemGroup>

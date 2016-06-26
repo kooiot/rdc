@@ -49,14 +49,14 @@ void * CClientMgr::Init(void * ctx, const char * bip, int port_rep, int port_pub
 	m_pReply = rep;
 	m_pPublish = pub;
 
-	m_Auth.Init();
+	m_Database.Init();
 
 	return rep;
 }
 
 void CClientMgr::Close()
 {
-	m_Auth.Close();
+	m_Database.Close();
 	zmq_close(m_pReply);
 	zmq_close(m_pPublish);
 }
@@ -70,12 +70,12 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd, void* rep, void* pub)
 		std::cout << "LOGIN: " << cmd.id << "\t" << cmd.data << std::endl;
 		if (cmd.id == "@DEVICE@") {
 			// Check for valid device sn
-			if (m_Auth.IsValidMapper(cmd.data) == 0) {
+			if (m_Database.IsValidMapper(cmd.data) == 0) {
 				AddMapper(cmd.data);
 				bSuccess = true;
 			}
 		}
-		else if (m_Auth.Login(cmd.id, cmd.data) == 0) {
+		else if (m_Database.Login(cmd.id, cmd.data) == 0) {
 			AddClient(cmd.id);
 			bSuccess = true;
 		}
@@ -96,72 +96,88 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd, void* rep, void* pub)
 	}
 	else if (cmd.cmd == "CREATE") {
 		std::string dest_id = cmd.data.substr(0, cmd.data.find(" "));
-		if (m_Auth.Access(cmd.id, dest_id) == 0) {
+		if (m_Database.Access(cmd.id, dest_id) == 0) {
 			koo_zmq_send_msg(pub, cmd.data, false);
 			bSuccess = true;
 		}
 	}
 	else if (cmd.cmd == "DESTROY") {
 		std::string dest_id = cmd.data.substr(0, cmd.data.find(" "));
-		if (m_Auth.Access(cmd.id, dest_id) == 0) {
+		if (m_Database.Access(cmd.id, dest_id) == 0) {
 			koo_zmq_send_msg(pub, cmd.data, false);
 			bSuccess = true;
 		}
 	}
 	else if (cmd.cmd == "LIST_DEV") {
+		std::string type = cmd.data;
+		std::list<std::string> list;
+		if (type != "ALL") {
+			MapperMap::iterator ptr = m_Mappers.begin();
+			for (; ptr != m_Mappers.end(); ++ptr) {
+				list.push_back(ptr->first);
+			}
+		}
+		else {
+			m_Database.ListDevices(list);
+		}
+
 		std::string data;
-		MapperMap::iterator ptr = m_Mappers.begin();
-		for (; ptr != m_Mappers.end(); ++ptr, data += "|") {
-			data += ptr->first;
+		std::list<std::string>::iterator ptr = list.begin();
+		for (; ptr != list.end(); ++ptr, data += "|") {
+			data += *ptr;
 		}
 		int rc = koo_zmq_send_reply(rep, cmd, data);
 		assert(rc == 0);
 		return;
 	}
 	else if (cmd.cmd == "DEV_INFO") {
-		std::string dev_id = cmd.data;
-		MapperMap::iterator ptr = m_Mappers.find(dev_id);
-		if (ptr != m_Mappers.end()) {
-			DeviceInfo info;
-			memset(&info, 0, sizeof(DeviceInfo));
-			snprintf(info.ID, RC_MAX_ID_LEN, "%s", dev_id.c_str());
-			snprintf(info.Name, RC_MAX_NAME_LEN, "%s", ptr->second->ID.c_str());
-			snprintf(info.Desc, RC_MAX_NAME_LEN, "%s", "Mapper Device");
-			info.IsOnline = true;
-			info.LastUpdate = ptr->second->Heartbeat;
-			koo_zmq_send_reply(rep, cmd, &info, sizeof(DeviceInfo));
-			return;
+		std::string sn = cmd.data;
+		DbDeviceInfo dbInfo;
+		int rc = m_Database.GetDevice(sn, dbInfo);
+		if (rc != 0) {
+			std::cerr << "Invalid Device ID " << std::endl;
+
 		}
-		else {
-			// TODO: Find in database;
-		}
+		DeviceInfo info;
+		memset(&info, 0, sizeof(DeviceInfo));
+		dbInfo.ToDeviceInfo(info);
+		koo_zmq_send_reply(rep, cmd, &info, sizeof(DeviceInfo));
+		return;
 	}
 	else if (cmd.cmd == "LIST_CLIENT") {
-		std::string data;
-		ClientMap::iterator ptr = m_Clients.begin();
-		for (; ptr != m_Clients.end(); ++ptr, data += "|") {
-			data += ptr->first;
+		std::string type = cmd.data;
+		std::list<std::string> list;
+		if (type != "ALL") {
+			ClientMap::iterator ptr = m_Clients.begin();
+			for (; ptr != m_Clients.end(); ++ptr) {
+				list.push_back(ptr->first);
+			}
 		}
-		koo_zmq_send_reply(rep, cmd, data);
+		else {
+			m_Database.ListDevices(list);
+		}
+
+		std::string data;
+		std::list<std::string>::iterator ptr = list.begin();
+		for (; ptr != list.end(); ++ptr, data += "|") {
+			data += *ptr;
+		}
+		int rc = koo_zmq_send_reply(rep, cmd, data);
+		assert(rc == 0);
 		return;
 	}
 	else if (cmd.cmd == "CLIENT_INFO") {
 		std::string id = cmd.data;
-		ClientMap::iterator ptr = m_Clients.find(id);
-		if (ptr != m_Clients.end()) {
-			UserInfo info;
-			memset(&info, 0, sizeof(UserInfo));
-			snprintf(info.ID, RC_MAX_ID_LEN, "%s", id.c_str());
-			snprintf(info.Name, RC_MAX_NAME_LEN, "%s", ptr->second->ID.c_str());
-			snprintf(info.Desc, RC_MAX_NAME_LEN, "%s", "Mapper Device");
-			snprintf(info.Desc, RC_MAX_NAME_LEN, "%s", "Unknown");
-			info.IsOnline = true;
-			koo_zmq_send_reply(rep, cmd, &info, sizeof(UserInfo));
-			return;
+		DbUserInfo dbInfo;
+		int rc = m_Database.GetUser(id, dbInfo);
+		if (rc != 0) {
+			std::cerr << "Invalid User ID " << std::endl;
 		}
-		else {
-			// TODO: Find in database;
-		}
+		UserInfo info;
+		memset(&info, 0, sizeof(UserInfo));
+		dbInfo.ToUserInfo(info);
+		koo_zmq_send_reply(rep, cmd, &info, sizeof(UserInfo));
+		return;
 	}
 	std::cout << "SEND REPLY: " << cmd.id << "\t" << cmd.cmd << "\t" << (bSuccess ? S_SUCCESS : S_FAILED) << std::endl;
 	koo_zmq_send_reply(rep, cmd, bSuccess ? S_SUCCESS : S_FAILED);
