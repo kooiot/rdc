@@ -12,7 +12,7 @@ public:
 	bool Connect(const char* sip, int port, const char* un, const char* pass);
 	int Disconnect();
 
-	int GetStreamServer(IPInfo* info);
+	int GetStreamServer(StreamProcess* info);
 
 	int SendHeartbeat();
 

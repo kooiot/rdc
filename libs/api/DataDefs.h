@@ -16,7 +16,14 @@ extern "C" {
 #define RC_MAX_SN_LEN 128
 #define RC_MAX_IP_LEN 128
 
+// Stream Server MAXs
 #define RC_MAX_CONNECTION 16
+#define RC_STREAM_SERVER_ID_BASE 10000
+#define RC_MAX_STREAM_SERVER_COUNT 128
+#define RC_MAX_CONNECTION_PER_SERVER 128
+
+#define MAPPER_TYPE 1
+#define CLIENT_TYPE 2
 
 	struct IPInfo {
 		char sip[RC_MAX_IP_LEN];
@@ -105,9 +112,10 @@ extern "C" {
 	};
 
 	struct StreamProcess {
-		int Counter;
+		int Index;
 		char StreamIP[128];
 		int Port;
+		void* __inner;
 	};
 
 #define S_SUCCESS	"__SUCCESS__"

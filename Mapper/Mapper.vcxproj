@@ -89,7 +89,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../libs/enet/include;../libs/libuv/include;../libs/serial/include;../libs/zeromq/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../libs/enet/include;../libs/libuv/include;../libs/serial/include;../libs/zeromq/include;../libs/api;../libs/common</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -106,7 +106,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../libs/enet/include;../libs/libuv/include;../libs/serial/include;../libs/zeromq/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../libs/enet/include;../libs/libuv/include;../libs/serial/include;../libs/zeromq/include;../libs/api;../libs/common</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -125,7 +125,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../libs/enet/include;../libs/libuv/include;../libs/serial/include;../libs/zeromq/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../libs/enet/include;../libs/libuv/include;../libs/serial/include;../libs/zeromq/include;../libs/api;../libs/common</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -146,7 +146,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../libs/enet/include;../libs/libuv/include;../libs/serial/include;../libs/zeromq/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../libs/enet/include;../libs/libuv/include;../libs/serial/include;../libs/zeromq/include;../libs/api;../libs/common</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -169,6 +169,12 @@
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\libs\api\api.vcxproj">
+      <Project>{847182ce-47fa-457e-beab-e6e58fc56ec0}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\libs\common\common.vcxproj">
+      <Project>{ff5c36d8-7d75-4997-b83a-c1ef1619f8e9}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\libs\enet\enet.vcxproj">
       <Project>{31984b3c-d213-48d3-8162-2e2bd460a115}</Project>
     </ProjectReference>

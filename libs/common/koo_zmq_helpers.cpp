@@ -27,7 +27,7 @@ std::string KZPacket::GetStr() const
 
 void KZPacket::SetStr(const char* str)
 {
-	SetData((void*)str, strlen(str) + 1);
+	SetData((void*)str, strlen(str));
 }
 
 bool koo_zmq_recv_string(void* skt, std::string& str, bool more) {

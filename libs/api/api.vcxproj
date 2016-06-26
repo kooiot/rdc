@@ -161,6 +161,11 @@
     <ClInclude Include="DataDefs.h" />
     <ClInclude Include="StreamApi.h" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\enet\enet.vcxproj">
+      <Project>{31984b3c-d213-48d3-8162-2e2bd460a115}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

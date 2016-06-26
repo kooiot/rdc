@@ -4,10 +4,19 @@
 #include <sstream>
 #include <DataDefs.h>
 
-#define MAX_CONNECTION_PER_SERVER 128
 
 CStreamServerMgr::CStreamServerMgr()
 {
+	for (int i = 0; i < RC_MAX_STREAM_SERVER_COUNT; ++i) {
+		StreamProcessVector& v = m_Streams[i];
+		v.Online = false;
+		v.Counter = 0;
+		memset(v.Used, false, RC_MAX_CONNECTION_PER_SERVER * sizeof(bool));
+		for (int j = 0; j < RC_MAX_CONNECTION_PER_SERVER; ++j) {
+			v.List[j].__inner = &v;
+			v.List[j].Index = j;
+		}
+	}
 }
 
 CStreamServerMgr::~CStreamServerMgr()
@@ -41,9 +50,8 @@ void CStreamServerMgr::HandleKZPacket(const KZPacket& cmd, void* rep)
 	bool bSuccess = false;
 	if (cmd.cmd == "ADD") {
 		printf("Add event %s\n", cmd.id.c_str());
-		StreamProcess* sp = new StreamProcess();
-		memcpy(sp, cmd.GetData(), sizeof(StreamProcess));
-		AddStream(atoi(cmd.id.c_str()), sp);
+		IPInfo* info = (IPInfo*)cmd.GetData();
+		AddStream(atoi(cmd.id.c_str()), info);
 		bSuccess = true;
 	}
 	else if (cmd.cmd == "REMOVE") {
@@ -65,23 +73,35 @@ void CStreamServerMgr::OnRecv()
 }
 StreamProcess * CStreamServerMgr::Alloc()
 {
+	StreamProcessVector* pV = nullptr;
 	StreamProcess* pData = nullptr;
 
-	int nMin = MAX_CONNECTION_PER_SERVER;
-	StreamProcessMap::iterator ptr = m_Streams.begin();
-	for (; ptr != m_Streams.end(); ++ptr) {
-		if (ptr->second->Counter < nMin) {
-			nMin = ptr->second->Counter;
-			pData = ptr->second;
+	int nMin = RC_MAX_CONNECTION_PER_SERVER;
+	
+	for (int i = 0; i < RC_MAX_STREAM_SERVER_COUNT; ++i) {
+		StreamProcessVector& v = m_Streams[i];
+		if (!v.Online)
+			continue;
+
+		if (v.Counter < nMin) {
+			nMin = v.Counter;
+			pV = &v;
 
 			// Make it faster
 			if (nMin == 0)
 				break;
 		}
 	}
-
-	if (pData) {
-		pData->Counter++;
+	if (pV) {
+		for (int i = 0; i < RC_MAX_CONNECTION_PER_SERVER; ++i) {
+			if (!pV->Used[i])
+			{
+				pV->Counter++;
+				pV->Used[i] = true;
+				pData = &pV->List[i];
+				break;
+			}
+		}
 	}
 
 	return pData;
@@ -89,22 +109,31 @@ StreamProcess * CStreamServerMgr::Alloc()
 
 void CStreamServerMgr::Release(StreamProcess * pData)
 {
-	if (pData->Counter > 0)
-		pData->Counter--;
+	StreamProcessVector* pV = (StreamProcessVector*)pData->__inner;
+	pV->Counter--;
+	pV->Used[pData->Index] = false;
 }
 
-bool CStreamServerMgr::AddStream(int id, StreamProcess* Process)
+bool CStreamServerMgr::AddStream(int id, IPInfo * Process)
 {
-	if (m_Streams[id] == NULL) {
-		m_Streams[id] = Process;
-		return true;
+	id = id - RC_STREAM_SERVER_ID_BASE;
+	StreamProcessVector& sp = m_Streams[id];
+	if (sp.Online) {
+		return false;
 	}
-	return false;
+
+	sp.Online = true;
+	for (int j = 0; j < RC_MAX_CONNECTION_PER_SERVER; ++j) {
+		memcpy(sp.List[j].StreamIP, Process->sip, RC_MAX_IP_LEN);
+		sp.List[j].Port = Process->port;
+	}
+	return true;
 }
 
-StreamProcess* CStreamServerMgr::RemoveStream(int id)
+bool CStreamServerMgr::RemoveStream(int id)
 {
-	StreamProcess* pProcess = m_Streams[id];
-	m_Streams[id] = NULL;
-	return pProcess;
+	id = id - RC_STREAM_SERVER_ID_BASE;
+	StreamProcessVector& sp = m_Streams[id];
+	sp.Online = false;
+	return true;
 }

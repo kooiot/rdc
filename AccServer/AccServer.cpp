@@ -9,7 +9,6 @@
 #include "ClientMgr.h"
 #include "koo_process.h"
 
-
 void* ctx = NULL;
 CStreamServerMgr StreamMgr;
 CClientMgr ClientMgr(StreamMgr);
@@ -56,7 +55,7 @@ int main(int argc, char* argv[])
 
 	k_kill_process("StreamServer.exe");
 	std::stringstream args;
-	args << 10000 << " ";
+	args << RC_STREAM_SERVER_ID_BASE << " ";
 	args << bip << " ";
 	args << port_stream << " ";
 	args << bip << " ";

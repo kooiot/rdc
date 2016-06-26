@@ -41,10 +41,13 @@ bool CAccApi::Connect(const char * sip, int port, const char * un, const char * 
 	ss << "tcp://" << sip << ":" << port;
 	m_Socket = zmq_socket(m_CTX, ZMQ_REQ);
 	assert(m_Socket);
-	int rc = zmq_connect(m_Socket, ss.str().c_str());
-	assert(rc != -1);
 	int timeo = 5 * 1000;
-	rc = zmq_setsockopt(m_Socket, ZMQ_RCVTIMEO, &timeo, sizeof(int));
+	int rc = zmq_setsockopt(m_Socket, ZMQ_RCVTIMEO, &timeo, sizeof(int));
+	timeo = 0;
+	rc = zmq_setsockopt(m_Socket, ZMQ_LINGER, &timeo, sizeof(int));
+	rc = zmq_connect(m_Socket, ss.str().c_str());
+	assert(rc != -1);
+
 	KZPacket login;
 	login.id = un;
 	login.cmd = "LOGIN";
@@ -71,7 +74,7 @@ int CAccApi::Disconnect()
 	return rc;
 }
 
-int CAccApi::GetStreamServer(IPInfo * info)
+int CAccApi::GetStreamServer(StreamProcess * info)
 {
 	KZPacket packet;
 	packet.id = m_ID;
@@ -79,7 +82,7 @@ int CAccApi::GetStreamServer(IPInfo * info)
 	packet.SetStr("GetStreamServer");
 
 	int rc = SendRequest(m_Socket, packet, [info](KZPacket& data) {
-		memcpy(info, data.GetData(), sizeof(IPInfo));
+		memcpy(info, data.GetData(), sizeof(StreamProcess));
 		return 0;
 	});
 

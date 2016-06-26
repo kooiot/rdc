@@ -156,7 +156,7 @@ static const char* CREATE_PERMISSIONS = ""
 "CREATE TABLE IF NOT EXISTS [permissions]("
 "[index] INTEGER  NOT NULL PRIMARY KEY AUTOINCREMENT,"
 "[uid] INTEGER  NOT NULL,"
-"[devid] INTEGER  NOT NULL"
+"[devid] INTEGER  NOT NULL,"
 "[valid_time] TIMESTAMP  NULL"
 ")";
 
@@ -177,10 +177,16 @@ int CAccDatabase::Init()
 	int rc = sqlite3_open(db_file.c_str(), &m_pDB);
 	if (SQLITE_OK == rc) {
 		rc = sqlite3_exec(m_pDB, CREATE_DEVICES, NULL, NULL, NULL);
+		if (rc != SQLITE_OK)
+			std::cerr << "CREATE_DEVICES Error: " << sqlite3_errmsg(m_pDB) << std::endl;
 		assert(rc == SQLITE_OK);
 		rc = sqlite3_exec(m_pDB, CREATE_USERS, NULL, NULL, NULL);
+		if (rc != SQLITE_OK)
+			std::cerr << "CREATE_USERS Error: " << sqlite3_errmsg(m_pDB) << std::endl;
 		assert(rc == SQLITE_OK);
 		rc = sqlite3_exec(m_pDB, CREATE_PERMISSIONS, NULL, NULL, NULL);
+		if (rc != SQLITE_OK)
+			std::cerr << "CREATE_PERMISSIONS Error: " << sqlite3_errmsg(m_pDB) << std::endl;
 		assert(rc == SQLITE_OK);
 	}
 	else {
@@ -248,7 +254,9 @@ int CAccDatabase::Login(const std::string & id, const std::string & password)
 	m_Lock.lock();
 
 	std::stringstream sql;
-	sql << "select valid_time from users where id='" << id << "' and passwd='" << password << "'";
+	sql << "select valid_time from users where id='" << id << "' and passwd='" << password << "' ";
+	std::string a = sql.str();
+	const char* pa = a.c_str();
 
 	std::string valid_time;
 	int nRet = 0;

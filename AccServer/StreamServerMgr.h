@@ -1,10 +1,10 @@
 #pragma once
 
 #include <map>
-#include <list>
+#include <vector>
 #include <koo_zmq_helpers.h>
+#include <DataDefs.h>
 
-struct StreamProcess;
 class CStreamServerMgr
 {
 public:
@@ -21,12 +21,17 @@ public:
 	StreamProcess* Alloc();
 	void Release(StreamProcess* pData);
 
-	bool AddStream(int id, StreamProcess* Process);
-	StreamProcess* RemoveStream(int id);
+	bool AddStream(int id, IPInfo* Process);
+	bool RemoveStream(int id);
 
 private:
 	void * m_pSocket;
-	typedef std::map<int, StreamProcess*> StreamProcessMap;
-	StreamProcessMap m_Streams;
+	struct StreamProcessVector {
+		int Online;
+		int Counter;
+		bool Used[RC_MAX_CONNECTION_PER_SERVER];
+		StreamProcess List[RC_MAX_CONNECTION_PER_SERVER];
+	};
+	StreamProcessVector m_Streams[RC_MAX_STREAM_SERVER_COUNT];
 };
 

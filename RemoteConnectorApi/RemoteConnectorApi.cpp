@@ -8,6 +8,7 @@
 #include "RemoteConnectorApi.h"
 #include "AccApi.h"
 
+
 void* g_ctx = NULL;
 std::list<CAccApi*> g_HandleList;
 
@@ -29,9 +30,10 @@ int RC_Close()
 		delete pApi;
 	}
 
-	if (g_ctx) {
-		zmq_ctx_term(g_ctx);
-	}
+	//if (g_ctx) {
+	//	zmq_ctx_term(g_ctx);
+	//}
+
 	return 0;
 }
 

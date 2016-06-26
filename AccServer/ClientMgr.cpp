@@ -96,14 +96,13 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd, void* rep, void* pub)
 			RemoveClient(cmd.id);
 	}
 	else if (cmd.cmd == "STREAM") {
-		IPInfo info;
-		memset(&info, 0, sizeof(IPInfo));
+		StreamProcess info;
+		memset(&info, 0, sizeof(StreamProcess));
 		ClientData* pData = m_Clients[cmd.id];
 		if (pData && pData->StreamServer) {
-			memcpy(info.sip, pData->StreamServer->StreamIP, RC_MAX_IP_LEN);
-			info.port = pData->StreamServer->Port;
+			memcpy(&info, pData->StreamServer, sizeof(StreamProcess));
 		}
-		int rc = koo_zmq_send_reply(rep, cmd, &info, sizeof(IPInfo));
+		int rc = koo_zmq_send_reply(rep, cmd, &info, sizeof(StreamProcess));
 		assert(rc == 0);
 		return;
 	}

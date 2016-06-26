@@ -67,12 +67,28 @@ BEGIN_MESSAGE_MAP(CServerCPDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
-	ON_BN_CLICKED(IDC_BUTTON_START, &CServerCPDlg::OnBnClickedButtonStart)
 	ON_WM_CLOSE()
+	ON_MESSAGE(WM_USER_EVENT, &CServerCPDlg::OnEventMsg)
+	ON_MESSAGE(WM_USER_DATA, &CServerCPDlg::OnDataMsg)
+	ON_BN_CLICKED(IDC_BUTTON_CONNECT, &CServerCPDlg::OnBnClickedButtonConnect)
+	ON_BN_CLICKED(IDC_BUTTON_SEND, &CServerCPDlg::OnBnClickedButtonSend)
 END_MESSAGE_MAP()
 
 
 // CServerCPDlg 消息处理程序
+
+bool CServerCPDlg::OnData(int channel, const unsigned char * data, size_t len)
+{
+	std::string* p = new std::string((char*)data, len);
+	this->PostMessage(WM_USER_DATA, (WPARAM)channel, (LPARAM)p);
+	return true;
+}
+
+bool CServerCPDlg::OnEvent(StreamEvent event)
+{
+	this->PostMessage(WM_USER_DATA, NULL, (LPARAM)event);
+	return true;
+}
 
 BOOL CServerCPDlg::OnInitDialog()
 {
@@ -104,6 +120,12 @@ BOOL CServerCPDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
+	m_pProcess = new koo_process("AccServer", "", "AccServer.exe", "", true);
+	m_pProcess->start();
+	m_pMapperProcess = new koo_process("Mapper", "", "Mapper.exe", "", true);
+	m_pMapperProcess->start();
+
+	m_CTX = zmq_ctx_new();
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -153,6 +175,8 @@ void CServerCPDlg::OnPaint()
 void CServerCPDlg::OnClose()
 {
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
+	if (m_pMapperProcess)
+		m_pMapperProcess->stop();
 	if (m_pProcess)
 		m_pProcess->stop();
 	k_kill_process("StreamServer.exe");
@@ -168,10 +192,51 @@ HCURSOR CServerCPDlg::OnQueryDragIcon()
 
 
 
-void CServerCPDlg::OnBnClickedButtonStart()
+
+
+HRESULT CServerCPDlg::OnEventMsg(WPARAM wParam, LPARAM lParam)
 {
-	// TODO: 在此添加控件通知处理程序代码
-	m_pProcess = new koo_process("AccServer", "", "AccServer.exe", "", true);
-	m_pProcess->start();
+	StreamEvent se = (StreamEvent)lParam;
+
+	return 0L;
 }
 
+HRESULT CServerCPDlg::OnDataMsg(WPARAM wParam, LPARAM lParam)
+{
+	int channel = (int)wParam;
+	std::string* p = (std::string*)lParam;
+
+	delete p;
+	return 0L;
+}
+
+void CServerCPDlg::OnBnClickedButtonConnect()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	m_pAccApi = new CAccApi(m_CTX);
+	bool br = m_pAccApi->Connect("127.0.0.1", 6600, "admin", "admin");
+	if (br) {
+		MessageBox("Connected");
+		StreamProcess sp;
+		int rc = m_pAccApi->GetStreamServer(&sp);
+		if (rc == 0) {
+			m_pStreamApi = new CStreamApi(*this, sp.Index, CLIENT_TYPE);
+			br = m_pStreamApi->Connect(sp.StreamIP, sp.Port);
+			if (br) {
+				MessageBox("Stream Connected");
+			}
+			else {
+				MessageBox("Stream Faied");
+			}
+		}
+	}
+	else {
+		MessageBox("Faied");
+	}
+}
+
+
+void CServerCPDlg::OnBnClickedButtonSend()
+{
+	// TODO: 在此添加控件通知处理程序代码
+}

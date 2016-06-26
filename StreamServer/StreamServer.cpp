@@ -11,22 +11,17 @@
 #include <koo_zmq_helpers.h>
 #include <DataDefs.h>
 
-#define MAX_CONNECTION_PER_SERVER 128
-#define MAX_CHANNEL_PER_CONNECTION RC_MAX_CONNECTION
 
-#define MAPPER_TYPE 1
-#define CLIENT_TYPE 2
+ENetPeer* MapperPeers[RC_MAX_CONNECTION_PER_SERVER];
+ENetPeer* ClientPeers[RC_MAX_CONNECTION_PER_SERVER];
 
-ENetPeer* MapperPeers[MAX_CONNECTION_PER_SERVER];
-ENetPeer* ClientPeers[MAX_CONNECTION_PER_SERVER];
-
-bool send_add_stream(int id, void* socket, const StreamProcess& sp) {
+bool send_add_stream(int id, void* socket, const IPInfo& info) {
 	KZPacket add;
 	std::stringstream ss;
 	ss << id;
 	add.id = ss.str();
 	add.cmd = "ADD";
-	add.SetData((void*)&sp, sizeof(StreamProcess));
+	add.SetData((void*)&info, sizeof(IPInfo));
 	int rc = koo_zmq_send_cmd(socket, add);
 	if (rc != 0)
 		return false;
@@ -56,7 +51,7 @@ bool send_remove_stream(int id, void* socket) {
 }
 int main(int argc, char* argv[])
 {
-	int id = 10000;
+	int id = RC_STREAM_SERVER_ID_BASE;
 	char* sip = "127.0.0.1";
 	int sport = 6602;
 	char* bip = "127.0.0.1";
@@ -72,6 +67,14 @@ int main(int argc, char* argv[])
 		bip = argv[4];
 	if (argc >= 6)
 		port = atoi(argv[5]);
+
+	if (id < RC_STREAM_SERVER_ID_BASE || id > RC_STREAM_SERVER_ID_BASE + RC_MAX_STREAM_SERVER_COUNT)
+	{
+		std::cerr << "Invalid Stream Server id: " << id << std::endl;
+		std::cerr << "Valid From " << RC_STREAM_SERVER_ID_BASE;
+		std::cerr << " to " << RC_STREAM_SERVER_ID_BASE + RC_MAX_STREAM_SERVER_COUNT << std::endl;
+		exit(EXIT_FAILURE);
+	}
 
 	std::cout << "StreamServer ID: \t" << id << std::endl;
 	std::cout << "Server IP: \t" << sip << std::endl;
@@ -92,8 +95,8 @@ int main(int argc, char* argv[])
 	address.port = port;
 
 	server = enet_host_create(&address /* the address to bind the server host to */,
-		MAX_CONNECTION_PER_SERVER      /* allow up to 32 clients and/or outgoing connections */,
-		MAX_CHANNEL_PER_CONNECTION      /* allow up to 2 channels to be used, 0 and 1 */,
+		RC_MAX_CONNECTION_PER_SERVER      /* allow up to 32 clients and/or outgoing connections */,
+		RC_MAX_CONNECTION      /* allow up to 2 channels to be used, 0 and 1 */,
 		0      /* assume any amount of incoming bandwidth */,
 		0      /* assume any amount of outgoing bandwidth */);
 	if (server == NULL)
@@ -105,17 +108,18 @@ int main(int argc, char* argv[])
 
 	void* ctx = zmq_ctx_new();
 	void* req = zmq_socket(ctx, ZMQ_REQ);
+	int timeo = 0;
+	int rc = zmq_setsockopt(req, ZMQ_LINGER, &timeo, sizeof(int));
 	std::stringstream ss;
 	ss << "tcp://" << sip << ":" << sport;
-	int rc = zmq_connect(req, ss.str().c_str());
+	rc = zmq_connect(req, ss.str().c_str());
 	if (rc != 0)
 		goto CLOSE;
 
-	StreamProcess sp;
-	sp.Counter = 0;
-	sp.Port = port;
-	sprintf(sp.StreamIP, "%s", bip);
-	if (!send_add_stream(id, req, sp))
+	IPInfo info;
+	info.port = port;
+	sprintf(info.sip, "%s", bip);
+	if (!send_add_stream(id, req, info))
 		goto CLOSE;
 
 	ENetEvent event;

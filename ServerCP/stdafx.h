@@ -54,3 +54,6 @@
 #endif
 
 
+#include <AccApi.h>
+#include <StreamApi.h>
+

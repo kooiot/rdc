@@ -1,9 +1,11 @@
 #include "StreamApi.h"
 #include <thread>
 #include <enet\enet.h>
+#include "DataDefs.h"
 
-CStreamApi::CStreamApi(IStreamHandler & Handler) : m_Handler(Handler)
+CStreamApi::CStreamApi(IStreamHandler & Handler, int nIndex, int nType) : m_Handler(Handler), m_pThread(nullptr)
 {
+	m_nData = (nType & 0xFFFF << 8) + nIndex & 0xFFFF;
 }
 
 CStreamApi::~CStreamApi()
@@ -13,7 +15,7 @@ CStreamApi::~CStreamApi()
 bool CStreamApi::Connect(const char * ip, int port)
 {
 	ENetHost * client;
-	client = enet_host_create(NULL, 1, 32, 0, 0);
+	client = enet_host_create(NULL, 2, RC_MAX_CONNECTION, 0, 0);
 	if (client == NULL)
 	{
 		fprintf(stderr,
@@ -25,7 +27,7 @@ bool CStreamApi::Connect(const char * ip, int port)
 
 	enet_address_set_host(&address, ip);
 	address.port = port;
-	peer = enet_host_connect(client, &address, 32, 0);
+	peer = enet_host_connect(client, &address, RC_MAX_CONNECTION, m_nData);
 	if (peer == NULL)
 	{
 		fprintf(stderr,
@@ -34,7 +36,7 @@ bool CStreamApi::Connect(const char * ip, int port)
 	}
 	m_Peer = peer;
 	
-	std::thread([this, client, peer](){
+	m_pThread =  new std::thread([this, client, peer](){
 		ENetEvent event;
 
 		while (!m_bAbort) {
@@ -80,6 +82,9 @@ bool CStreamApi::Disconnect()
 {
 	m_bAbort = true;
 	m_Peer = NULL;
+
+	if (m_pThread && m_pThread->joinable())
+		m_pThread->join();
 
 	return true;
 }

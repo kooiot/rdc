@@ -5,8 +5,12 @@
 #pragma once
 
 class koo_process;
+
+#define WM_USER_DATA WM_USER + 100
+#define WM_USER_EVENT WM_USER + 100
+
 // CServerCPDlg 对话框
-class CServerCPDlg : public CDialogEx
+class CServerCPDlg : public CDialogEx, IStreamHandler
 {
 // 构造
 public:
@@ -25,6 +29,13 @@ public:
 protected:
 	HICON m_hIcon;
 	koo_process* m_pProcess;
+	koo_process* m_pMapperProcess;
+	CAccApi* m_pAccApi;
+	CStreamApi* m_pStreamApi;
+	void* m_CTX;
+
+	virtual bool OnData(int channel, const unsigned char* data, size_t len);
+	virtual bool OnEvent(StreamEvent event);
 
 	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();
@@ -34,5 +45,8 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
-	afx_msg void OnBnClickedButtonStart();
+	afx_msg HRESULT OnEventMsg(WPARAM wParam, LPARAM lParam);
+	afx_msg HRESULT OnDataMsg(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnBnClickedButtonConnect();
+	afx_msg void OnBnClickedButtonSend();
 };
