@@ -339,6 +339,7 @@ int CAccDatabase::AddUser(const DbUserInfo& info, const std::string & passwd)
 	std::stringstream sql;
 	sql << "insert into users (level,id,name,desc,passwd,email,phone,create_time,valid_time)";
 	sql << "values(" << info.Level << ",";
+	sql << "'" << info.ID << "',";
 	sql << "'" << info.Name << "',";
 	sql << "'" << info.Desc << "',";
 	sql << "'" << passwd << "',";
@@ -350,8 +351,10 @@ int CAccDatabase::AddUser(const DbUserInfo& info, const std::string & passwd)
 	int rc = sqlite3_exec(m_pDB, sql.str().c_str(), NULL, NULL, NULL);
 	if (rc != SQLITE_OK)
 		std::cerr << "SQL Error: " << sqlite3_errmsg(m_pDB) << std::endl;
-
+	
 	m_Lock.unlock();
+	if (rc == SQLITE_OK)
+		rc = GetClientIndex(info.ID);
 
 	return rc;
 }
@@ -490,6 +493,9 @@ int CAccDatabase::AddDevice(const DbDeviceInfo& info)
 		std::cerr << "SQL Error: " << sqlite3_errmsg(m_pDB) << std::endl;
 
 	m_Lock.unlock();
+
+	if (rc == SQLITE_OK)
+		rc = GetClientIndex(info.SN);
 
 	return rc;
 }

@@ -65,7 +65,7 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd, void* rep, void* pub)
 {
 	std::cout << __FUNCTION__ << ": " << cmd.id << "\t" << cmd.cmd << std::endl;
 
-	bool bSuccess = false;
+	int nReturn = -1;
 	if (cmd.cmd == "LOGIN") {
 		std::cout << "LOGIN: " << cmd.id << "\t" << cmd.GetStr() << std::endl;
 		if (cmd.id == "@DEVICE@") {
@@ -73,23 +73,23 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd, void* rep, void* pub)
 			// Check for valid device sn
 			if (m_Database.IsValidMapper(mapper_id) == 0) {
 				AddMapper(mapper_id);
-				bSuccess = true;
+				nReturn = 0;
 			}
 		}
 		else if (m_Database.Login(cmd.id, cmd.GetStr()) == 0) {
 			AddClient(cmd.id);
-			bSuccess = true;
+			nReturn = 0;
 		}
 	}
 	else if (cmd.cmd == "HEARTBEAT") {
-		bSuccess = true;
+		nReturn = 0;
 		if (cmd.id == "@DEVICE@")
 			UpdateMapperHearbeat(cmd.GetStr());
 		else
 			UpdateClientHearbeat(cmd.id);
 	}
 	else if (cmd.cmd == "LOGOUT") {
-		bSuccess = true;
+		nReturn = 0;
 		if (cmd.id == "@DEVICE@")
 			RemoveMapper(cmd.GetStr());
 		else
@@ -125,8 +125,23 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd, void* rep, void* pub)
 		int index = atoi(cmd.GetStr().c_str());
 		if (index > 0 && index < RC_MAX_CONNECTION) {
 			// FIXME:
-			bSuccess = true;
+			nReturn = 0;
 		}
+	}
+	else if (cmd.cmd == "ADD_DEV") {
+		DeviceInfo* pInfo = (DeviceInfo*)cmd.GetData();
+		DbDeviceInfo dbInfo;
+		dbInfo.FromDeviceInfo(*pInfo);
+		nReturn = m_Database.AddDevice(dbInfo);
+	}
+	else if (cmd.cmd == "MOD_DEV") {
+		DeviceInfo* pInfo = (DeviceInfo*)cmd.GetData();
+		DbDeviceInfo dbInfo;
+		dbInfo.FromDeviceInfo(*pInfo);
+		nReturn = m_Database.UpdateDevice(dbInfo);
+	}
+	else if (cmd.cmd == "DEL_DEV") {
+		nReturn = m_Database.DeleteDevice(cmd.GetStr());
 	}
 	else if (cmd.cmd == "LIST_DEV") {
 		std::string type = cmd.GetStr();
@@ -164,6 +179,21 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd, void* rep, void* pub)
 		koo_zmq_send_reply(rep, cmd, &info, sizeof(DeviceInfo));
 		return;
 	}
+	else if (cmd.cmd == "ADD_CLIENT") {
+		UserInfo* pInfo = (UserInfo*)cmd.GetData();
+		DbUserInfo dbInfo;
+		dbInfo.FromUserInfo(*pInfo);
+		nReturn = m_Database.AddUser(dbInfo, pInfo->Passwd);
+	}
+	else if (cmd.cmd == "MOD_CLIENT") {
+		UserInfo* pInfo = (UserInfo*)cmd.GetData();
+		DbUserInfo dbInfo;
+		dbInfo.FromUserInfo(*pInfo);
+		nReturn = m_Database.UpdateUser(dbInfo, pInfo->Passwd);
+	}
+	else if (cmd.cmd == "DEL_CLIENT") {
+		nReturn = m_Database.DeleteUser(cmd.GetStr());
+	}
 	else if (cmd.cmd == "LIST_CLIENT") {
 		std::string type = cmd.GetStr();
 		std::list<std::string> list;
@@ -199,8 +229,10 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd, void* rep, void* pub)
 		koo_zmq_send_reply(rep, cmd, &info, sizeof(UserInfo));
 		return;
 	}
-	std::cout << "SEND REPLY: " << cmd.id << "\t" << cmd.cmd << "\t" << (bSuccess ? S_SUCCESS : S_FAILED) << std::endl;
-	koo_zmq_send_reply(rep, cmd, bSuccess ? S_SUCCESS : S_FAILED);
+	std::cout << "SEND REPLY: " << cmd.id << "\t" << cmd.cmd << "\t" << nReturn << std::endl;
+	std::stringstream ss;
+	ss << nReturn;
+	koo_zmq_send_reply(rep, cmd, ss.str());
 }
 
 void CClientMgr::OnRecv()

@@ -14,7 +14,7 @@ void * KZPacket::GetData() const
 {
 	return zmq_msg_data((zmq_msg_t*)&data);
 }
-void KZPacket::SetData(void* buf, size_t len)
+void KZPacket::SetData(const void* buf, size_t len)
 {
 	zmq_msg_close(&data);
 	zmq_msg_init_size(&data, len);

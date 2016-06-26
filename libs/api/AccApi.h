@@ -16,15 +16,19 @@ public:
 
 	int SendHeartbeat();
 
+	// Return Device Index Where Add
 	int AddDevice(const DeviceInfo* info);
 	int ModifyDevice(const DeviceInfo* info);
 	int DeleteDevice(const char* sn);
-	int ListDevices(DeviceInfo* list, int list_len);
+	int ListDevices(DeviceInfo* list, int list_len, bool only_online = true);
+	int GetDeviceInfo(const char* sn, DeviceInfo* info);
 
+	// Return User Index Where Add
 	int AddUser(const UserInfo* info);
 	int ModifyUser(const UserInfo* info);
 	int DeleteUser(const char* id);
-	int ListUsers(UserInfo* list, int list_len);
+	int ListUsers(UserInfo* list, int list_len, bool only_online = true);
+	int GetUserInfo(const char * id, UserInfo* info);
 
 	int Allow(const char* id, const char* devsn, time_t valid_time);
 	int Deny(const char* id, const char* devsn);

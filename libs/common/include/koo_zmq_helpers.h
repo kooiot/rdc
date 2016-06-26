@@ -13,9 +13,9 @@ struct KZPacket {
 	zmq_msg_t data;
 
 	void* GetData() const;
-	void SetData(void* data, size_t len);
-	void SetStr(const char* str);
+	void SetData(const void* data, size_t len);
 	std::string GetStr() const;
+	void SetStr(const char* str);
 };
 
 bool koo_zmq_recv_string(void* skt, std::string& str, bool more);
