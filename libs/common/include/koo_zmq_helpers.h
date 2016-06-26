@@ -5,9 +5,17 @@
 #include <cassert>
 
 struct KZPacket {
+	KZPacket();
+	~KZPacket();
+
 	std::string id;
 	std::string cmd;
-	std::string data;
+	zmq_msg_t data;
+
+	void* GetData() const;
+	void SetData(void* data, size_t len);
+	void SetStr(const char* str);
+	std::string GetStr() const;
 };
 
 bool koo_zmq_recv_string(void* skt, std::string& str, bool more);

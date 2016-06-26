@@ -67,15 +67,16 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd, void* rep, void* pub)
 
 	bool bSuccess = false;
 	if (cmd.cmd == "LOGIN") {
-		std::cout << "LOGIN: " << cmd.id << "\t" << cmd.data << std::endl;
+		std::cout << "LOGIN: " << cmd.id << "\t" << cmd.GetStr() << std::endl;
 		if (cmd.id == "@DEVICE@") {
+			std::string mapper_id = cmd.GetStr();
 			// Check for valid device sn
-			if (m_Database.IsValidMapper(cmd.data) == 0) {
-				AddMapper(cmd.data);
+			if (m_Database.IsValidMapper(mapper_id) == 0) {
+				AddMapper(mapper_id);
 				bSuccess = true;
 			}
 		}
-		else if (m_Database.Login(cmd.id, cmd.data) == 0) {
+		else if (m_Database.Login(cmd.id, cmd.GetStr()) == 0) {
 			AddClient(cmd.id);
 			bSuccess = true;
 		}
@@ -83,21 +84,33 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd, void* rep, void* pub)
 	else if (cmd.cmd == "HEARTBEAT") {
 		bSuccess = true;
 		if (cmd.id == "@DEVICE@")
-			UpdateMapperHearbeat(cmd.data);
+			UpdateMapperHearbeat(cmd.GetStr());
 		else
 			UpdateClientHearbeat(cmd.id);
 	}
 	else if (cmd.cmd == "LOGOUT") {
 		bSuccess = true;
 		if (cmd.id == "@DEVICE@")
-			RemoveMapper(cmd.data);
+			RemoveMapper(cmd.GetStr());
 		else
 			RemoveClient(cmd.id);
+	}
+	else if (cmd.cmd == "STREAM") {
+		IPInfo info;
+		memset(&info, 0, sizeof(IPInfo));
+		ClientData* pData = m_Clients[cmd.id];
+		if (pData && pData->StreamServer) {
+			memcpy(info.sip, pData->StreamServer->StreamIP, RC_MAX_IP_LEN);
+			info.port = pData->StreamServer->Port;
+		}
+		int rc = koo_zmq_send_reply(rep, cmd, &info, sizeof(IPInfo));
+		assert(rc == 0);
+		return;
 	}
 	else if (cmd.cmd == "CREATE") {
 		ConnectionInfo info;
 		int index = -1;
-		memcpy(&info, cmd.data.c_str(), sizeof(ConnectionInfo));
+		memcpy(&info, cmd.GetData(), sizeof(ConnectionInfo));
 		if (m_Database.Access(cmd.id, info.DevSN)) {
 			// FIXME:
 			index = 0;
@@ -109,14 +122,14 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd, void* rep, void* pub)
 		return;
 	}
 	else if (cmd.cmd == "DESTROY") {
-		int index = atoi(cmd.data.c_str());
+		int index = atoi(cmd.GetStr().c_str());
 		if (index > 0 && index < RC_MAX_CONNECTION) {
 			// FIXME:
 			bSuccess = true;
 		}
 	}
 	else if (cmd.cmd == "LIST_DEV") {
-		std::string type = cmd.data;
+		std::string type = cmd.GetStr();
 		std::list<std::string> list;
 		if (type != "ALL") {
 			MapperMap::iterator ptr = m_Mappers.begin();
@@ -138,7 +151,7 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd, void* rep, void* pub)
 		return;
 	}
 	else if (cmd.cmd == "DEV_INFO") {
-		std::string sn = cmd.data;
+		std::string sn = cmd.GetStr();
 		DbDeviceInfo dbInfo;
 		int rc = m_Database.GetDevice(sn, dbInfo);
 		if (rc != 0) {
@@ -152,7 +165,7 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd, void* rep, void* pub)
 		return;
 	}
 	else if (cmd.cmd == "LIST_CLIENT") {
-		std::string type = cmd.data;
+		std::string type = cmd.GetStr();
 		std::list<std::string> list;
 		if (type != "ALL") {
 			ClientMap::iterator ptr = m_Clients.begin();
@@ -174,7 +187,7 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd, void* rep, void* pub)
 		return;
 	}
 	else if (cmd.cmd == "CLIENT_INFO") {
-		std::string id = cmd.data;
+		std::string id = cmd.GetStr();
 		DbUserInfo dbInfo;
 		int rc = m_Database.GetUser(id, dbInfo);
 		if (rc != 0) {
@@ -208,6 +221,7 @@ int CClientMgr::AddMapper(const std::string & id)
 
 	pData->ID = id;
 	pData->Heartbeat = ::GetCurrentTime();
+	m_Mappers[id] = pData;
 
 	return 0;
 }
@@ -247,6 +261,7 @@ int CClientMgr::AddClient(const std::string & id)
 	pData->ID = id;
 	pData->Heartbeat = ::GetCurrentTime();
 	pData->StreamServer = m_StreamMgr.Alloc();
+	m_Clients[id] = pData;
 	return 0;
 }
 

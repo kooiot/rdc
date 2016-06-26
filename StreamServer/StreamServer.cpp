@@ -26,7 +26,7 @@ bool send_add_stream(int id, void* socket, const StreamProcess& sp) {
 	ss << id;
 	add.id = ss.str();
 	add.cmd = "ADD";
-	add.data = std::string((char*)&sp, sizeof(StreamProcess));
+	add.SetData((void*)&sp, sizeof(StreamProcess));
 	int rc = koo_zmq_send_cmd(socket, add);
 	if (rc != 0)
 		return false;
@@ -35,7 +35,7 @@ bool send_add_stream(int id, void* socket, const StreamProcess& sp) {
 	if (rc != 0)
 		return false;
 
-	return result.data == S_SUCCESS;
+	return result.GetStr() == S_SUCCESS;
 }
 bool send_remove_stream(int id, void* socket) {
 	KZPacket add;
@@ -43,6 +43,7 @@ bool send_remove_stream(int id, void* socket) {
 	ss << id;
 	add.id = ss.str();
 	add.cmd = "REMOVE";
+	add.SetStr("");
 	int rc = koo_zmq_send_cmd(socket, add);
 	if (rc != 0)
 		return false;
@@ -51,7 +52,7 @@ bool send_remove_stream(int id, void* socket) {
 	if (rc != 0)
 		return false;
 
-	return result.data == S_SUCCESS;
+	return result.GetStr() == S_SUCCESS;
 }
 int main(int argc, char* argv[])
 {

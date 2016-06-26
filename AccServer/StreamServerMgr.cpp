@@ -42,7 +42,7 @@ void CStreamServerMgr::HandleKZPacket(const KZPacket& cmd, void* rep)
 	if (cmd.cmd == "ADD") {
 		printf("Add event %s\n", cmd.id.c_str());
 		StreamProcess* sp = new StreamProcess();
-		memcpy(sp, cmd.data.c_str(), sizeof(StreamProcess));
+		memcpy(sp, cmd.GetData(), sizeof(StreamProcess));
 		AddStream(atoi(cmd.id.c_str()), sp);
 		bSuccess = true;
 	}
