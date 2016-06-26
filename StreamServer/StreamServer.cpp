@@ -12,7 +12,7 @@
 #include <DataDefs.h>
 
 #define MAX_CONNECTION_PER_SERVER 128
-#define MAX_CHANNEL_PER_SERVER 32
+#define MAX_CHANNEL_PER_CONNECTION RC_MAX_CONNECTION
 
 #define MAPPER_TYPE 1
 #define CLIENT_TYPE 2
@@ -92,7 +92,7 @@ int main(int argc, char* argv[])
 
 	server = enet_host_create(&address /* the address to bind the server host to */,
 		MAX_CONNECTION_PER_SERVER      /* allow up to 32 clients and/or outgoing connections */,
-		MAX_CHANNEL_PER_SERVER      /* allow up to 2 channels to be used, 0 and 1 */,
+		MAX_CHANNEL_PER_CONNECTION      /* allow up to 2 channels to be used, 0 and 1 */,
 		0      /* assume any amount of incoming bandwidth */,
 		0      /* assume any amount of outgoing bandwidth */);
 	if (server == NULL)

@@ -67,6 +67,48 @@ int CAccApi::Disconnect()
 	return rc;
 }
 
+int CAccApi::SendHeartbeat()
+{
+	KZPacket packet;
+	packet.id = m_ID;
+	packet.cmd = "HEARTBEAT";
+	packet.data = "NOW";
+
+	int rc = SendRequest(m_Socket, packet, [](const KZPacket& data) {
+		if (data.data == std::string(S_SUCCESS))
+			return 0;
+		return -1;
+	});
+
+	return rc;
+}
+
+int CAccApi::AddDevice(const DeviceInfo * info)
+{
+	KZPacket packet;
+	packet.id = m_ID;
+	packet.cmd = "HEARTBEAT";
+	packet.data = "NOW";
+
+	int rc = SendRequest(m_Socket, packet, [](const KZPacket& data) {
+		if (data.data == std::string(S_SUCCESS))
+			return 0;
+		return -1;
+	});
+
+	return rc;
+}
+
+int CAccApi::ModifyDevice(const DeviceInfo * info)
+{
+	return 0;
+}
+
+int CAccApi::DeleteDevice(const char * sn)
+{
+	return 0;
+}
+
 int CAccApi::ListDevices(DeviceInfo * list, int list_len)
 {
 	KZPacket packet;
@@ -90,37 +132,95 @@ int CAccApi::ListDevices(DeviceInfo * list, int list_len)
 	return i;
 }
 
+int CAccApi::AddUser(const UserInfo * info)
+{
+	return 0;
+}
+
+int CAccApi::ModifyUser(const UserInfo * info)
+{
+	return 0;
+}
+
+int CAccApi::DeleteUser(const char * id)
+{
+	return 0;
+}
+
 int CAccApi::ListUsers(UserInfo * list, int list_len)
 {
 	return 0;
 }
 
-int CAccApi::ConnectSerial(const char * id, const char * devid, const SerialInfo & info)
+int CAccApi::Allow(const char * id, const char * devsn, time_t valid_time)
 {
+	KZPacket packet;
+	packet.id = m_ID;
+	packet.cmd = "ALLOW";
+	AllowInfo info;
+	memcpy(info.ID, id, RC_MAX_ID_LEN);
+	memcpy(info.DevSN, devsn, RC_MAX_SN_LEN);
+	info.ValidTime = valid_time;
+	packet.data = std::string((char*)&info, sizeof(AllowInfo));
+
+	int rc = SendRequest(m_Socket, packet, [](const KZPacket& data) {
+		if (data.data == std::string(S_SUCCESS))
+			return 0;
+		return -1;
+	});
+
+	return rc;
+}
+
+int CAccApi::Deny(const char * id, const char * devsn)
+{
+	KZPacket packet;
+	packet.id = m_ID;
+	packet.cmd = "DENY";
+	DenyInfo info;
+	memcpy(info.ID, id, RC_MAX_ID_LEN);
+	memcpy(info.DevSN, devsn, RC_MAX_SN_LEN);
+	packet.data = std::string((char*)&info, sizeof(AllowInfo));
+
+	int rc = SendRequest(m_Socket, packet, [](const KZPacket& data) {
+		if (data.data == std::string(S_SUCCESS))
+			return 0;
+		return -1;
+	});
+
+	return rc;
+}
+
+int CAccApi::CreateConnection(const ConnectionInfo * info)
+{
+	KZPacket packet;
+	packet.id = m_ID;
+	packet.cmd = "CREATE";
+	packet.data = std::string((char*)info, sizeof(AllowInfo));
+
+	int rc = SendRequest(m_Socket, packet, [](const KZPacket& data) {
+		return atoi(data.data.c_str());
+	});
+
+	return rc;
+}
+
+int CAccApi::DestroyConnection(int index)
+{
+	KZPacket packet;
+	packet.id = m_ID;
+	packet.cmd = "DESTROY";
+	std::stringstream ss;
+	ss << index;
+	packet.data = ss.str();
+
+	int rc = SendRequest(m_Socket, packet, [](const KZPacket& data) {
+		if (data.data == std::string(S_SUCCESS))
+			return 0;
+		return -1;
+	});
+
+	return rc;
 	return 0;
 }
 
-int CAccApi::CloseSerial(const char * id)
-{
-	return 0;
-}
-
-int CAccApi::ConnectTCPC(const char * id, const char * devid, const TCPClientInfo & info)
-{
-	return 0;
-}
-
-int CAccApi::CloseTCPC(const char * id)
-{
-	return 0;
-}
-
-int CAccApi::ConnectUDP(const char * id, const char * devid, const UDPInfo & info)
-{
-	return 0;
-}
-
-int CAccApi::CloseUDP(const char * id)
-{
-	return 0;
-}

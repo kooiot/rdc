@@ -32,6 +32,7 @@ bool CStreamApi::Connect(const char * ip, int port)
 			"No available peers for initiating an ENet connection.\n");
 		return false;
 	}
+	m_Peer = peer;
 	
 	std::thread([this, client, peer](){
 		ENetEvent event;
@@ -47,6 +48,7 @@ bool CStreamApi::Connect(const char * ip, int port)
 						event.peer->address.port);
 					/* Store any relevant client information here. */
 					event.peer->data = "Client information";
+					m_Handler.OnEvent(SE_CONNECT);
 					break;
 				case ENET_EVENT_TYPE_RECEIVE:
 					printf("A packet of length %u containing %s was received from %s on channel %u.\n",
@@ -54,18 +56,22 @@ bool CStreamApi::Connect(const char * ip, int port)
 						event.packet->data,
 						(char*)event.peer->data,
 						event.channelID);
+					m_Handler.OnData(event.channelID, event.packet->data, event.packet->dataLength);
+
 					/* Clean up the packet now that we're done using it. */
 					enet_packet_destroy(event.packet);
-
 					break;
 
 				case ENET_EVENT_TYPE_DISCONNECT:
 					printf("%s disconnected.\n", (char*)event.peer->data);
 					/* Reset the peer's client information. */
 					event.peer->data = NULL;
+					m_Handler.OnEvent(SE_DISCONNECT);
 				}
 			}
 		}
+		enet_peer_disconnect((ENetPeer*)m_Peer, 0);
+		enet_host_destroy(client);
 	});
 	return false;
 }
@@ -73,6 +79,17 @@ bool CStreamApi::Connect(const char * ip, int port)
 bool CStreamApi::Disconnect()
 {
 	m_bAbort = true;
+	m_Peer = NULL;
 
 	return true;
+}
+
+bool CStreamApi::SendData(int index, const unsigned char * buf, size_t len)
+{
+	if (!m_Peer)
+		return false;
+	ENetPacket* packet = enet_packet_create(buf, len, ENET_PACKET_FLAG_RELIABLE);
+	int rc = enet_peer_send((ENetPeer*)m_Peer, index, packet);
+
+	return rc == 0;
 }

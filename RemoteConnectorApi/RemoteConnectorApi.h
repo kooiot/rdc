@@ -17,6 +17,7 @@ extern "C" {
 #endif
 
 	typedef void* RC_HANDLE;
+	typedef int RC_CONNECT_HANDLE;
 
 	REMOTECONNECTORAPI_API int RC_Init();
 	REMOTECONNECTORAPI_API int RC_Close();
@@ -26,12 +27,12 @@ extern "C" {
 
 	REMOTECONNECTORAPI_API int RC_ListDevices(RC_HANDLE Api, DeviceInfo* list, int list_len);
 	REMOTECONNECTORAPI_API int RC_ListUsers(RC_HANDLE Api, UserInfo* list, int list_len);
-	REMOTECONNECTORAPI_API int RC_ConnectSerial(RC_HANDLE Api, const char*  id, const char*  devid, const SerialInfo* info);
-	REMOTECONNECTORAPI_API int RC_CloseSerial(RC_HANDLE Api, const char*  id);
-	REMOTECONNECTORAPI_API int RC_ConnectTCPC(RC_HANDLE Api, const char*  id, const char*  devid, const TCPClientInfo* info);
-	REMOTECONNECTORAPI_API int RC_CloseTCPC(RC_HANDLE Api, const char*  id);
-	REMOTECONNECTORAPI_API int RC_ConnectUDP(RC_HANDLE Api, const char*  id, const char*  devid, const UDPInfo* info);
-	REMOTECONNECTORAPI_API int RC_CloseUDP(RC_HANDLE Api, const char*  id);
+	REMOTECONNECTORAPI_API RC_CONNECT_HANDLE RC_ConnectSerial(RC_HANDLE Api, const char*  devid, const SerialInfo* info);
+	REMOTECONNECTORAPI_API int RC_CloseSerial(RC_HANDLE Api, RC_CONNECT_HANDLE conn);
+	REMOTECONNECTORAPI_API RC_CONNECT_HANDLE RC_ConnectTCPC(RC_HANDLE Api, const char*  devid, const TCPClientInfo* info);
+	REMOTECONNECTORAPI_API int RC_CloseTCPC(RC_HANDLE Api, RC_CONNECT_HANDLE conn);
+	REMOTECONNECTORAPI_API RC_CONNECT_HANDLE RC_ConnectUDP(RC_HANDLE Api, const char*  devid, const UDPInfo* info);
+	REMOTECONNECTORAPI_API int RC_CloseUDP(RC_HANDLE Api, RC_CONNECT_HANDLE conn);
 
 #ifdef __cplusplus
 }

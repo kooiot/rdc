@@ -80,55 +80,73 @@ int RC_ListUsers(RC_HANDLE Api, UserInfo * list, int list_len)
 }
 
 extern "C"
-int RC_ConnectSerial(RC_HANDLE Api, const char * id, const char * devid, const SerialInfo* info)
+RC_CONNECT_HANDLE RC_ConnectSerial(RC_HANDLE Api, const char * devid, const SerialInfo* info)
 {
 	CAccApi* pApi = (CAccApi*)Api;
-	if (pApi)
-		return pApi->ConnectSerial(id, devid, *info);
+	if (pApi) {
+		ConnectionInfo ci;
+		ci.Type = CT_SERIAL;
+		memcpy(&ci.Serial, info, sizeof(SerialInfo));
+		memcpy(ci.DevSN, devid, RC_MAX_SN_LEN);
+
+		return pApi->CreateConnection(&ci);
+	}
 	return -1;
 }
 
 extern "C"
-int RC_CloseSerial(RC_HANDLE Api, const char * id)
+int RC_CloseSerial(RC_HANDLE Api, RC_CONNECT_HANDLE conn)
 {
 	CAccApi* pApi = (CAccApi*)Api;
 	if (pApi)
-		return pApi->CloseSerial(id);
+		return pApi->DestroyConnection(conn);
 	return -1;
 }
 
 extern "C"
-int RC_ConnectTCPC(RC_HANDLE Api, const char * id, const char * devid, const  TCPClientInfo* info)
+RC_CONNECT_HANDLE RC_ConnectTCPC(RC_HANDLE Api, const char * devid, const  TCPClientInfo* info)
 {
 	CAccApi* pApi = (CAccApi*)Api;
-	if (pApi)
-		return pApi->ConnectTCPC(id, devid, *info);
+	if (pApi) {
+		ConnectionInfo ci;
+		ci.Type = CT_TCPC;
+		memcpy(&ci.TCPClient, info, sizeof(TCPClientInfo));
+		memcpy(ci.DevSN, devid, RC_MAX_SN_LEN);
+
+		return pApi->CreateConnection(&ci);
+	}
 	return -1;
 }
 
 extern "C"
-int RC_CloseTCPC(RC_HANDLE Api, const char * id)
+int RC_CloseTCPC(RC_HANDLE Api, RC_CONNECT_HANDLE conn)
 {
 	CAccApi* pApi = (CAccApi*)Api;
 	if (pApi)
-		return pApi->CloseTCPC(id);
+		return pApi->DestroyConnection(conn);
 	return -1;
 }
 
 extern "C"
-int RC_ConnectUDP(RC_HANDLE Api, const char * id, const char * devid, const UDPInfo* info)
+RC_CONNECT_HANDLE RC_ConnectUDP(RC_HANDLE Api, const char * devid, const UDPInfo* info)
 {
 	CAccApi* pApi = (CAccApi*)Api;
-	if (pApi)
-		return pApi->ConnectUDP(id, devid, *info);
+	if (pApi) {
+		ConnectionInfo ci;
+		ci.Type = CT_UDP;
+		memcpy(&ci.Serial, info, sizeof(UDPInfo));
+		memcpy(ci.DevSN, devid, RC_MAX_SN_LEN);
+
+		return pApi->CreateConnection(&ci);
+	}
 	return -1;
 }
 
 extern "C"
-int RC_CloseUDP(RC_HANDLE Api, const char * id)
+int RC_CloseUDP(RC_HANDLE Api, RC_CONNECT_HANDLE conn)
 {
 	CAccApi* pApi = (CAccApi*)Api;
 	if (pApi)
-		return pApi->CloseUDP(id);
+		return pApi->DestroyConnection(conn);
 	return -1;
 }

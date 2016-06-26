@@ -16,38 +16,7 @@ extern "C" {
 #define RC_MAX_SN_LEN 128
 #define RC_MAX_IP_LEN 128
 
-#define RC_MAX_MAX_USER_CONNECTION 16
-
-	struct DeviceInfo
-	{
-		int Index;
-		char SN[RC_MAX_SN_LEN];
-		char Name[RC_MAX_NAME_LEN];
-		char Desc[RC_MAX_DESC_LEN];
-		time_t CreateTime; // In UTC
-		time_t ValidTime; // In UTC
-	};
-
-	struct ConnectionInfo
-	{
-		char Name[RC_MAX_NAME_LEN];
-		char Desc[RC_MAX_DESC_LEN];
-		char DevSN[RC_MAX_SN_LEN];
-	};
-	struct UserInfo
-	{
-		int Index;
-		int Level;
-		char ID[RC_MAX_ID_LEN];
-		char Name[RC_MAX_NAME_LEN];
-		char Desc[RC_MAX_DESC_LEN];
-		char Passwd[RC_MAX_PASSWD_LEN];
-		char Email[RC_MAX_EMAIL_LEN];
-		char Phone[RC_MAX_PHONE_LEN];
-		time_t CreateTime; // In UTC
-		time_t ValidTime; // In UTC
-		ConnectionInfo Connections[RC_MAX_MAX_USER_CONNECTION];
-	};
+#define RC_MAX_CONNECTION 16
 
 	struct IPInfo {
 		char sip[RC_MAX_IP_LEN];
@@ -81,6 +50,58 @@ extern "C" {
 		int parity;
 		int stopbits;
 		int flowcontrol;
+	};
+	enum ConnectionType {
+		CT_SERIAL = 0,
+		CT_TCPC,
+		CT_UDP,
+		//CT_TCPS,
+		CT_COUNT,
+	};
+	struct ConnectionInfo {
+		ConnectionType Type;
+		char DevSN[RC_MAX_SN_LEN];
+		union {
+			SerialInfo Serial;
+			TCPClientInfo TCPClient;
+			UDPInfo UDP;
+			//TCPServerInfo TCPServer;
+		};
+	};
+
+	struct DeviceInfo
+	{
+		int Index;
+		char SN[RC_MAX_SN_LEN];
+		char Name[RC_MAX_NAME_LEN];
+		char Desc[RC_MAX_DESC_LEN];
+		time_t CreateTime; // In UTC
+		time_t ValidTime; // In UTC
+	};
+
+	struct UserInfo
+	{
+		int Index;
+		int Level;
+		char ID[RC_MAX_ID_LEN];
+		char Name[RC_MAX_NAME_LEN];
+		char Desc[RC_MAX_DESC_LEN];
+		char Passwd[RC_MAX_PASSWD_LEN];
+		char Email[RC_MAX_EMAIL_LEN];
+		char Phone[RC_MAX_PHONE_LEN];
+		time_t CreateTime; // In UTC
+		time_t ValidTime; // In UTC
+		ConnectionInfo Connections[RC_MAX_CONNECTION];
+	};
+
+	struct AllowInfo {
+		char ID[RC_MAX_ID_LEN];
+		char DevSN[RC_MAX_SN_LEN];
+		time_t ValidTime; // In UTC
+	};
+	struct DenyInfo {
+		char ID[RC_MAX_ID_LEN];
+		char DevSN[RC_MAX_SN_LEN];
 	};
 
 	struct StreamProcess {

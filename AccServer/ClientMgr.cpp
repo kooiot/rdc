@@ -95,16 +95,23 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd, void* rep, void* pub)
 			RemoveClient(cmd.id);
 	}
 	else if (cmd.cmd == "CREATE") {
-		std::string dest_id = cmd.data.substr(0, cmd.data.find(" "));
-		if (m_Database.Access(cmd.id, dest_id) == 0) {
-			koo_zmq_send_msg(pub, cmd.data, false);
-			bSuccess = true;
+		ConnectionInfo info;
+		int index = -1;
+		memcpy(&info, cmd.data.c_str(), sizeof(ConnectionInfo));
+		if (m_Database.Access(cmd.id, info.DevSN)) {
+			// FIXME:
+			index = 0;
 		}
+		std::stringstream ss;
+		ss << index;
+		int rc = koo_zmq_send_reply(rep, cmd, ss.str());
+		assert(rc == 0);
+		return;
 	}
 	else if (cmd.cmd == "DESTROY") {
-		std::string dest_id = cmd.data.substr(0, cmd.data.find(" "));
-		if (m_Database.Access(cmd.id, dest_id) == 0) {
-			koo_zmq_send_msg(pub, cmd.data, false);
+		int index = atoi(cmd.data.c_str());
+		if (index > 0 && index < RC_MAX_CONNECTION) {
+			// FIXME:
 			bSuccess = true;
 		}
 	}

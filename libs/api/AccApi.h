@@ -12,14 +12,24 @@ public:
 	bool Connect(const char* sip, int port, const char* un, const char* pass);
 	int Disconnect();
 
+	int SendHeartbeat();
+
+	int AddDevice(const DeviceInfo* info);
+	int ModifyDevice(const DeviceInfo* info);
+	int DeleteDevice(const char* sn);
 	int ListDevices(DeviceInfo* list, int list_len);
+
+	int AddUser(const UserInfo* info);
+	int ModifyUser(const UserInfo* info);
+	int DeleteUser(const char* id);
 	int ListUsers(UserInfo* list, int list_len);
-	int ConnectSerial(const char*  id, const char*  devid, const SerialInfo& info);
-	int CloseSerial(const char*  id);
-	int ConnectTCPC(const char*  id, const char*  devid, const TCPClientInfo& info);
-	int CloseTCPC(const char*  id);
-	int ConnectUDP(const char*  id, const char*  devid, const UDPInfo& info);
-	int CloseUDP(const char*  id);
+
+	int Allow(const char* id, const char* devsn, time_t valid_time);
+	int Deny(const char* id, const char* devsn);
+
+	// Return the Connection Channel Index
+	int CreateConnection(const ConnectionInfo* info);
+	int DestroyConnection(int index);
 
 private:
 	void* m_CTX;
