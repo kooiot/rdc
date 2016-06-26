@@ -2,10 +2,11 @@
 //
 
 #include "stdafx.h"
-#include "RemoteConnectorApi.h"
-#include "AccApi.h"
 #include <zmq.h>
 #include <list>
+
+#include "RemoteConnectorApi.h"
+#include "AccApi.h"
 
 void* g_ctx = NULL;
 std::list<CAccApi*> g_HandleList;
@@ -79,11 +80,11 @@ int RC_ListUsers(RC_HANDLE Api, UserInfo * list, int list_len)
 }
 
 extern "C"
-int RC_ConnectSerial(RC_HANDLE Api, const char * id, const char * devid, const SerialInfo & info)
+int RC_ConnectSerial(RC_HANDLE Api, const char * id, const char * devid, const SerialInfo* info)
 {
 	CAccApi* pApi = (CAccApi*)Api;
 	if (pApi)
-		return pApi->ConnectSerial(id, devid, info);
+		return pApi->ConnectSerial(id, devid, *info);
 	return -1;
 }
 
@@ -97,11 +98,11 @@ int RC_CloseSerial(RC_HANDLE Api, const char * id)
 }
 
 extern "C"
-int RC_ConnectTCPC(RC_HANDLE Api, const char * id, const char * devid, const TCPClientInfo & info)
+int RC_ConnectTCPC(RC_HANDLE Api, const char * id, const char * devid, const  TCPClientInfo* info)
 {
 	CAccApi* pApi = (CAccApi*)Api;
 	if (pApi)
-		return pApi->ConnectTCPC(id, devid, info);
+		return pApi->ConnectTCPC(id, devid, *info);
 	return -1;
 }
 
@@ -115,11 +116,11 @@ int RC_CloseTCPC(RC_HANDLE Api, const char * id)
 }
 
 extern "C"
-int RC_ConnectUDP(RC_HANDLE Api, const char * id, const char * devid, const UDPInfo & info)
+int RC_ConnectUDP(RC_HANDLE Api, const char * id, const char * devid, const UDPInfo* info)
 {
 	CAccApi* pApi = (CAccApi*)Api;
 	if (pApi)
-		return pApi->ConnectUDP(id, devid, info);
+		return pApi->ConnectUDP(id, devid, *info);
 	return -1;
 }
 

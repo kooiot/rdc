@@ -1,16 +1,10 @@
 #pragma once
 
-#ifndef _REMOTE_CONNECTIOR_DATA_DEFS_H_
-#define _REMOTE_CONNECTIOR_DATA_DEFS_H_
+#ifndef _RDC_DATA_DEFS_H_
+#define _RDC_DATA_DEFS_H_
 
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-#ifdef REMOTECONNECTORAPI_EXPORTS
-#define REMOTECONNECTORAPI_API __declspec(dllexport)
-#else
-#define REMOTECONNECTORAPI_API __declspec(dllimport)
 #endif
 
 #define RC_MAX_ID_LEN 32
@@ -102,4 +96,4 @@ extern "C" {
 }
 #endif
 
-#endif 
+#endif //_RDC_DATA_DEFS_H_

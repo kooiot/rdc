@@ -97,7 +97,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include;../libs/common/include;../libs/sqlite3</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include;../libs/common/include;../libs/sqlite3;../libs/api</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -114,7 +114,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include;../libs/common/include;../libs/sqlite3</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include;../libs/common/include;../libs/sqlite3;../libs/api</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -133,7 +133,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include;../libs/common/include;../libs/sqlite3</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include;../libs/common/include;../libs/sqlite3;../libs/api</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -154,7 +154,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;ZMQ_STATIC;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include;../libs/common/include;../libs/sqlite3</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include;../libs/common/include;../libs/sqlite3;../libs/api</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "StreamApi.h"
 #include <thread>
 #include <enet\enet.h>

@@ -2,7 +2,7 @@
 #include "ClientMgr.h"
 #include <zmq.h>
 #include <sstream>
-#include "../RemoteConnectorApi/DataDefs.h"
+#include <DataDefs.h>
 
 #define MAX_CONNECTION_PER_SERVER 128
 

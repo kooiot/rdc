@@ -5,7 +5,7 @@
 #include <sstream>
 #include "AccDatabase.h"
 
-#include "../RemoteConnectorApi/DataDefs.h"
+#include <DataDefs.h>
 
 std::string GetModuleFilePath()
 {

@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "AccApi.h"
 #include <sstream>
 #include <zmq.h>

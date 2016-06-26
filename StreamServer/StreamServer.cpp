@@ -9,7 +9,7 @@
 #include <enet\enet.h>
 #include <zmq.h>
 #include <koo_zmq_helpers.h>
-#include "../RemoteConnectorApi/DataDefs.h"
+#include <DataDefs.h>
 
 #define MAX_CONNECTION_PER_SERVER 128
 #define MAX_CHANNEL_PER_SERVER 32

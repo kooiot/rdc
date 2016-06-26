@@ -4,7 +4,7 @@
 #ifndef _REMOTE_CONNECTIOR_API_H_
 #define _REMOTE_CONNECTIOR_API_H_
 
-#include "DataDefs.h"
+#include <DataDefs.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,11 +26,11 @@ extern "C" {
 
 	REMOTECONNECTORAPI_API int RC_ListDevices(RC_HANDLE Api, DeviceInfo* list, int list_len);
 	REMOTECONNECTORAPI_API int RC_ListUsers(RC_HANDLE Api, UserInfo* list, int list_len);
-	REMOTECONNECTORAPI_API int RC_ConnectSerial(RC_HANDLE Api, const char*  id, const char*  devid, const SerialInfo& info);
+	REMOTECONNECTORAPI_API int RC_ConnectSerial(RC_HANDLE Api, const char*  id, const char*  devid, const SerialInfo* info);
 	REMOTECONNECTORAPI_API int RC_CloseSerial(RC_HANDLE Api, const char*  id);
-	REMOTECONNECTORAPI_API int RC_ConnectTCPC(RC_HANDLE Api, const char*  id, const char*  devid, const TCPClientInfo& info);
+	REMOTECONNECTORAPI_API int RC_ConnectTCPC(RC_HANDLE Api, const char*  id, const char*  devid, const TCPClientInfo* info);
 	REMOTECONNECTORAPI_API int RC_CloseTCPC(RC_HANDLE Api, const char*  id);
-	REMOTECONNECTORAPI_API int RC_ConnectUDP(RC_HANDLE Api, const char*  id, const char*  devid, const UDPInfo& info);
+	REMOTECONNECTORAPI_API int RC_ConnectUDP(RC_HANDLE Api, const char*  id, const char*  devid, const UDPInfo* info);
 	REMOTECONNECTORAPI_API int RC_CloseUDP(RC_HANDLE Api, const char*  id);
 
 #ifdef __cplusplus

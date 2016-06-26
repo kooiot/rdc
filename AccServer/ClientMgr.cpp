@@ -1,5 +1,5 @@
 #include "ClientMgr.h"
-#include "../RemoteConnectorApi/DataDefs.h"
+#include <DataDefs.h>
 #include <zmq.h>
 
 #include <list>
