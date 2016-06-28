@@ -218,7 +218,7 @@ void CAccDatabase::Close()
 	m_Lock.unlock();
 }
 
-int CAccDatabase::IsValidMapper(const std::string & sn)
+int CAccDatabase::IsValidDevice(const std::string & sn)
 {
 	if (!m_pDB)
 		return -AUTH_ERROR;
@@ -302,10 +302,10 @@ int CAccDatabase::Access(const std::string & id, const std::string & sn)
 {
 	if (!m_pDB)
 		return -AUTH_ERROR;
-	int uid = GetClientIndex(id);
+	int uid = GetUserIndex(id);
 	if (uid == INVALID_INDEX)
 		return -AUTH_ERROR;
-	int devid = GetMapperIndex(sn);
+	int devid = GetDeviceIndex(sn);
 	if (devid == INVALID_INDEX)
 		return -AUTH_ERROR;
 
@@ -317,11 +317,11 @@ int CAccDatabase::Allow(const std::string & id, const std::string & sn, time_t* 
 	if (!m_pDB)
 		return -AUTH_ERROR;
 
-	int uid = GetClientIndex(id);
+	int uid = GetUserIndex(id);
 	if (uid == INVALID_INDEX)
 		return -AUTH_ERROR;
 
-	int devid = GetMapperIndex(sn);
+	int devid = GetDeviceIndex(sn);
 	if (devid == INVALID_INDEX)
 		return -AUTH_ERROR;
 
@@ -333,11 +333,11 @@ int CAccDatabase::Deny(const std::string & id, const std::string & sn)
 	if (!m_pDB)
 		return -AUTH_ERROR;
 
-	int uid = GetClientIndex(id);
+	int uid = GetUserIndex(id);
 	if (uid == INVALID_INDEX)
 		return -AUTH_ERROR;
 
-	int devid = GetMapperIndex(sn);
+	int devid = GetDeviceIndex(sn);
 	if (devid == INVALID_INDEX)
 		return -AUTH_ERROR;
 
@@ -352,7 +352,7 @@ int CAccDatabase::AddUser(const DbUserInfo& info, const std::string & passwd)
 	m_Lock.lock();
 
 	std::stringstream sql;
-	sql << "insert into users (level,id,name,desc,passwd,email,phone,valid_time)";
+	sql << "insert into users (level,id,name,desc,passwd,email,phone,valid_time) ";
 	sql << "values(" << info.Level << ",";
 	sql << "'" << info.ID << "',";
 	sql << "'" << info.Name << "',";
@@ -366,12 +366,15 @@ int CAccDatabase::AddUser(const DbUserInfo& info, const std::string & passwd)
 		sql << "NULL)";
 
 	int rc = sqlite3_exec(m_pDB, sql.str().c_str(), NULL, NULL, NULL);
-	if (rc != SQLITE_OK)
+
+	if (rc != SQLITE_OK) {
 		std::cerr << "SQL Error: " << sqlite3_errmsg(m_pDB) << std::endl;
+		std::cerr << "SQL: " << sql.str() << std::endl;
+	}
 	
 	m_Lock.unlock();
 	if (rc == SQLITE_OK)
-		rc = GetClientIndex(info.ID);
+		rc = GetUserIndex(info.ID);
 
 	return rc;
 }
@@ -408,8 +411,10 @@ int CAccDatabase::GetUser(const std::string & id, DbUserInfo& info)
 		return 0;
 	}, &info, NULL);
 
-	if (rc != SQLITE_OK)
+	if (rc != SQLITE_OK) {
 		std::cerr << "SQL Error: " << sqlite3_errmsg(m_pDB) << std::endl;
+		std::cerr << "SQL: " << sql.str() << std::endl;
+	}
 
 	m_Lock.unlock();
 
@@ -428,8 +433,9 @@ int CAccDatabase::UpdateUser(const DbUserInfo& info, const std::string & passwd)
 	m_Lock.lock();
 
 	std::stringstream sql;
-	sql << "replace into users (level,id,name,desc,passwd,email,phone,valid_time)";
-	sql << "values(" << info.Level << ",";
+	sql << "replace into users (`index`,level,id,name,desc,passwd,email,phone,valid_time) ";
+	sql << "values(" << info.Index << "," << info.Level << ",";
+	sql << "'" << info.ID << "',";
 	sql << "'" << info.Name << "',";
 	sql << "'" << info.Desc << "',";
 	sql << "'" << passwd << "',";
@@ -439,11 +445,12 @@ int CAccDatabase::UpdateUser(const DbUserInfo& info, const std::string & passwd)
 		sql << "'" << time2str(&info.ValidTime) << "')";
 	else
 		sql << "NULL)";
-	sql << " where `index`=" << info.Index;
 
 	int rc = sqlite3_exec(m_pDB, sql.str().c_str(), NULL, NULL, NULL);
-	if (rc != SQLITE_OK)
+	if (rc != SQLITE_OK) {
 		std::cerr << "SQL Error: " << sqlite3_errmsg(m_pDB) << std::endl;
+		std::cerr << "SQL: " << sql.str() << std::endl;
+	}
 
 	m_Lock.unlock();
 
@@ -458,11 +465,13 @@ int CAccDatabase::DeleteUser(const std::string & id)
 	m_Lock.lock();
 
 	std::stringstream sql;
-	sql << "delete from users where id=" << id;
+	sql << "delete from users where id='" << id << "'";
 
 	int rc = sqlite3_exec(m_pDB, sql.str().c_str(), NULL, NULL, NULL);
-	if (rc != SQLITE_OK)
+	if (rc != SQLITE_OK) {
 		std::cerr << "SQL Error: " << sqlite3_errmsg(m_pDB) << std::endl;
+		std::cerr << "SQL: " << sql.str() << std::endl;
+	}
 
 	m_Lock.unlock();
 
@@ -477,7 +486,7 @@ int CAccDatabase::ListUsers(std::list<std::string>& list)
 	m_Lock.lock();
 
 	std::stringstream sql;
-	sql << "select id from users";
+	sql << "select id from users order by `index`";
 
 	int rc = sqlite3_exec(m_pDB, sql.str().c_str(), [](void* data, int row, char** vals, char** cols) {
 		std::list<std::string> * pList = (std::list<std::string>*)data;
@@ -485,8 +494,10 @@ int CAccDatabase::ListUsers(std::list<std::string>& list)
 		return 0;
 	}, &list, NULL);
 
-	if (rc != SQLITE_OK)
+	if (rc != SQLITE_OK) {
 		std::cerr << "SQL Error: " << sqlite3_errmsg(m_pDB) << std::endl;
+		std::cerr << "SQL: " << sql.str() << std::endl;
+	}
 
 	m_Lock.unlock();
 	return rc;
@@ -500,7 +511,7 @@ int CAccDatabase::AddDevice(const DbDeviceInfo& info)
 	m_Lock.lock();
 
 	std::stringstream sql;
-	sql << "insert into devices (sn,name,desc,valid_time)";
+	sql << "insert into devices (sn,name,desc,valid_time) ";
 	sql << "values('" << info.SN << "',";
 	sql << "'" << info.Name << "',";
 	sql << "'" << info.Desc << "',";
@@ -510,13 +521,16 @@ int CAccDatabase::AddDevice(const DbDeviceInfo& info)
 		sql << "NULL)";
 
 	int rc = sqlite3_exec(m_pDB, sql.str().c_str(), NULL, NULL, NULL);
-	if (rc != SQLITE_OK)
+
+	if (rc != SQLITE_OK) {
 		std::cerr << "SQL Error: " << sqlite3_errmsg(m_pDB) << std::endl;
+		std::cerr << "SQL: " << sql.str() << std::endl;
+	}
 
 	m_Lock.unlock();
 
 	if (rc == SQLITE_OK)
-		rc = GetClientIndex(info.SN);
+		rc = GetDeviceIndex(info.SN);
 
 	return rc;
 }
@@ -549,8 +563,10 @@ int CAccDatabase::GetDevice(const std::string & sn, DbDeviceInfo& info)
 		return 0;
 	}, &info, NULL);
 
-	if (rc != SQLITE_OK)
+	if (rc != SQLITE_OK) {
 		std::cerr << "SQL Error: " << sqlite3_errmsg(m_pDB) << std::endl;
+		std::cerr << "SQL: " << sql.str() << std::endl;
+	}
 
 	m_Lock.unlock();
 
@@ -569,19 +585,22 @@ int CAccDatabase::UpdateDevice(const DbDeviceInfo& info)
 	m_Lock.lock();
 
 	std::stringstream sql;
-	sql << "replace into devices (sn,name,desc,valid_time)";
-	sql << "values('" << info.SN << "',";
+	sql << "replace into devices (`index`,sn,name,desc,valid_time) ";
+	sql << "values(" << info.Index << ",";
+	sql << "'" << info.SN << "',";
 	sql << "'" << info.Name << "',";
 	sql << "'" << info.Desc << "',";
 	if (info.ValidTime != -1)
 		sql << "'" << time2str(&info.ValidTime) << "')";
 	else
 		sql << "NULL)";
-	sql << " where `index`=" << info.Index;
 
 	int rc = sqlite3_exec(m_pDB, sql.str().c_str(), NULL, NULL, NULL);
-	if (rc != SQLITE_OK)
+
+	if (rc != SQLITE_OK) {
 		std::cerr << "SQL Error: " << sqlite3_errmsg(m_pDB) << std::endl;
+		std::cerr << "SQL: " << sql.str() << std::endl;
+	}
 
 	m_Lock.unlock();
 
@@ -596,11 +615,14 @@ int CAccDatabase::DeleteDevice(const std::string & sn)
 	m_Lock.lock();
 
 	std::stringstream sql;
-	sql << "delete from devices where sn=" << sn;
+	sql << "delete from devices where sn='" << sn << "'";
 
 	int rc = sqlite3_exec(m_pDB, sql.str().c_str(), NULL, NULL, NULL);
-	if (rc != SQLITE_OK)
+
+	if (rc != SQLITE_OK) {
 		std::cerr << "SQL Error: " << sqlite3_errmsg(m_pDB) << std::endl;
+		std::cerr << "SQL: " << sql.str() << std::endl;
+	}
 
 	m_Lock.unlock();
 
@@ -615,7 +637,7 @@ int CAccDatabase::ListDevices(std::list<std::string>& list)
 	m_Lock.lock();
 
 	std::stringstream sql;
-	sql << "select sn from devices";
+	sql << "select sn from devices order by `index`";
 
 	int rc = sqlite3_exec(m_pDB, sql.str().c_str(), [](void* data, int row, char** vals, char** cols) {
 		std::list<std::string> * pList = (std::list<std::string>*)data;
@@ -623,14 +645,16 @@ int CAccDatabase::ListDevices(std::list<std::string>& list)
 		return 0;
 	}, &list, NULL);
 
-	if (rc != SQLITE_OK)
+	if (rc != SQLITE_OK) {
 		std::cerr << "SQL Error: " << sqlite3_errmsg(m_pDB) << std::endl;
+		std::cerr << "SQL: " << sql.str() << std::endl;
+	}
 
 	m_Lock.unlock();
 	return rc;
 }
 
-int CAccDatabase::GetClientIndex(const std::string & id)
+int CAccDatabase::GetUserIndex(const std::string & id)
 {
 	if (!m_pDB)
 		return INVALID_INDEX;
@@ -638,7 +662,7 @@ int CAccDatabase::GetClientIndex(const std::string & id)
 	m_Lock.lock();
 
 	std::stringstream sql;
-	sql << "select index from users where id='" << id << "'";
+	sql << "select `index` from users where id='" << id << "'";
 
 	std::string valid_time;
 	int nID = -1;
@@ -653,14 +677,16 @@ int CAccDatabase::GetClientIndex(const std::string & id)
 		return 0;
 	}, &nID, NULL);
 
-	if (rc != SQLITE_OK)
+	if (rc != SQLITE_OK) {
 		std::cerr << "SQL Error: " << sqlite3_errmsg(m_pDB) << std::endl;
+		std::cerr << "SQL: " << sql.str() << std::endl;
+	}
 
 	m_Lock.unlock();
 	return nID;
 }
 
-int CAccDatabase::GetMapperIndex(const std::string & id)
+int CAccDatabase::GetDeviceIndex(const std::string & id)
 {
 	if (!m_pDB)
 		return INVALID_INDEX;
@@ -668,7 +694,7 @@ int CAccDatabase::GetMapperIndex(const std::string & id)
 	m_Lock.lock();
 
 	std::stringstream sql;
-	sql << "select index from devices where sn='" << id << "'";
+	sql << "select `index` from devices where sn='" << id << "'";
 
 	std::string valid_time;
 	int nID = -1;
@@ -683,8 +709,10 @@ int CAccDatabase::GetMapperIndex(const std::string & id)
 		return 0;
 	}, &nID, NULL);
 
-	if (rc != SQLITE_OK)
+	if (rc != SQLITE_OK) {
 		std::cerr << "SQL Error: " << sqlite3_errmsg(m_pDB) << std::endl;
+		std::cerr << "SQL: " << sql.str() << std::endl;
+	}
 
 	m_Lock.unlock();
 	return nID;
@@ -709,8 +737,10 @@ int CAccDatabase::_Access(int user, int dev)
 		return 0;
 	}, &valid_time, NULL);
 
-	if (rc != SQLITE_OK)
+	if (rc != SQLITE_OK) {
 		std::cerr << "SQL Error: " << sqlite3_errmsg(m_pDB) << std::endl;
+		std::cerr << "SQL: " << sql.str() << std::endl;
+	}
 
 	m_Lock.unlock();
 
@@ -744,8 +774,10 @@ int CAccDatabase::_Allow(int user, int dev, time_t * _Time)
 	std::string valid_time;
 	rc = sqlite3_exec(m_pDB, sql.str().c_str(), NULL, NULL, NULL);
 
-	if (rc != SQLITE_OK)
+	if (rc != SQLITE_OK) {
 		std::cerr << "SQL Error: " << sqlite3_errmsg(m_pDB) << std::endl;
+		std::cerr << "SQL: " << sql.str() << std::endl;
+	}
 
 	m_Lock.unlock();
 
@@ -765,8 +797,10 @@ int CAccDatabase::_Deny(int user, int dev)
 	std::string valid_time;
 	int rc = sqlite3_exec(m_pDB, sql.str().c_str(), NULL, NULL, NULL);
 
-	if (rc != SQLITE_OK)
+	if (rc != SQLITE_OK) {
 		std::cerr << "SQL Error: " << sqlite3_errmsg(m_pDB) << std::endl;
+		std::cerr << "SQL: " << sql.str() << std::endl;
+	}
 	
 	m_Lock.unlock();
 

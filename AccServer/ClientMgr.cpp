@@ -69,10 +69,10 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd, void* rep, void* pub)
 	if (cmd.cmd == "LOGIN") {
 		std::cout << "LOGIN: " << cmd.id << "\t" << cmd.GetStr() << std::endl;
 		if (cmd.id == "@DEVICE@") {
-			std::string mapper_id = cmd.GetStr();
+			std::string dev_sn = cmd.GetStr();
 			// Check for valid device sn
-			if (m_Database.IsValidMapper(mapper_id) == 0) {
-				AddMapper(mapper_id);
+			if (m_Database.IsValidDevice(dev_sn) == 0) {
+				AddMapper(dev_sn);
 				nReturn = 0;
 			}
 		}
@@ -228,6 +228,10 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd, void* rep, void* pub)
 		koo_zmq_send_reply(rep, cmd, &info, sizeof(UserInfo));
 		return;
 	}
+	else {
+		std::cerr << "Unknown CMD... " << std::endl;
+	}
+
 	std::cout << "SEND REPLY: " << cmd.id << "\t" << cmd.cmd << "\t" << nReturn << std::endl;
 	std::stringstream ss;
 	ss << nReturn;

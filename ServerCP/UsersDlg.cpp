@@ -7,39 +7,6 @@
 #include "afxdialogex.h"
 
 
-time_t str2time(const std::string &strTime)
-{
-	struct tm sTime;
-	sscanf(strTime.c_str(), "%d-%d-%d %d:%d:%d", &sTime.tm_year, &sTime.tm_mon, &sTime.tm_mday, &sTime.tm_hour, &sTime.tm_min, &sTime.tm_sec);
-	sTime.tm_year -= 1900;
-	sTime.tm_mon -= 1;
-	time_t ft = mktime(&sTime);
-	return ft;
-}
-time_t str2time_utc(const std::string& strTime) {
-	time_t t = str2time(strTime);
-	return t + 8 * 60 * 60;
-}
-
-const std::string time2str(const time_t *_Time = NULL) {
-	char buffer[80];
-	time_t now = _Time != NULL ? *_Time : time(NULL);
-
-	struct tm * timeinfo = localtime(&now);
-	strftime(buffer, 80, "%F %T", timeinfo);
-
-	return std::string(buffer);
-}
-const std::string time2str_utc(const time_t *_Time = NULL) {
-	char buffer[80];
-	time_t now = _Time != NULL ? *_Time : time(NULL);
-
-	struct tm * timeinfo = gmtime(&now);
-	strftime(buffer, 80, "%F %T", timeinfo);
-
-	return std::string(buffer);
-}
-
 // CUsersDlg 对话框
 
 IMPLEMENT_DYNAMIC(CUsersDlg, CDialogEx)
@@ -71,9 +38,55 @@ void CUsersDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CHECK_VALID, m_chkValid);
 }
 
-void CUsersDlg::BindUser(int nCur)
+BEGIN_MESSAGE_MAP(CUsersDlg, CDialogEx)
+	ON_BN_CLICKED(IDC_BUTTON_ADD, &CUsersDlg::OnBnClickedButtonAdd)
+	ON_BN_CLICKED(IDC_BUTTON_DEL, &CUsersDlg::OnBnClickedButtonDel)
+	ON_BN_CLICKED(IDC_BUTTON_SHOW_PASS, &CUsersDlg::OnBnClickedButtonShowPass)
+	ON_NOTIFY(NM_DBLCLK, IDC_LIST_USERS, &CUsersDlg::OnNMDblclkListUsers)
+	ON_BN_CLICKED(IDC_CHECK_VALID, &CUsersDlg::OnBnClickedCheckValid)
+	ON_BN_CLICKED(IDC_BUTTON_SAVE, &CUsersDlg::OnBnClickedButtonSave)
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_USERS, &CUsersDlg::OnLvnItemchangedListUsers)
+END_MESSAGE_MAP()
+
+
+// CUsersDlg 消息处理程序
+
+BOOL CUsersDlg::OnInitDialog()
 {
-	if (nCur < 0) {
+	CDialogEx::OnInitDialog();
+
+	m_boxLevel.AddString("普通用户");
+	m_boxLevel.AddString("企业账户");
+	m_boxLevel.AddString("管理员");
+	m_boxLevel.AddString("系统管理员");
+
+	m_listUsers.InsertColumn(0, "ID", LVCFMT_LEFT, 60);
+	m_listUsers.InsertColumn(1, "Name", LVCFMT_LEFT, 120);
+	m_listUsers.InsertColumn(2, "Desc", LVCFMT_LEFT, 120);
+
+	// TODO:  在此添加额外的初始化
+	memset(m_Users, 0, sizeof(UserInfo) * 2048);
+	int num = m_pAccApi->ListUsers(m_Users, 2048, false);
+
+	for (int i = 0; i < num; ++i) {
+		int n = m_listUsers.InsertItem(i, m_Users[i].ID);
+		m_listUsers.SetItemText(n, 1, m_Users[i].Name);
+		m_listUsers.SetItemText(n, 2, m_Users[i].Desc);
+	}
+	m_listUsers.SetExtendedStyle(m_listUsers.GetExtendedStyle() | LVS_EX_FULLROWSELECT);
+
+	m_CurSel = -2;
+	BindUser(-1, false);
+	return TRUE;  // return TRUE unless you set the focus to a control
+				  // 异常: OCX 属性页应返回 FALSE
+}
+
+
+void CUsersDlg::BindUser(int nCur, bool bEdit)
+{
+	m_CurSel = nCur;
+
+	if (nCur < 0 || !bEdit) {
 		m_editID.EnableWindow(FALSE);
 		m_editPasswd.EnableWindow(FALSE);
 		m_editName.EnableWindow(FALSE);
@@ -81,32 +94,31 @@ void CUsersDlg::BindUser(int nCur)
 		m_editEmail.EnableWindow(FALSE);
 		m_editPhone.EnableWindow(FALSE);
 		m_boxLevel.EnableWindow(FALSE);
-		m_boxLevel.EnableWindow(FALSE);
 		m_editCreateTime.EnableWindow(FALSE);
 		m_dtValid.EnableWindow(FALSE);
+		m_chkValid.EnableWindow(FALSE);
 		m_chkValid.SetCheck(0);
-		return;
 	}
 	else {
-		m_editID.EnableWindow(TRUE);
+		m_editID.EnableWindow(FALSE);
 		m_editPasswd.EnableWindow(TRUE);
 		m_editName.EnableWindow(TRUE);
 		m_editDesc.EnableWindow(TRUE);
 		m_editEmail.EnableWindow(TRUE);
 		m_editPhone.EnableWindow(TRUE);
 		m_boxLevel.EnableWindow(TRUE);
-		m_boxLevel.EnableWindow(TRUE);
-		m_editCreateTime.EnableWindow(TRUE);
+		m_editCreateTime.EnableWindow(FALSE);
 		m_dtValid.EnableWindow(TRUE);
+		m_chkValid.EnableWindow(TRUE);
 		m_chkValid.SetCheck(0);
 	}
-
-	if (m_CurSel == nCur)
+	if (nCur < 0)
 		return;
-	m_CurSel = nCur;
 
 	UserInfo& info = m_Users[nCur];
 	m_editID.SetWindowText(info.ID);
+	if (info.Index == -1)
+		m_editID.EnableWindow(bEdit ? TRUE : FALSE);
 	m_editPasswd.SetWindowText(info.Passwd);
 	m_editName.SetWindowText(info.Name);
 	m_editDesc.SetWindowText(info.Desc);
@@ -118,7 +130,7 @@ void CUsersDlg::BindUser(int nCur)
 		m_boxLevel.SetCurSel(2);
 	else if (info.Level > 1)
 		m_boxLevel.SetCurSel(1);
-	else if (info.Level == 1)
+	else
 		m_boxLevel.SetCurSel(0);
 	m_editCreateTime.SetWindowText(time2str_utc(&info.CreateTime).c_str());
 
@@ -126,7 +138,7 @@ void CUsersDlg::BindUser(int nCur)
 		char buffer[80];
 		struct tm * timeinfo = gmtime(&info.ValidTime);
 		strftime(buffer, 80, "%Y/%m/%d", timeinfo);
-		m_dtValid.EnableWindow(TRUE);
+		m_dtValid.EnableWindow(bEdit ? TRUE : FALSE);
 		m_dtValid.SetWindowText(buffer);
 		m_chkValid.SetCheck(1);
 	}
@@ -162,53 +174,16 @@ void CUsersDlg::DumpUser(int nCur)
 	if (m_chkValid.GetCheck()) {
 		CTime valid;
 		m_dtValid.GetTime(valid);
+		struct tm t;
+		info.ValidTime = mktime(valid.GetGmtTm(&t));
 	}
 	else {
 		info.ValidTime = -1;
 	}
-}
 
-
-BEGIN_MESSAGE_MAP(CUsersDlg, CDialogEx)
-	ON_BN_CLICKED(IDC_BUTTON_ADD, &CUsersDlg::OnBnClickedButtonAdd)
-	ON_BN_CLICKED(IDC_BUTTON_DEL, &CUsersDlg::OnBnClickedButtonDel)
-	ON_BN_CLICKED(IDC_BUTTON_SHOW_PASS, &CUsersDlg::OnBnClickedButtonShowPass)
-	ON_NOTIFY(NM_DBLCLK, IDC_LIST_USERS, &CUsersDlg::OnNMDblclkListUsers)
-	ON_BN_CLICKED(IDC_CHECK_VALID, &CUsersDlg::OnBnClickedCheckValid)
-	ON_BN_CLICKED(IDC_BUTTON_SAVE, &CUsersDlg::OnBnClickedButtonSave)
-END_MESSAGE_MAP()
-
-
-// CUsersDlg 消息处理程序
-
-BOOL CUsersDlg::OnInitDialog()
-{
-	CDialogEx::OnInitDialog();
-
-	m_boxLevel.AddString("普通用户");
-	m_boxLevel.AddString("企业账户");
-	m_boxLevel.AddString("管理员");
-	m_boxLevel.AddString("系统管理员");
-
-	m_listUsers.InsertColumn(0, "ID", LVCFMT_LEFT, 60);
-	m_listUsers.InsertColumn(1, "Name", LVCFMT_LEFT, 120);
-	m_listUsers.InsertColumn(2, "Desc", LVCFMT_LEFT, 120);
-
-	// TODO:  在此添加额外的初始化
-	memset(m_Users, 0, sizeof(UserInfo) * 2048);
-	int num = m_pAccApi->ListUsers(m_Users, 2048, false);
-
-	for (int i = 0; i < num; ++i) {
-		int n = m_listUsers.InsertItem(i, m_Users[i].ID);
-		m_listUsers.SetItemText(n, 1, m_Users[i].Name);
-		m_listUsers.SetItemText(n, 2, m_Users[i].Desc);
-	}
-	m_listUsers.SetExtendedStyle(m_listUsers.GetExtendedStyle() | LVS_EX_FULLROWSELECT);
-
-	m_CurSel = -1;
-	BindUser(m_CurSel);
-	return TRUE;  // return TRUE unless you set the focus to a control
-				  // 异常: OCX 属性页应返回 FALSE
+	m_listUsers.SetItemText(nCur, 0, info.ID);
+	m_listUsers.SetItemText(nCur, 1, info.Name);
+	m_listUsers.SetItemText(nCur, 2, info.Desc);
 }
 
 
@@ -218,15 +193,40 @@ void CUsersDlg::OnBnClickedButtonAdd()
 	int n = m_listUsers.InsertItem(nCur, "New_User");
 	ASSERT(m_Users[n].Index == 0 && m_Users[n].CreateTime == 0);
 	m_Users[n].Index = -1;
+	m_Users[n].CreateTime = time(NULL);
+	m_Users[n].ValidTime = -1;
 	sprintf(m_Users[n].ID, "%s", "New_User");
 	//m_listUsers.SetItem(nCur, 0, LVIF_STATE, NULL, 0, LVIS_SELECTED, LVIS_SELECTED, 0);
 	m_listUsers.SetItemState(nCur, LVNI_FOCUSED | LVIS_SELECTED, LVNI_FOCUSED | LVIS_SELECTED);
-	BindUser(nCur);
+	BindUser(nCur, true);
 }
 
 
 void CUsersDlg::OnBnClickedButtonDel()
 {
+	if (m_CurSel == -1) {
+		return;
+	}
+
+	if (LVIS_SELECTED != m_listUsers.GetItemState(m_CurSel, LVIS_SELECTED)) {
+		MessageBox("EEEEE");
+		return;
+	}
+
+	UserInfo& info = m_Users[m_CurSel];
+	if (info.Index != -1) {
+		int rc = m_pAccApi->DeleteUser(info.ID);
+		if (rc != 0) {
+			MessageBox("Delete User Failed");
+			return;
+		}
+	}
+	m_listUsers.DeleteItem(m_CurSel);
+	for (int i = m_CurSel + 1; i < 2048; ++i) {
+		m_Users[i - 1] = m_Users[i];
+		if (m_Users[i].Index == -1)
+			break;
+	}
 }
 
 void CUsersDlg::OnBnClickedButtonShowPass()
@@ -245,7 +245,7 @@ void CUsersDlg::OnNMDblclkListUsers(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	// TODO: 在此添加控件通知处理程序代码
-	BindUser(pNMItemActivate->iItem);
+	BindUser(pNMItemActivate->iItem, true);
 	*pResult = 0;
 }
 
@@ -277,10 +277,24 @@ void CUsersDlg::OnBnClickedButtonSave()
 		if (info.Index == -1) {
 			MessageBox("Add User Failed");
 		}
+		else {
+			MessageBox("Add User Done!");
+		}
 	} else {
 		int rc = m_pAccApi->ModifyUser(&info);
 		if (rc != 0) {
 			MessageBox("Modify User Failed");
 		}
+		else {
+			MessageBox("Modify User Done!");
+		}
 	}
+}
+
+
+void CUsersDlg::OnLvnItemchangedListUsers(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	BindUser(pNMLV->iItem, false);
+	*pResult = 0;
 }

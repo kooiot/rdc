@@ -24,16 +24,29 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 
-	void BindUser(int nCur);
 public:
 	CAccApi* m_pAccApi;
 	DeviceInfo* m_Devs;
+	int m_CurSel;
 
-	virtual BOOL OnInitDialog();
+private:
 	CListCtrl m_listDevs;
 	CEdit m_editSN;
 	CEdit m_editName;
 	CEdit m_editDesc;
 	CEdit m_editCreateTime;
 	CDateTimeCtrl m_dtValid;
+	CButton m_chkValid;
+
+public:
+	virtual BOOL OnInitDialog();
+	void BindDevice(int nCur, bool bEdit);
+	void DumpDevice(int nCur);
+
+	afx_msg void OnNMDblclkListDevices(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnBnClickedButtonAdd();
+	afx_msg void OnBnClickedButtonDel();
+	afx_msg void OnBnClickedButtonSave();
+	afx_msg void OnBnClickedCheckValid();
+	afx_msg void OnLvnItemchangedListDevices(NMHDR *pNMHDR, LRESULT *pResult);
 };

@@ -55,10 +55,10 @@ public:
 	int Init();
 	void Close();
 
-	// Mappers
-	int IsValidMapper(const std::string& sn);
+	// Devices
+	int IsValidDevice(const std::string& sn);
 
-	// Clients
+	// Users
 	int Login(const std::string& id, const std::string& password);
 	int Logout(const std::string& id);
 
@@ -82,8 +82,8 @@ public:
 	int ListDevices(std::list<std::string>& list);
 
 protected:
-	int GetClientIndex(const std::string& id);
-	int GetMapperIndex(const std::string& id);
+	int GetUserIndex(const std::string& id);
+	int GetDeviceIndex(const std::string& id);
 	int _Access(int user, int dev);
 	int _Allow(int user, int dev, time_t* _Time = NULL);
 	int _Deny(int user, int dev);

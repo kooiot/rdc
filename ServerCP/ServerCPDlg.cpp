@@ -57,6 +57,14 @@ CServerCPDlg::CServerCPDlg(CWnd* pParent /*=NULL*/)
 	m_pMapperProcess(NULL)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+	m_Users = new UserInfo[2048];
+	m_Devices = new DeviceInfo[2048];
+}
+
+CServerCPDlg::~CServerCPDlg()
+{
+	delete[] m_Users;
+	delete[] m_Devices;
 }
 
 void CServerCPDlg::DoDataExchange(CDataExchange* pDX)
@@ -64,6 +72,7 @@ void CServerCPDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST_ONLINE_DEVCIES, m_listDevices);
 	DDX_Control(pDX, IDC_LIST_ONLINE_USERS, m_listUsers);
+	DDX_Control(pDX, IDC_TAB1, m_TabCtrl);
 }
 
 BEGIN_MESSAGE_MAP(CServerCPDlg, CDialogEx)
@@ -81,6 +90,7 @@ BEGIN_MESSAGE_MAP(CServerCPDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_DEVS, &CServerCPDlg::OnBnClickedButtonDevs)
 	ON_BN_CLICKED(IDC_BUTTON_RD, &CServerCPDlg::OnBnClickedButtonRd)
 	ON_BN_CLICKED(IDC_BUTTON_RUSERS, &CServerCPDlg::OnBnClickedButtonRusers)
+	ON_NOTIFY(TCN_SELCHANGE, IDC_TAB1, &CServerCPDlg::OnTcnSelchangeTab1)
 END_MESSAGE_MAP()
 
 
@@ -128,14 +138,32 @@ BOOL CServerCPDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 设置大图标
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
-	// TODO: 在此添加额外的初始化代码
-	m_listDevices.InsertColumn(0, "Name", LVCFMT_LEFT, 60);
-	m_listDevices.InsertColumn(1, "Desc", LVCFMT_LEFT, 120);
-	m_listDevices.InsertColumn(2, "SN", LVCFMT_LEFT, 120);
+	m_TabCtrl.InsertItem(0, "Online Devices");
+	m_TabCtrl.InsertItem(1, "Online Users");
 
-	m_listUsers.InsertColumn(0, "ID", LVCFMT_LEFT, 60);
-	m_listUsers.InsertColumn(1, "Name", LVCFMT_LEFT, 120);
-	m_listUsers.InsertColumn(2, "Desc", LVCFMT_LEFT, 120);
+	// TODO: 在此添加额外的初始化代码
+	m_listDevices.InsertColumn(0, "Name", LVCFMT_LEFT, 120);
+	m_listDevices.InsertColumn(1, "SN", LVCFMT_LEFT, 240);
+	m_listDevices.InsertColumn(2, "Desc", LVCFMT_LEFT, 240);
+	m_listDevices.SetExtendedStyle(m_listDevices.GetExtendedStyle() | LVS_EX_FULLROWSELECT);
+	m_listDevices.ShowWindow(SW_SHOW);
+
+	m_listUsers.InsertColumn(0, "ID", LVCFMT_LEFT, 120);
+	m_listUsers.InsertColumn(1, "Name", LVCFMT_LEFT, 240);
+	m_listUsers.InsertColumn(2, "Desc", LVCFMT_LEFT, 240);
+	m_listUsers.SetExtendedStyle(m_listUsers.GetExtendedStyle() | LVS_EX_FULLROWSELECT);
+	m_listUsers.ShowWindow(SW_HIDE);
+
+	RECT rect;
+	m_TabCtrl.GetClientRect(&rect);
+	rect.top += 25;
+	rect.left += 1;
+	rect.right -= 3;
+	rect.bottom -= 1;
+	m_listDevices.SetParent(&m_TabCtrl);
+	m_listUsers.SetParent(&m_TabCtrl);
+	m_listDevices.MoveWindow(&rect);
+	m_listUsers.MoveWindow(&rect);
 
 	m_CTX = zmq_ctx_new();
 
@@ -310,12 +338,44 @@ void CServerCPDlg::OnBnClickedButtonDevs()
 
 void CServerCPDlg::OnBnClickedButtonRd()
 {
-	// TODO: 在此添加控件通知处理程序代码
+	m_listDevices.DeleteAllItems();
+	memset(m_Devices, 0, sizeof(DeviceInfo) * 2048);
+	int num = m_pAccApi->ListDevices(m_Devices, 2048, true);
+
+	for (int i = 0; i < num; ++i) {
+		int n = m_listDevices.InsertItem(i, m_Devices[i].Name);
+		m_listDevices.SetItemText(n, 1, m_Devices[i].SN);
+		m_listDevices.SetItemText(n, 2, m_Devices[i].Desc);
+	}
 }
 
 
 void CServerCPDlg::OnBnClickedButtonRusers()
 {
-	// TODO: 在此添加控件通知处理程序代码
+	m_listUsers.DeleteAllItems();
+	memset(m_Users, 0, sizeof(UserInfo) * 2048);
+	int num = m_pAccApi->ListUsers(m_Users, 2048, true);
+
+	for (int i = 0; i < num; ++i) {
+		int n = m_listUsers.InsertItem(i, m_Users[i].ID);
+		m_listUsers.SetItemText(n, 1, m_Users[i].Name);
+		m_listUsers.SetItemText(n, 2, m_Users[i].Desc);
+	}
 }
 
+
+
+void CServerCPDlg::OnTcnSelchangeTab1(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	int CurSel = m_TabCtrl.GetCurSel();
+
+	m_listDevices.ShowWindow(SW_HIDE);
+	m_listUsers.ShowWindow(SW_HIDE);
+	if (CurSel == 0) {
+		m_listDevices.ShowWindow(SW_SHOW);
+	}
+	if (CurSel == 1) {
+		m_listUsers.ShowWindow(SW_SHOW);
+	}
+	*pResult = 0;
+}

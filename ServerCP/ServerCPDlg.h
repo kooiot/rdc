@@ -20,6 +20,7 @@ class CServerCPDlg : public CDialogEx, IStreamHandler
 // 构造
 public:
 	CServerCPDlg(CWnd* pParent = NULL);	// 标准构造函数
+	~CServerCPDlg();
 
 // 对话框数据
 #ifdef AFX_DESIGN_TIME
@@ -38,6 +39,8 @@ protected:
 	CAccApi* m_pAccApi;
 	CStreamApi* m_pStreamApi;
 	void* m_CTX;
+	UserInfo* m_Users;
+	DeviceInfo* m_Devices;
 
 	virtual bool OnData(int channel, const unsigned char* data, size_t len);
 	virtual bool OnEvent(StreamEvent event);
@@ -63,4 +66,7 @@ public:
 private:
 	CListCtrl m_listDevices;
 	CListCtrl m_listUsers;
+public:
+	CTabCtrl m_TabCtrl;
+	afx_msg void OnTcnSelchangeTab1(NMHDR *pNMHDR, LRESULT *pResult);
 };

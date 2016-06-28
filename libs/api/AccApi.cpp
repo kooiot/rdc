@@ -217,7 +217,7 @@ int CAccApi::AddUser(const UserInfo * info)
 {
 	KZPacket packet;
 	packet.id = m_User;
-	packet.cmd = "ADD_CLINET";
+	packet.cmd = "ADD_CLIENT";
 	packet.SetData(info, sizeof(UserInfo));
 
 	int rc = SendRequest(packet, [](KZPacket& data) {
@@ -231,7 +231,7 @@ int CAccApi::ModifyUser(const UserInfo * info)
 {
 	KZPacket packet;
 	packet.id = m_User;
-	packet.cmd = "MOD_CLINET";
+	packet.cmd = "MOD_CLIENT";
 	packet.SetData(info, sizeof(UserInfo));
 
 	int rc = SendRequest(packet, [](KZPacket& data) {
@@ -245,7 +245,7 @@ int CAccApi::DeleteUser(const char * id)
 {
 	KZPacket packet;
 	packet.id = m_User;
-	packet.cmd = "DEL_CLINET";
+	packet.cmd = "DEL_CLIENT";
 	packet.SetStr(id);
 
 	int rc = SendRequest(packet, [](KZPacket& data) {

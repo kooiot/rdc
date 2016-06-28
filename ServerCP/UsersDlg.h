@@ -23,8 +23,6 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV Ö§³Ö
 
 	DECLARE_MESSAGE_MAP()
-	void BindUser(int nCur);
-	void DumpUser(int nCur);
 public:
 	CAccApi* m_pAccApi;
 	UserInfo* m_Users;
@@ -42,12 +40,16 @@ private:
 	CEdit m_editCreateTime;
 	CDateTimeCtrl m_dtValid;
 public:
+	virtual BOOL OnInitDialog();
+	void BindUser(int nCur, bool bEdit);
+	void DumpUser(int nCur);
+
 	afx_msg void OnBnClickedButtonAdd();
 	afx_msg void OnBnClickedButtonDel();
-	virtual BOOL OnInitDialog();
 	afx_msg void OnBnClickedButtonShowPass();
 	afx_msg void OnNMDblclkListUsers(NMHDR *pNMHDR, LRESULT *pResult);
 	CButton m_chkValid;
 	afx_msg void OnBnClickedCheckValid();
 	afx_msg void OnBnClickedButtonSave();
+	afx_msg void OnLvnItemchangedListUsers(NMHDR *pNMHDR, LRESULT *pResult);
 };
