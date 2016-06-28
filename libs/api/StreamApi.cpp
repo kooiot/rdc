@@ -3,9 +3,12 @@
 #include <enet\enet.h>
 #include "DataDefs.h"
 
-CStreamApi::CStreamApi(IStreamHandler & Handler, int nIndex, int nType) : m_Handler(Handler), m_pThread(nullptr)
+CStreamApi::CStreamApi(IStreamHandler & Handler, int nIndex, int nType)
+	: m_Handler(Handler),
+	m_pThread(nullptr),
+	m_bAbort(false)
 {
-	m_nData = (nType & 0xFFFF << 8) + nIndex & 0xFFFF;
+	m_nData = ((nType & 0xFFFF) << 16) + (nIndex & 0xFFFF);
 }
 
 CStreamApi::~CStreamApi()
@@ -20,7 +23,7 @@ bool CStreamApi::Connect(const char * ip, int port)
 	{
 		fprintf(stderr,
 			"An error occurred while trying to create an ENet client host.\n");
-		exit(EXIT_FAILURE);
+		return false;
 	}
 	ENetAddress address;
 	ENetPeer *peer;
@@ -75,26 +78,24 @@ bool CStreamApi::Connect(const char * ip, int port)
 		enet_peer_disconnect((ENetPeer*)m_Peer, 0);
 		enet_host_destroy(client);
 	});
-	return false;
+	return true;
 }
 
-bool CStreamApi::Disconnect()
+void CStreamApi::Disconnect()
 {
 	m_bAbort = true;
 	m_Peer = NULL;
 
 	if (m_pThread && m_pThread->joinable())
 		m_pThread->join();
-
-	return true;
 }
 
-bool CStreamApi::SendData(int index, const unsigned char * buf, size_t len)
+int CStreamApi::SendData(int channel, const unsigned char * buf, size_t len)
 {
 	if (!m_Peer)
-		return false;
+		return -1;
 	ENetPacket* packet = enet_packet_create(buf, len, ENET_PACKET_FLAG_RELIABLE);
-	int rc = enet_peer_send((ENetPeer*)m_Peer, index, packet);
+	int rc = enet_peer_send((ENetPeer*)m_Peer, channel, packet);
 
-	return rc == 0;
+	return rc;
 }

@@ -73,13 +73,13 @@ public:
 	int GetUser(const std::string& id, DbUserInfo& info);
 	int UpdateUser(const DbUserInfo& info, const std::string& passwd);
 	int DeleteUser(const std::string& id);
-	int ListUsers(std::list<std::string> list);
+	int ListUsers(std::list<std::string>& list);
 
 	int AddDevice(const DbDeviceInfo& info);
 	int GetDevice(const std::string& sn, DbDeviceInfo& info);
 	int UpdateDevice(const DbDeviceInfo& info);
 	int DeleteDevice(const std::string& sn);
-	int ListDevices(std::list<std::string> list);
+	int ListDevices(std::list<std::string>& list);
 
 protected:
 	int GetClientIndex(const std::string& id);

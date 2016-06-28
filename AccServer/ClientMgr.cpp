@@ -203,7 +203,7 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd, void* rep, void* pub)
 			}
 		}
 		else {
-			m_Database.ListDevices(list);
+			m_Database.ListUsers(list);
 		}
 
 		std::string data;
@@ -285,7 +285,7 @@ int CClientMgr::RemoveMapper(const std::string & id)
 int CClientMgr::AddClient(const std::string & id)
 {
 	if (m_Clients.find(id) != m_Clients.end()) {
-		RemoveMapper(id);
+		RemoveClient(id);
 	}
 	ClientData* pData = new ClientData();
 

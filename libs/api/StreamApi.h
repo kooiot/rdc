@@ -25,9 +25,9 @@ public:
 
 public:
 	bool Connect(const char* ip, int port);
-	bool Disconnect();
+	void Disconnect();
 
-	bool SendData(int channel, const unsigned char* buf, size_t len);
+	int SendData(int channel, const unsigned char* buf, size_t len);
 private:
 	IStreamHandler& m_Handler;
 	bool m_bAbort;

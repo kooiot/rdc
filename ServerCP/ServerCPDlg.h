@@ -4,6 +4,11 @@
 
 #pragma once
 
+#include "UsersDlg.h"
+#include "DevicesDlg.h"
+#include "afxwin.h"
+#include "afxcmn.h"
+
 class koo_process;
 
 #define WM_USER_DATA WM_USER + 100
@@ -47,6 +52,15 @@ protected:
 public:
 	afx_msg HRESULT OnEventMsg(WPARAM wParam, LPARAM lParam);
 	afx_msg HRESULT OnDataMsg(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnBnClickedButtonStart();
+	afx_msg void OnBnClickedButtonStop();
 	afx_msg void OnBnClickedButtonConnect();
-	afx_msg void OnBnClickedButtonSend();
+	afx_msg void OnBnClickedButtonDisconnect();
+	afx_msg void OnBnClickedButtonUsers();
+	afx_msg void OnBnClickedButtonDevs();
+	afx_msg void OnBnClickedButtonRd();
+	afx_msg void OnBnClickedButtonRusers();
+private:
+	CListCtrl m_listDevices;
+	CListCtrl m_listUsers;
 };

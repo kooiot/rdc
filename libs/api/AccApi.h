@@ -1,8 +1,10 @@
 #pragma once
 
 #include <string>
+#include <functional>
 #include "DataDefs.h"
 
+struct KZPacket;
 class CAccApi {
 public:
 	CAccApi(void* ctx);
@@ -36,9 +38,13 @@ public:
 	// Return the Connection Channel Index
 	int CreateConnection(const ConnectionInfo* info);
 	int DestroyConnection(int index);
-
+private:
+	bool _Connect();
+	int SendRequest(KZPacket& packet, std::function< int(KZPacket&)> cb = nullptr);
 private:
 	void* m_CTX;
 	void* m_Socket;
-	std::string m_ID;
+	std::string m_Conn;
+	std::string m_User;
+	std::string m_Pass;
 };

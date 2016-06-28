@@ -122,17 +122,19 @@ int main(int argc, char* argv[])
 	if (!send_add_stream(id, req, info))
 		goto CLOSE;
 
+	printf("%s\n", "Initialized!");
 	ENetEvent event;
 	/* Wait up to 1000 milliseconds for an event. */
 	while (enet_host_service(server, &event, 1000) >= 0)
 	{
+		putc('.', stdout);
 		switch (event.type)
 		{
 		case ENET_EVENT_TYPE_CONNECT:
 		{
 			event.peer->data = (void*)event.data;
 
-			int nType = (event.data & 0xFFFF0000 >> 8);
+			int nType = ((event.data & 0xFFFF0000) >> 16);
 			int nIndex = (event.data & 0xFFFF);
 			printf("A new client %d - %d connected from %x:%u.\n", 
 				nType,
@@ -140,18 +142,21 @@ int main(int argc, char* argv[])
 				event.peer->address.host,
 				event.peer->address.port);
 			if (nType == MAPPER_TYPE) {
+				ENetPeer* pOldPeer = MapperPeers[nIndex];
 				// This is the mapper
-				if (MapperPeers[nIndex] != NULL) {
+				if (pOldPeer != NULL && pOldPeer != event.peer) {
 					printf("New mapper for index %u, disconnect old one\n", nIndex);
-					enet_peer_disconnect(MapperPeers[nIndex], -2);
+					enet_peer_disconnect(pOldPeer, -2);
 				}
 				MapperPeers[nIndex] = event.peer;
 			}
 			else if (nType == CLIENT_TYPE) {
 				// This is the client
-				if (ClientPeers[nIndex] != NULL) {
+				ENetPeer* pOldPeer = ClientPeers[nIndex];
+				// This is the mapper
+				if (pOldPeer != NULL && pOldPeer != event.peer) {
 					printf("New client for index %u, disconnect old one\n", nIndex);
-					enet_peer_disconnect(ClientPeers[nIndex], -2);
+					enet_peer_disconnect(pOldPeer, -2);
 				}
 				ClientPeers[nIndex] = event.peer;
 			}
@@ -163,7 +168,7 @@ int main(int argc, char* argv[])
 		case ENET_EVENT_TYPE_RECEIVE:
 		{
 			int data = (int)event.peer->data;
-			int nType = (data & 0xFFFF0000 >> 8);
+			int nType = ((data & 0xFFFF0000) >> 16);
 			int nIndex = (data & 0xFFFF);
 
 			printf("A packet of length %u containing %s was received from %d-%d on channel %u.\n",
@@ -178,7 +183,10 @@ int main(int argc, char* argv[])
 					enet_peer_send(client, event.channelID, event.packet);
 				}
 				else {
-					printf("No Client for this Mapper Connectionn %d\n", nIndex);
+					std::stringstream ss;
+					ss << "ERROR: No Client for this Mapper Connectionn. Index:" << nIndex << "\n";
+					ENetPacket* perr = enet_packet_create(ss.str().c_str(), ss.str().length(), ENET_PACKET_FLAG_RELIABLE);
+					enet_peer_send(event.peer, event.channelID, perr);
 				}
 			}
 			else if (nType == CLIENT_TYPE) {
@@ -187,7 +195,10 @@ int main(int argc, char* argv[])
 					enet_peer_send(mapper, event.channelID, event.packet);
 				}
 				else {
-					printf("No Mapper for this Client Connectionn %d\n", nIndex);
+					std::stringstream ss;
+					ss << "ERROR: No Mapper for this Client Connectionn. Index:" << nIndex << "\n";
+					ENetPacket* perr = enet_packet_create(ss.str().c_str(), ss.str().length(), ENET_PACKET_FLAG_RELIABLE);
+					enet_peer_send(event.peer, event.channelID, perr);
 				}
 			}
 			else {
@@ -199,7 +210,7 @@ int main(int argc, char* argv[])
 		} break;
 		case ENET_EVENT_TYPE_DISCONNECT:
 			int data = (int)event.peer->data;
-			int nType = (data & 0xFFFF0000 >> 8);
+			int nType = ((data & 0xFFFF0000) >> 16);
 			int nIndex = (data & 0xFFFF);
 			printf("%d - %d disconnected.\n", nType, nIndex);
 

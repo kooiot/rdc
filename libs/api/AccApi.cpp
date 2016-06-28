@@ -11,15 +11,23 @@
 		return -1; \
 	return atoi((char*)zmq_msg_data((zmq_msg_t*)&data.data));
 
-int SendRequest(void* socket, KZPacket& packet, std::function< int(KZPacket&)> cb = nullptr)
+int CAccApi::SendRequest(KZPacket& packet, std::function< int(KZPacket&)> cb)
 {
-	int rc = koo_zmq_send_cmd(socket, packet);
+	int rc = koo_zmq_send_cmd(m_Socket, packet);
 	if (rc == 0) {
 		KZPacket data;
-		rc = koo_zmq_recv_cmd(socket, data);
+		rc = koo_zmq_recv_cmd(m_Socket, data);
 		if (rc == 0) {
 			assert(packet.cmd == data.cmd);
 			return cb != nullptr ? cb(data) : rc;
+		}
+	}
+	if (rc != 0) {
+		int err = errno;
+		if (EAGAIN == errno) {
+			// Recreate the socket.
+			bool br = _Connect();
+			assert(br);
 		}
 	}
 	return rc;
@@ -35,27 +43,45 @@ CAccApi::~CAccApi()
 
 bool CAccApi::Connect(const char * sip, int port, const char * un, const char * pass)
 {
-	m_ID = un;
+	m_Pass = pass;
+	m_User = un;
 
 	std::stringstream ss;
 	ss << "tcp://" << sip << ":" << port;
+	m_Conn = ss.str();
+
+	return _Connect();
+}
+
+bool CAccApi::_Connect() 
+{
+	if (m_Socket != NULL) {
+		zmq_close(m_Socket);
+		m_Socket = NULL;
+	}
+
 	m_Socket = zmq_socket(m_CTX, ZMQ_REQ);
 	assert(m_Socket);
 	int timeo = 5 * 1000;
 	int rc = zmq_setsockopt(m_Socket, ZMQ_RCVTIMEO, &timeo, sizeof(int));
 	timeo = 0;
 	rc = zmq_setsockopt(m_Socket, ZMQ_LINGER, &timeo, sizeof(int));
-	rc = zmq_connect(m_Socket, ss.str().c_str());
+	rc = zmq_connect(m_Socket, m_Conn.c_str());
 	assert(rc != -1);
 
 	KZPacket login;
-	login.id = un;
+	login.id = m_User;
 	login.cmd = "LOGIN";
-	login.SetStr(pass);
+	login.SetStr(m_Pass.c_str());
 
-	rc = SendRequest(m_Socket, login, [](KZPacket& data) {
+	rc = SendRequest(login, [](KZPacket& data) {
 		RETURN_MSG_DATA_RC(data)
 	});
+
+	if (rc != 0) {
+		zmq_close(m_Socket);
+		m_Socket = NULL;
+	}
 		
 	return rc == 0;
 }
@@ -63,11 +89,11 @@ bool CAccApi::Connect(const char * sip, int port, const char * un, const char * 
 int CAccApi::Disconnect()
 {
 	KZPacket logout;
-	logout.id = m_ID;
+	logout.id = m_User;
 	logout.cmd = "LOGOUT";
 	logout.SetStr("LOGOUT");
 
-	int rc = SendRequest(m_Socket, logout);
+	int rc = SendRequest(logout);
 	zmq_close(m_Socket);
 	m_Socket = NULL;
 
@@ -77,11 +103,11 @@ int CAccApi::Disconnect()
 int CAccApi::GetStreamServer(StreamProcess * info)
 {
 	KZPacket packet;
-	packet.id = m_ID;
+	packet.id = m_User;
 	packet.cmd = "STREAM";
 	packet.SetStr("GetStreamServer");
 
-	int rc = SendRequest(m_Socket, packet, [info](KZPacket& data) {
+	int rc = SendRequest(packet, [info](KZPacket& data) {
 		memcpy(info, data.GetData(), sizeof(StreamProcess));
 		return 0;
 	});
@@ -92,11 +118,11 @@ int CAccApi::GetStreamServer(StreamProcess * info)
 int CAccApi::SendHeartbeat()
 {
 	KZPacket packet;
-	packet.id = m_ID;
+	packet.id = m_User;
 	packet.cmd = "HEARTBEAT";
 	packet.SetStr("NOW");
 
-	int rc = SendRequest(m_Socket, packet, [](KZPacket& data) {
+	int rc = SendRequest(packet, [](KZPacket& data) {
 		RETURN_MSG_DATA_RC(data)
 	});
 
@@ -106,11 +132,11 @@ int CAccApi::SendHeartbeat()
 int CAccApi::AddDevice(const DeviceInfo * info)
 {
 	KZPacket packet;
-	packet.id = m_ID;
+	packet.id = m_User;
 	packet.cmd = "ADD_DEV";
 	packet.SetData(info, sizeof(DeviceInfo));
 
-	int rc = SendRequest(m_Socket, packet, [](KZPacket& data) {
+	int rc = SendRequest(packet, [](KZPacket& data) {
 		RETURN_MSG_DATA_RC(data)
 	});
 
@@ -120,11 +146,11 @@ int CAccApi::AddDevice(const DeviceInfo * info)
 int CAccApi::ModifyDevice(const DeviceInfo * info)
 {
 	KZPacket packet;
-	packet.id = m_ID;
+	packet.id = m_User;
 	packet.cmd = "MOD_DEV";
 	packet.SetData(info, sizeof(DeviceInfo));
 
-	int rc = SendRequest(m_Socket, packet, [](KZPacket& data) {
+	int rc = SendRequest(packet, [](KZPacket& data) {
 		RETURN_MSG_DATA_RC(data)
 	});
 
@@ -134,11 +160,11 @@ int CAccApi::ModifyDevice(const DeviceInfo * info)
 int CAccApi::DeleteDevice(const char * sn)
 {
 	KZPacket packet;
-	packet.id = m_ID;
+	packet.id = m_User;
 	packet.cmd = "DEL_DEV";
 	packet.SetStr(sn);
 
-	int rc = SendRequest(m_Socket, packet, [](KZPacket& data) {
+	int rc = SendRequest(packet, [](KZPacket& data) {
 		RETURN_MSG_DATA_RC(data)
 	});
 
@@ -149,12 +175,14 @@ int CAccApi::ListDevices(DeviceInfo * list, int list_len, bool only_online)
 {
 	int i = 0;
 	KZPacket packet;
-	packet.id = m_ID;
+	packet.id = m_User;
 	packet.cmd = "LIST_DEV";
 	packet.SetStr(only_online ? "ONLINE" : "ALL");
 	auto devs = new std::vector<std::string>();
-	int rc = SendRequest(m_Socket, packet, [devs](KZPacket& data) {
-		k_str_split(data.GetStr(), *devs, "|");
+	int rc = SendRequest(packet, [devs](KZPacket& data) {
+		std::string strList = data.GetStr();
+		if (strList.length() > 2)
+			k_str_split(strList, *devs, "|");
 		return 0;
 	});
 	if (rc == 0) {
@@ -171,10 +199,10 @@ int CAccApi::ListDevices(DeviceInfo * list, int list_len, bool only_online)
 int CAccApi::GetDeviceInfo(const char * sn, DeviceInfo * info)
 {
 	KZPacket packet;
-	packet.id = m_ID;
+	packet.id = m_User;
 	packet.cmd = "DEV_INFO";
 	packet.SetStr(sn);
-	int rc = SendRequest(m_Socket, packet, [info](KZPacket& data) {
+	int rc = SendRequest(packet, [info](KZPacket& data) {
 		if (zmq_msg_size(&data.data) == sizeof(DeviceInfo)) {
 			memcpy(info, zmq_msg_data(&data.data), sizeof(DeviceInfo));
 			return 0;
@@ -188,11 +216,11 @@ int CAccApi::GetDeviceInfo(const char * sn, DeviceInfo * info)
 int CAccApi::AddUser(const UserInfo * info)
 {
 	KZPacket packet;
-	packet.id = m_ID;
+	packet.id = m_User;
 	packet.cmd = "ADD_CLINET";
 	packet.SetData(info, sizeof(UserInfo));
 
-	int rc = SendRequest(m_Socket, packet, [](KZPacket& data) {
+	int rc = SendRequest(packet, [](KZPacket& data) {
 		RETURN_MSG_DATA_RC(data)
 	});
 
@@ -202,11 +230,11 @@ int CAccApi::AddUser(const UserInfo * info)
 int CAccApi::ModifyUser(const UserInfo * info)
 {
 	KZPacket packet;
-	packet.id = m_ID;
+	packet.id = m_User;
 	packet.cmd = "MOD_CLINET";
 	packet.SetData(info, sizeof(UserInfo));
 
-	int rc = SendRequest(m_Socket, packet, [](KZPacket& data) {
+	int rc = SendRequest(packet, [](KZPacket& data) {
 		RETURN_MSG_DATA_RC(data)
 	});
 
@@ -216,11 +244,11 @@ int CAccApi::ModifyUser(const UserInfo * info)
 int CAccApi::DeleteUser(const char * id)
 {
 	KZPacket packet;
-	packet.id = m_ID;
+	packet.id = m_User;
 	packet.cmd = "DEL_CLINET";
 	packet.SetStr(id);
 
-	int rc = SendRequest(m_Socket, packet, [](KZPacket& data) {
+	int rc = SendRequest(packet, [](KZPacket& data) {
 		RETURN_MSG_DATA_RC(data)
 	});
 
@@ -231,12 +259,14 @@ int CAccApi::ListUsers(UserInfo * list, int list_len, bool only_online)
 {
 	int i = 0;
 	KZPacket packet;
-	packet.id = m_ID;
+	packet.id = m_User;
 	packet.cmd = "LIST_CLIENT";
 	packet.SetStr(only_online ? "ONLINE" : "ALL");
 	auto devs = new std::vector<std::string>();
-	int rc = SendRequest(m_Socket, packet, [devs](KZPacket& data) {
-		k_str_split(data.GetStr(), *devs, "|");
+	int rc = SendRequest(packet, [devs](KZPacket& data) {
+		std::string strList = data.GetStr();
+		if (strList.length() > 2)
+			k_str_split(strList, *devs, "|");
 		return 0;
 	});
 	if (rc == 0) {
@@ -253,10 +283,10 @@ int CAccApi::ListUsers(UserInfo * list, int list_len, bool only_online)
 int CAccApi::GetUserInfo(const char * id, UserInfo * info)
 {
 	KZPacket packet;
-	packet.id = m_ID;
+	packet.id = m_User;
 	packet.cmd = "CLIENT_INFO";
 	packet.SetStr(id);
-	int rc = SendRequest(m_Socket, packet, [info](KZPacket& data) {
+	int rc = SendRequest(packet, [info](KZPacket& data) {
 		if (zmq_msg_size(&data.data) == sizeof(UserInfo)) {
 			memcpy(info, zmq_msg_data(&data.data), sizeof(UserInfo));
 			return 0;
@@ -270,7 +300,7 @@ int CAccApi::GetUserInfo(const char * id, UserInfo * info)
 int CAccApi::Allow(const char * id, const char * devsn, time_t valid_time)
 {
 	KZPacket packet;
-	packet.id = m_ID;
+	packet.id = m_User;
 	packet.cmd = "ALLOW";
 	AllowInfo info;
 	memcpy(info.ID, id, RC_MAX_ID_LEN);
@@ -278,7 +308,7 @@ int CAccApi::Allow(const char * id, const char * devsn, time_t valid_time)
 	info.ValidTime = valid_time;
 	packet.SetData(&info, sizeof(AllowInfo));
 
-	int rc = SendRequest(m_Socket, packet, [](KZPacket& data) {
+	int rc = SendRequest(packet, [](KZPacket& data) {
 		RETURN_MSG_DATA_RC(data)
 	});
 
@@ -288,14 +318,14 @@ int CAccApi::Allow(const char * id, const char * devsn, time_t valid_time)
 int CAccApi::Deny(const char * id, const char * devsn)
 {
 	KZPacket packet;
-	packet.id = m_ID;
+	packet.id = m_User;
 	packet.cmd = "DENY";
 	DenyInfo info;
 	memcpy(info.ID, id, RC_MAX_ID_LEN);
 	memcpy(info.DevSN, devsn, RC_MAX_SN_LEN);
 	packet.SetData(&info, sizeof(DenyInfo));
 
-	int rc = SendRequest(m_Socket, packet, [](KZPacket& data) {
+	int rc = SendRequest(packet, [](KZPacket& data) {
 		RETURN_MSG_DATA_RC(data)
 	});
 
@@ -305,11 +335,11 @@ int CAccApi::Deny(const char * id, const char * devsn)
 int CAccApi::CreateConnection(const ConnectionInfo * info)
 {
 	KZPacket packet;
-	packet.id = m_ID;
+	packet.id = m_User;
 	packet.cmd = "CREATE";
 	packet.SetData(&info, sizeof(ConnectionInfo));
 
-	int rc = SendRequest(m_Socket, packet, [](KZPacket& data) {
+	int rc = SendRequest(packet, [](KZPacket& data) {
 		RETURN_MSG_DATA_RC(data)
 	});
 
@@ -319,13 +349,13 @@ int CAccApi::CreateConnection(const ConnectionInfo * info)
 int CAccApi::DestroyConnection(int index)
 {
 	KZPacket packet;
-	packet.id = m_ID;
+	packet.id = m_User;
 	packet.cmd = "DESTROY";
 	std::stringstream ss;
 	ss << index;
 	packet.SetStr(ss.str().c_str());
 
-	int rc = SendRequest(m_Socket, packet, [](KZPacket& data) {
+	int rc = SendRequest(packet, [](KZPacket& data) {
 		RETURN_MSG_DATA_RC(data)
 	});
 

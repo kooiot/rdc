@@ -65,6 +65,10 @@ bool CheckValidTime(const std::string& valid_time) {
 	return valid > now;
 }
 
+inline std::string SQL2STD_STRING(const char* sql) {
+	return std::string(sql != NULL ? sql : "");
+}
+
 
 DbUserInfo::DbUserInfo() : Index(INVALID_INDEX), Level(1)
 {
@@ -160,6 +164,8 @@ static const char* CREATE_PERMISSIONS = ""
 "[valid_time] TIMESTAMP  NULL"
 ")";
 
+static const char* CREATE_ADMIN = ""
+"INSERT INTO [users] (id,name,desc,passwd,level) VALUES('admin','管理员','系统管理员','admin',99)";
 
 CAccDatabase::CAccDatabase() : m_pDB(nullptr)
 {
@@ -188,6 +194,7 @@ int CAccDatabase::Init()
 		if (rc != SQLITE_OK)
 			std::cerr << "CREATE_PERMISSIONS Error: " << sqlite3_errmsg(m_pDB) << std::endl;
 		assert(rc == SQLITE_OK);
+		rc = sqlite3_exec(m_pDB, CREATE_ADMIN, NULL, NULL, NULL);
 	}
 	else {
 		std::cerr << "Failed open file:" << db_file << std::endl;
@@ -345,7 +352,7 @@ int CAccDatabase::AddUser(const DbUserInfo& info, const std::string & passwd)
 	m_Lock.lock();
 
 	std::stringstream sql;
-	sql << "insert into users (level,id,name,desc,passwd,email,phone,create_time,valid_time)";
+	sql << "insert into users (level,id,name,desc,passwd,email,phone,valid_time)";
 	sql << "values(" << info.Level << ",";
 	sql << "'" << info.ID << "',";
 	sql << "'" << info.Name << "',";
@@ -353,8 +360,10 @@ int CAccDatabase::AddUser(const DbUserInfo& info, const std::string & passwd)
 	sql << "'" << passwd << "',";
 	sql << "'" << info.Email << "',";
 	sql << "'" << info.Phone << "',";
-	sql << "'" << time2str(&info.CreateTime) << "',";
-	sql << "'" << time2str(&info.ValidTime) << "')";
+	if (info.ValidTime != -1)
+		sql << "'" << time2str(&info.ValidTime) << "')";
+	else
+		sql << "NULL)";
 
 	int rc = sqlite3_exec(m_pDB, sql.str().c_str(), NULL, NULL, NULL);
 	if (rc != SQLITE_OK)
@@ -376,7 +385,7 @@ int CAccDatabase::GetUser(const std::string & id, DbUserInfo& info)
 
 	info.Index = INVALID_INDEX;
 	std::stringstream sql;
-	sql << "select index,level,id,name,desc,email,phone,create_time,valid_time from users ";
+	sql << "select `index`,level,id,name,desc,email,phone,create_time,valid_time from users ";
 	sql << "where id = '" << id << "'";
 
 	int rc = sqlite3_exec(m_pDB, sql.str().c_str(), [](void* data, int row, char** vals, char** cols) {
@@ -385,13 +394,13 @@ int CAccDatabase::GetUser(const std::string & id, DbUserInfo& info)
 			int i = 0;
 			pInfo->Index = atoi(vals[i++]);
 			pInfo->Level = atoi(vals[i++]);
-			pInfo->ID = std::string(vals[i++]);
-			pInfo->Name = std::string(vals[i++]);
-			pInfo->Desc = std::string(vals[i++]);
-			pInfo->Email = std::string(vals[i++]);
-			pInfo->Phone = std::string(vals[i++]);
-			pInfo->CreateTime = str2time(std::string(vals[i++]));
-			pInfo->ValidTime = str2time(std::string(vals[i++]));
+			pInfo->ID = SQL2STD_STRING(vals[i++]);
+			pInfo->Name = SQL2STD_STRING(vals[i++]);
+			pInfo->Desc = SQL2STD_STRING(vals[i++]);
+			pInfo->Email = SQL2STD_STRING(vals[i++]);
+			pInfo->Phone = SQL2STD_STRING(vals[i++]);
+			pInfo->CreateTime = str2time(SQL2STD_STRING(vals[i++]));
+			pInfo->ValidTime = str2time(SQL2STD_STRING(vals[i++]));
 		}
 		catch (...) {
 			return -1;
@@ -419,16 +428,18 @@ int CAccDatabase::UpdateUser(const DbUserInfo& info, const std::string & passwd)
 	m_Lock.lock();
 
 	std::stringstream sql;
-	sql << "replace into users (level,id,name,desc,passwd,email,phone,create_time,valid_time)";
+	sql << "replace into users (level,id,name,desc,passwd,email,phone,valid_time)";
 	sql << "values(" << info.Level << ",";
 	sql << "'" << info.Name << "',";
 	sql << "'" << info.Desc << "',";
 	sql << "'" << passwd << "',";
 	sql << "'" << info.Email << "',";
 	sql << "'" << info.Phone << "',";
-	sql << "'" << time2str(&info.CreateTime) << "',";
-	sql << "'" << time2str(&info.ValidTime) << "')";
-	sql << " where index=" << info.Index;
+	if (info.ValidTime != -1)
+		sql << "'" << time2str(&info.ValidTime) << "')";
+	else
+		sql << "NULL)";
+	sql << " where `index`=" << info.Index;
 
 	int rc = sqlite3_exec(m_pDB, sql.str().c_str(), NULL, NULL, NULL);
 	if (rc != SQLITE_OK)
@@ -458,7 +469,7 @@ int CAccDatabase::DeleteUser(const std::string & id)
 	return rc;
 }
 
-int CAccDatabase::ListUsers(std::list<std::string> list)
+int CAccDatabase::ListUsers(std::list<std::string>& list)
 {
 	if (!m_pDB)
 		return AUTH_ERROR;
@@ -489,12 +500,14 @@ int CAccDatabase::AddDevice(const DbDeviceInfo& info)
 	m_Lock.lock();
 
 	std::stringstream sql;
-	sql << "insert into devices (sn,name,desc,create_time,valid_time)";
+	sql << "insert into devices (sn,name,desc,valid_time)";
 	sql << "values('" << info.SN << "',";
 	sql << "'" << info.Name << "',";
 	sql << "'" << info.Desc << "',";
-	sql << "'" << time2str(&info.CreateTime) << "',";
-	sql << "'" << time2str(&info.ValidTime) << "')";
+	if (info.ValidTime != -1)
+		sql << "'" << time2str(&info.ValidTime) << "')";
+	else
+		sql << "NULL)";
 
 	int rc = sqlite3_exec(m_pDB, sql.str().c_str(), NULL, NULL, NULL);
 	if (rc != SQLITE_OK)
@@ -517,18 +530,18 @@ int CAccDatabase::GetDevice(const std::string & sn, DbDeviceInfo& info)
 
 	info.Index = INVALID_INDEX;
 	std::stringstream sql;
-	sql << "select index,sn,name,desc,create_time,valid_time from devices where sn='" << sn << "'";
+	sql << "select `index`,sn,name,desc,create_time,valid_time from devices where sn='" << sn << "'";
 
 	int rc = sqlite3_exec(m_pDB, sql.str().c_str(), [](void* data, int row, char** vals, char** cols) {
 		DbDeviceInfo * pInfo = (DbDeviceInfo*)data;
 		try {
 			int i = 0;
 			pInfo->Index = atoi(vals[i++]);
-			pInfo->SN = std::string(vals[i++]);
-			pInfo->Name = std::string(vals[i++]);
-			pInfo->Desc = std::string(vals[i++]);
-			pInfo->CreateTime = str2time(std::string(vals[i++]));
-			pInfo->ValidTime = str2time(std::string(vals[i++]));
+			pInfo->SN = SQL2STD_STRING(vals[i++]);
+			pInfo->Name = SQL2STD_STRING(vals[i++]);
+			pInfo->Desc = SQL2STD_STRING(vals[i++]);
+			pInfo->CreateTime = str2time(SQL2STD_STRING(vals[i++]));
+			pInfo->ValidTime = str2time(SQL2STD_STRING(vals[i++]));
 		}
 		catch (...) {
 			return -1;
@@ -556,13 +569,15 @@ int CAccDatabase::UpdateDevice(const DbDeviceInfo& info)
 	m_Lock.lock();
 
 	std::stringstream sql;
-	sql << "replace into devices (sn,name,desc,create_time,valid_time)";
+	sql << "replace into devices (sn,name,desc,valid_time)";
 	sql << "values('" << info.SN << "',";
 	sql << "'" << info.Name << "',";
 	sql << "'" << info.Desc << "',";
-	sql << "'" << time2str(&info.CreateTime) << "',";
-	sql << "'" << time2str(&info.ValidTime) << "')";
-	sql << " where index=" << info.Index;
+	if (info.ValidTime != -1)
+		sql << "'" << time2str(&info.ValidTime) << "')";
+	else
+		sql << "NULL)";
+	sql << " where `index`=" << info.Index;
 
 	int rc = sqlite3_exec(m_pDB, sql.str().c_str(), NULL, NULL, NULL);
 	if (rc != SQLITE_OK)
@@ -592,7 +607,7 @@ int CAccDatabase::DeleteDevice(const std::string & sn)
 	return rc;
 }
 
-int CAccDatabase::ListDevices(std::list<std::string> list)
+int CAccDatabase::ListDevices(std::list<std::string>& list)
 {
 	if (!m_pDB)
 		return AUTH_ERROR;

@@ -53,7 +53,8 @@ END_MESSAGE_MAP()
 
 CServerCPDlg::CServerCPDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(IDD_SERVERCP_DIALOG, pParent),
-	m_pProcess(NULL)
+	m_pProcess(NULL),
+	m_pMapperProcess(NULL)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -61,6 +62,8 @@ CServerCPDlg::CServerCPDlg(CWnd* pParent /*=NULL*/)
 void CServerCPDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_LIST_ONLINE_DEVCIES, m_listDevices);
+	DDX_Control(pDX, IDC_LIST_ONLINE_USERS, m_listUsers);
 }
 
 BEGIN_MESSAGE_MAP(CServerCPDlg, CDialogEx)
@@ -70,8 +73,14 @@ BEGIN_MESSAGE_MAP(CServerCPDlg, CDialogEx)
 	ON_WM_CLOSE()
 	ON_MESSAGE(WM_USER_EVENT, &CServerCPDlg::OnEventMsg)
 	ON_MESSAGE(WM_USER_DATA, &CServerCPDlg::OnDataMsg)
+	ON_BN_CLICKED(IDC_BUTTON_START, &CServerCPDlg::OnBnClickedButtonStart)
+	ON_BN_CLICKED(IDC_BUTTON_STOP, &CServerCPDlg::OnBnClickedButtonStop)
 	ON_BN_CLICKED(IDC_BUTTON_CONNECT, &CServerCPDlg::OnBnClickedButtonConnect)
-	ON_BN_CLICKED(IDC_BUTTON_SEND, &CServerCPDlg::OnBnClickedButtonSend)
+	ON_BN_CLICKED(IDC_BUTTON_DISCONNECT, &CServerCPDlg::OnBnClickedButtonDisconnect)
+	ON_BN_CLICKED(IDC_BUTTON_USERS, &CServerCPDlg::OnBnClickedButtonUsers)
+	ON_BN_CLICKED(IDC_BUTTON_DEVS, &CServerCPDlg::OnBnClickedButtonDevs)
+	ON_BN_CLICKED(IDC_BUTTON_RD, &CServerCPDlg::OnBnClickedButtonRd)
+	ON_BN_CLICKED(IDC_BUTTON_RUSERS, &CServerCPDlg::OnBnClickedButtonRusers)
 END_MESSAGE_MAP()
 
 
@@ -120,10 +129,13 @@ BOOL CServerCPDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
-	m_pProcess = new koo_process("AccServer", "", "AccServer.exe", "", true);
-	m_pProcess->start();
-	m_pMapperProcess = new koo_process("Mapper", "", "Mapper.exe", "", true);
-	m_pMapperProcess->start();
+	m_listDevices.InsertColumn(0, "Name", LVCFMT_LEFT, 60);
+	m_listDevices.InsertColumn(1, "Desc", LVCFMT_LEFT, 120);
+	m_listDevices.InsertColumn(2, "SN", LVCFMT_LEFT, 120);
+
+	m_listUsers.InsertColumn(0, "ID", LVCFMT_LEFT, 60);
+	m_listUsers.InsertColumn(1, "Name", LVCFMT_LEFT, 120);
+	m_listUsers.InsertColumn(2, "Desc", LVCFMT_LEFT, 120);
 
 	m_CTX = zmq_ctx_new();
 
@@ -177,9 +189,10 @@ void CServerCPDlg::OnClose()
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
 	if (m_pMapperProcess)
 		m_pMapperProcess->stop();
-	if (m_pProcess)
+	if (m_pProcess) {
 		m_pProcess->stop();
-	k_kill_process("StreamServer.exe");
+		k_kill_process("StreamServer.exe");
+	}
 	CDialogEx::OnClose();
 }
 
@@ -206,8 +219,36 @@ HRESULT CServerCPDlg::OnDataMsg(WPARAM wParam, LPARAM lParam)
 	int channel = (int)wParam;
 	std::string* p = (std::string*)lParam;
 
+	
+
 	delete p;
 	return 0L;
+}
+
+
+void CServerCPDlg::OnBnClickedButtonStart()
+{
+	if (m_pProcess)
+		return;
+
+	m_pProcess = new koo_process("AccServer", "", "AccServer.exe", "", true);
+	m_pProcess->start();
+
+	//m_pMapperProcess = new koo_process("Mapper", "", "Mapper.exe", "", true);
+	//m_pMapperProcess->start();
+}
+
+
+void CServerCPDlg::OnBnClickedButtonStop()
+{
+	if (m_pMapperProcess)
+		m_pMapperProcess->stop();
+	if (m_pProcess)
+		m_pProcess->stop();
+	delete m_pMapperProcess;
+	m_pMapperProcess = NULL;
+	delete m_pProcess;
+	m_pProcess = NULL;
 }
 
 void CServerCPDlg::OnBnClickedButtonConnect()
@@ -224,6 +265,8 @@ void CServerCPDlg::OnBnClickedButtonConnect()
 			br = m_pStreamApi->Connect(sp.StreamIP, sp.Port);
 			if (br) {
 				MessageBox("Stream Connected");
+				rc = m_pStreamApi->SendData(0, (unsigned char *)"Hello World", strlen("Hello World"));
+				assert(rc >= 0);
 			}
 			else {
 				MessageBox("Stream Faied");
@@ -236,7 +279,43 @@ void CServerCPDlg::OnBnClickedButtonConnect()
 }
 
 
-void CServerCPDlg::OnBnClickedButtonSend()
+void CServerCPDlg::OnBnClickedButtonDisconnect()
+{
+	if (m_pStreamApi)
+		m_pStreamApi->Disconnect();
+	delete m_pStreamApi;
+	m_pStreamApi = NULL;
+	if (m_pAccApi)
+		m_pAccApi->Disconnect();
+	delete m_pAccApi;
+	m_pAccApi = NULL;
+}
+
+
+void CServerCPDlg::OnBnClickedButtonUsers()
+{
+	CUsersDlg dlg;
+	dlg.m_pAccApi = m_pAccApi;
+	dlg.DoModal();
+}
+
+
+void CServerCPDlg::OnBnClickedButtonDevs()
+{
+	CDevicesDlg dlg;
+	dlg.m_pAccApi = m_pAccApi;
+	dlg.DoModal();
+}
+
+
+void CServerCPDlg::OnBnClickedButtonRd()
 {
 	// TODO: 在此添加控件通知处理程序代码
 }
+
+
+void CServerCPDlg::OnBnClickedButtonRusers()
+{
+	// TODO: 在此添加控件通知处理程序代码
+}
+
