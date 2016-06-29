@@ -6,30 +6,25 @@
 #include "AccDatabase.h"
 #include <koo_zmq_helpers.h>
 
-#define MAX_CLIENT_CONNECTION 32
 #define CLIENT_HEARTBEAT_TIME 30
 #define MAPPER_HEARTBEAT_TIME 120
 
 struct ClientData;
-typedef std::map<std::string, ClientData*> ResourceMap;
 struct MapperData {
 	std::string ID;
 	int Heartbeat;
-	// Resource Key, Client Pointer
-	ResourceMap Resources;
 };
 
 struct ConnectionData {
 	int Channel;
 	MapperData* Mapper;
-	std::string Resource;
 };
 
 struct ClientData {
 	std::string ID;
 	int Heartbeat;
 	StreamProcess* StreamServer;
-	ConnectionData Connections[MAX_CLIENT_CONNECTION];
+	ConnectionData* Connections[RC_MAX_CONNECTION];
 };
 
 class CClientMgr
@@ -45,7 +40,8 @@ public:
 	void OnTimer(int nTime);
 
 private:
-	void HandleKZPacket(const KZPacket& cmd, void* rep, void* pub);
+	void HandleKZPacket(const KZPacket& cmd);
+	int SendToMapper(const std::string& id, const std::string& cmd, void* data, size_t len);
 
 private:
 	int AddMapper(const std::string& id);
@@ -55,6 +51,10 @@ private:
 	int UpdateMapperHearbeat(const std::string& id);
 	int UpdateClientHearbeat(const std::string& id);
 
+	// Return channel index
+	int AllocStream(const std::string& id, const std::string& mapper_id);
+	MapperData* FindStream(const std::string& id, int channel);
+	int FreeStream(const std::string& id, int channel);
 private:
 	void* m_pReply;
 	void* m_pPublish;

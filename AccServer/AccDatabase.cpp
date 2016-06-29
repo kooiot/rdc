@@ -114,7 +114,7 @@ DbDeviceInfo::DbDeviceInfo() : Index(INVALID_INDEX)
 void DbDeviceInfo::ToDeviceInfo(DeviceInfo & info)
 {
 	info.Index = Index;
-	memcpy(info.SN, SN.c_str(), RC_MAX_ID_LEN);
+	memcpy(info.SN, SN.c_str(), RC_MAX_SN_LEN);
 	memcpy(info.Name, Name.c_str(), RC_MAX_NAME_LEN);
 	memcpy(info.Desc, Desc.c_str(), RC_MAX_DESC_LEN);
 	info.CreateTime = CreateTime;

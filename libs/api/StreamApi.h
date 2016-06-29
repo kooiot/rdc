@@ -1,12 +1,7 @@
 #pragma once
 #include <thread>
+#include "DataDefs.h"
 
-enum StreamEvent {
-	SE_CONNECT,
-	SE_DISCONNECT,
-	SE_CLOSE,
-	SE_TIMEOUT,
-};
 class IStreamHandler
 {
 public:

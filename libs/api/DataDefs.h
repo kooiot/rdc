@@ -67,6 +67,7 @@ extern "C" {
 	};
 	struct ConnectionInfo {
 		ConnectionType Type;
+		int Channel;
 		char DevSN[RC_MAX_SN_LEN];
 		union {
 			SerialInfo Serial;
@@ -121,6 +122,12 @@ extern "C" {
 #define S_SUCCESS	"__SUCCESS__"
 #define S_FAILED	"__FAILED__"
 
+	enum StreamEvent {
+		SE_CONNECT,
+		SE_DISCONNECT,
+		SE_CLOSE,
+		SE_TIMEOUT,
+	};
 #ifdef __cplusplus
 }
 #endif

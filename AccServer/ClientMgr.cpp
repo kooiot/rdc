@@ -61,7 +61,7 @@ void CClientMgr::Close()
 	zmq_close(m_pPublish);
 }
 
-void CClientMgr::HandleKZPacket(const KZPacket& cmd, void* rep, void* pub)
+void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 {
 	std::cout << __FUNCTION__ << ": " << cmd.id << "\t" << cmd.cmd << std::endl;
 
@@ -87,6 +87,8 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd, void* rep, void* pub)
 			UpdateMapperHearbeat(cmd.GetStr());
 		else
 			UpdateClientHearbeat(cmd.id);
+		/*if (cmd.id == "@DEVICE@")
+			SendToMapper(cmd.GetStr(), "XXXXX", "XXXX", strlen("XXXX"));*/
 	}
 	else if (cmd.cmd == "LOGOUT") {
 		nReturn = 0;
@@ -102,29 +104,38 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd, void* rep, void* pub)
 		if (pData && pData->StreamServer) {
 			memcpy(&info, pData->StreamServer, sizeof(StreamProcess));
 		}
-		int rc = koo_zmq_send_reply(rep, cmd, &info, sizeof(StreamProcess));
+		int rc = koo_zmq_send_reply(m_pReply, cmd, &info, sizeof(StreamProcess));
 		assert(rc == 0);
 		return;
 	}
 	else if (cmd.cmd == "CREATE") {
 		ConnectionInfo info;
-		int index = -1;
+		int channel = -99;
 		memcpy(&info, cmd.GetData(), sizeof(ConnectionInfo));
 		if (m_Database.Access(cmd.id, info.DevSN)) {
-			// FIXME:
-			index = 0;
+			channel = AllocStream(cmd.id, info.DevSN);
+			if (channel >= 0) {
+				std::cout << "Create Stream Channel " << channel << std::endl;
+				SendToMapper(info.DevSN, "CREATE", &info, sizeof(ConnectionInfo));
+			}
 		}
 		std::stringstream ss;
-		ss << index;
-		int rc = koo_zmq_send_reply(rep, cmd, ss.str());
+		ss << channel;
+		int rc = koo_zmq_send_reply(m_pReply, cmd, ss.str());
 		assert(rc == 0);
 		return;
 	}
 	else if (cmd.cmd == "DESTROY") {
-		int index = atoi(cmd.GetStr().c_str());
-		if (index > 0 && index < RC_MAX_CONNECTION) {
-			// FIXME:
-			nReturn = 0;
+		int channel = atoi(cmd.GetStr().c_str());
+		if (channel > 0 && channel < RC_MAX_CONNECTION) {
+			MapperData* pMapper = FindStream(cmd.id, channel);
+			if (pMapper) {
+				nReturn = FreeStream(cmd.id, channel);
+				if (nReturn == 0) {
+					std::cout << "Destroy Stream Channel " << channel << std::endl;
+					SendToMapper(pMapper->ID, "DESTROY", &channel, sizeof(int));
+				}
+			}
 		}
 	}
 	else if (cmd.cmd == "ADD_DEV") {
@@ -160,7 +171,7 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd, void* rep, void* pub)
 		for (; ptr != list.end(); ++ptr, data += "|") {
 			data += *ptr;
 		}
-		int rc = koo_zmq_send_reply(rep, cmd, data);
+		int rc = koo_zmq_send_reply(m_pReply, cmd, data);
 		assert(rc == 0);
 		return;
 	}
@@ -175,7 +186,7 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd, void* rep, void* pub)
 		DeviceInfo info;
 		memset(&info, 0, sizeof(DeviceInfo));
 		dbInfo.ToDeviceInfo(info);
-		koo_zmq_send_reply(rep, cmd, &info, sizeof(DeviceInfo));
+		koo_zmq_send_reply(m_pReply, cmd, &info, sizeof(DeviceInfo));
 		return;
 	}
 	else if (cmd.cmd == "ADD_CLIENT") {
@@ -211,7 +222,7 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd, void* rep, void* pub)
 		for (; ptr != list.end(); ++ptr, data += "|") {
 			data += *ptr;
 		}
-		int rc = koo_zmq_send_reply(rep, cmd, data);
+		int rc = koo_zmq_send_reply(m_pReply, cmd, data);
 		assert(rc == 0);
 		return;
 	}
@@ -225,7 +236,7 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd, void* rep, void* pub)
 		UserInfo info;
 		memset(&info, 0, sizeof(UserInfo));
 		dbInfo.ToUserInfo(info);
-		koo_zmq_send_reply(rep, cmd, &info, sizeof(UserInfo));
+		koo_zmq_send_reply(m_pReply, cmd, &info, sizeof(UserInfo));
 		return;
 	}
 	else {
@@ -235,7 +246,23 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd, void* rep, void* pub)
 	std::cout << "SEND REPLY: " << cmd.id << "\t" << cmd.cmd << "\t" << nReturn << std::endl;
 	std::stringstream ss;
 	ss << nReturn;
-	koo_zmq_send_reply(rep, cmd, ss.str());
+	koo_zmq_send_reply(m_pReply, cmd, ss.str());
+}
+
+int CClientMgr::SendToMapper(const std::string & id, const std::string & cmd, void * data, size_t len)
+{
+	std::string filter = id + " " + cmd;
+	std::cout << "Publish to Mapper " << filter << "\t" << filter.length() << "-" << filter.size() << std::endl;
+	int rc = zmq_send(m_pPublish, filter.c_str(), filter.length(), ZMQ_SNDMORE);
+	if (rc == -1) {
+		std::cerr << "PUBLISH Failed filter: " << filter << std::endl;
+		return rc;
+	}
+	rc = zmq_send(m_pPublish, data, len, 0);
+	if (rc == -1) {
+		std::cerr << "PUBLISH Failed Data: " << std::endl;
+	}
+	return rc;
 }
 
 void CClientMgr::OnRecv()
@@ -243,7 +270,7 @@ void CClientMgr::OnRecv()
 	KZPacket cmd;
 	int rc = koo_zmq_recv_cmd(m_pReply, cmd);
 	if (rc == 0) {
-		HandleKZPacket(cmd, m_pReply, m_pPublish);
+		HandleKZPacket(cmd);
 	}
 }
 
@@ -266,23 +293,24 @@ int CClientMgr::RemoveMapper(const std::string & id)
 	MapperMap::iterator ptr = m_Mappers.find(id);
 	if (ptr == m_Mappers.end())
 		return -1;
+	MapperData* pMapper = ptr->second;
 
-	ResourceMap& Resources = ptr->second->Resources;
-	ResourceMap::iterator cptr = Resources.begin();
-	for (; cptr != Resources.end(); ++cptr) {
+	ClientMap::iterator cptr = m_Clients.begin();
+	for (; cptr != m_Clients.end(); ++cptr) {
 		ClientData* pClient = cptr->second;
 		if (pClient != NULL) {
-			for (int i = 0; i < MAX_CLIENT_CONNECTION; ++i) {
-				ConnectionData& Data = pClient->Connections[i];
-				if (Data.Mapper == ptr->second) {
-					Data.Mapper = NULL;
-					Data.Resource = "";
+			for (int i = 0; i < RC_MAX_CONNECTION; ++i) {
+				ConnectionData* Data = pClient->Connections[i];
+				if (Data && Data->Mapper == ptr->second) {
+					delete Data;
+					pClient->Connections[i] = NULL;
 				}
 			}
 		}
 	}
 
-	delete ptr->second;
+	delete pMapper;
+	m_Mappers.erase(ptr);
 	return 0;
 }
 
@@ -306,11 +334,8 @@ int CClientMgr::RemoveClient(const std::string & id)
 	if (ptr == m_Clients.end())
 		return -1;
 
-	for (int i = 0; i < MAX_CLIENT_CONNECTION; ++i){
-		ConnectionData& Conn = ptr->second->Connections[i];
-		if (Conn.Mapper != NULL) {
-			Conn.Mapper->Resources[Conn.Resource] = NULL;
-		}
+	for (int i = 0; i < RC_MAX_CONNECTION; ++i){
+		delete ptr->second->Connections[i];
 	}
 
 	StreamProcess* StreamServer = ptr->second->StreamServer;
@@ -336,6 +361,50 @@ int CClientMgr::UpdateClientHearbeat(const std::string & id)
 		return -1;
 	ptr->second->Heartbeat = ::GetCurrentTime();
 	return 0;
+}
+
+int CClientMgr::AllocStream(const std::string & id, const std::string & mapper_id)
+{
+	ClientMap::iterator ptr = m_Clients.find(id);
+	if (ptr == m_Clients.end())
+		return -1;
+	MapperMap::iterator mptr = m_Mappers.find(id);
+	if (mptr == m_Mappers.end())
+		return -1;
+
+	ClientData* pClient = ptr->second;
+	MapperData* pMapper = mptr->second;
+
+	for (int i = 0; i < RC_MAX_CONNECTION; ++i) {
+		if (!pClient->Connections[i]) {
+			pClient->Connections[i] = new ConnectionData();
+			pClient->Connections[i]->Channel = i;
+			pClient->Connections[i]->Mapper = pMapper;
+			return i;
+		}
+	}
+	return -1;
+}
+
+MapperData * CClientMgr::FindStream(const std::string & id, int channel)
+{
+	return nullptr;
+}
+
+int CClientMgr::FreeStream(const std::string& id, int channel)
+{
+	ClientMap::iterator ptr = m_Clients.find(id);
+	if (ptr == m_Clients.end())
+		return -1;
+	
+	ClientData* pClient = ptr->second;
+
+	if (!pClient->Connections[channel]) {
+		delete pClient->Connections[channel];
+		pClient->Connections[channel] = NULL;
+		return 0;
+	}
+	return -1;
 }
 
 void CClientMgr::OnTimer(int nTime)

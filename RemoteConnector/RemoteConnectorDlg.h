@@ -4,6 +4,7 @@
 
 #pragma once
 #include "afxwin.h"
+#include "afxcmn.h"
 
 
 // CRemoteConnectorDlg ¶Ô»°¿ò
@@ -40,4 +41,5 @@ public:
 	afx_msg void OnBnClickedButtonListdev();
 	CEdit m_editIP;
 	CEdit m_editPort;
+	CListCtrl m_listDevs;
 };

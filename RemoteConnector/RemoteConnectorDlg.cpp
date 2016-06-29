@@ -61,6 +61,7 @@ void CRemoteConnectorDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_EDIT_IP, m_editIP);
 	DDX_Control(pDX, IDC_EDIT_PORT, m_editPort);
+	DDX_Control(pDX, IDC_LIST_DEV, m_listDevs);
 }
 
 BEGIN_MESSAGE_MAP(CRemoteConnectorDlg, CDialogEx)
@@ -109,6 +110,11 @@ BOOL CRemoteConnectorDlg::OnInitDialog()
 	m_editIP.SetWindowText("127.0.0.1");
 	m_editPort.SetWindowText("6600");
 	RC_Init();
+
+	m_listDevs.InsertColumn(0, "Name", LVCFMT_LEFT, 120);
+	m_listDevs.InsertColumn(1, "SN", LVCFMT_LEFT, 240);
+	m_listDevs.InsertColumn(2, "Desc", LVCFMT_LEFT, 240);
+	m_listDevs.SetExtendedStyle(m_listDevs.GetExtendedStyle() | LVS_EX_FULLROWSELECT);
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -201,10 +207,14 @@ void CRemoteConnectorDlg::OnBnClickedButtonDisconnect()
 
 void CRemoteConnectorDlg::OnBnClickedButtonListdev()
 {
-	DeviceInfo* pInfo = new DeviceInfo[1024];
-	int num = RC_ListDevices(m_hApi, pInfo, 1024);
+	DeviceInfo* pInfo = new DeviceInfo[2048];
+	int num = RC_ListDevices(m_hApi, pInfo, 2048);
 	if (num >= 0) {
-		MessageBox("OK");
+		for (int i = 0; i < num; ++i) {
+			int n = m_listDevs.InsertItem(i, pInfo[i].Name);
+			m_listDevs.SetItemText(n, 1, pInfo[i].SN);
+			m_listDevs.SetItemText(n, 2, pInfo[i].Desc);
+		}
 	}
 	else {
 		MessageBox("Failed");

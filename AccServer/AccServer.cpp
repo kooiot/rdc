@@ -69,13 +69,14 @@ int main(int argc, char* argv[])
 			{ sm_skt,   0, ZMQ_POLLIN, 0 },
 			{ cli_skt,   0, ZMQ_POLLIN, 0 },
 		};
-		zmq_poll(items, 2, -1);
+		zmq_poll(items, 2, 1000);
 		if (items[0].revents & ZMQ_POLLIN) {
 			StreamMgr.OnRecv();
 		}
 		if (items[1].revents & ZMQ_POLLIN) {
 			ClientMgr.OnRecv();
 		}
+		ClientMgr.OnTimer(time(NULL));
 	}
 
 	on_close();

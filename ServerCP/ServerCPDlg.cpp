@@ -262,8 +262,8 @@ void CServerCPDlg::OnBnClickedButtonStart()
 	m_pProcess = new koo_process("AccServer", "", "AccServer.exe", "", true);
 	m_pProcess->start();
 
-	//m_pMapperProcess = new koo_process("Mapper", "", "Mapper.exe", "", true);
-	//m_pMapperProcess->start();
+	m_pMapperProcess = new koo_process("Mapper", "", "Mapper.exe", "", true);
+	m_pMapperProcess->start();
 }
 
 

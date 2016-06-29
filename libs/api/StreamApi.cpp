@@ -84,7 +84,6 @@ bool CStreamApi::Connect(const char * ip, int port)
 void CStreamApi::Disconnect()
 {
 	m_bAbort = true;
-	m_Peer = NULL;
 
 	if (m_pThread && m_pThread->joinable())
 		m_pThread->join();
@@ -92,7 +91,7 @@ void CStreamApi::Disconnect()
 
 int CStreamApi::SendData(int channel, const unsigned char * buf, size_t len)
 {
-	if (!m_Peer)
+	if (!m_Peer || m_bAbort)
 		return -1;
 	ENetPacket* packet = enet_packet_create(buf, len, ENET_PACKET_FLAG_RELIABLE);
 	int rc = enet_peer_send((ENetPeer*)m_Peer, channel, packet);
