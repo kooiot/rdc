@@ -7,6 +7,10 @@
 #include <cassert>
 #include <zmq.h>
 #include <uv.h>
+#include <enet/enet.h>
+
+#include "StreamMgr.h"
+#include "../api/DataDefs.h"
 
 char* g_sn = "4C05D6F6-92EA-4a23-8EFF-179F91CBAA6A";
 //char* g_sip = "198.11.175.199";
@@ -17,6 +21,36 @@ int g_port_sub = 6601;
 
 void* g_req_socket;
 void* g_sub_socket;
+StreamMgr* g_StreamMgr = NULL;
+
+#define COMPARE_MSG_STR(msg, str) \
+	strncmp((char*)zmq_msg_data(&msg), str, strlen(str)) == 0
+
+void handle_sub_msg(zmq_msg_t& cmd, zmq_msg_t& data) {
+	printf("CMD: %s\n", std::string((char*)zmq_msg_data(&cmd), zmq_msg_size(&cmd)).c_str());
+	char* pCmd = (char*)zmq_msg_data(&cmd);
+	
+	if (strncmp(pCmd, "ALL ", strlen("ALL ")) == 0)
+		return;
+
+	pCmd = pCmd + strlen(g_sn) + 1;
+	if (0 == strncmp(pCmd, "CREATE", strlen("CREATE"))) {
+		StreamProcess sp;
+		ConnectionInfo info;
+		memcpy(&sp, zmq_msg_data(&data), sizeof(StreamProcess));
+		memcpy(&info, (char*)zmq_msg_data(&data) + sizeof(StreamProcess), sizeof(ConnectionInfo));
+		int rc = g_StreamMgr->Create(sp, info);
+		// FIXME: For failure handlesss
+	}
+	else if (0 == strncmp(pCmd, "DESTROY", strlen("DESTROY"))) {
+		StreamProcess sp;
+		memcpy(&sp, zmq_msg_data(&data), sizeof(StreamProcess));
+		int channel = atoi((char*)zmq_msg_data(&data) + sizeof(StreamProcess));
+		int rc = g_StreamMgr->Destroy(sp, channel);
+	}
+	else {
+	}
+}
 
 void proccss_sub_msg(uv_poll_t *req, int status, int events)
 {
@@ -44,7 +78,7 @@ void proccss_sub_msg(uv_poll_t *req, int status, int events)
 		zmq_msg_init(&data);
 		zmq_msg_recv(&data, sub, 0);
 		if (!zmq_msg_more(&data)) {
-			printf("CMD: %s\n", std::string((char*)zmq_msg_data(&cmd), zmq_msg_size(&cmd)).c_str());
+			handle_sub_msg(cmd, data);
 		}
 		else {
 			while (zmq_msg_more(&data)) {
@@ -97,8 +131,6 @@ int create_sub_socket(void* ctx) {
 	g_sub_socket = sub;
 	return 0;
 }
-#define COMPARE_MSG_STR(msg, str) \
-	strncmp((char*)zmq_msg_data(&msg), str, strlen(str)) == 0
 
 int GetReturnRC(zmq_msg_t* data) {
 	char* pBuf = (char*)zmq_msg_data(data);
@@ -137,6 +169,12 @@ int SendCmd(const char* id, const char* cmd_str, void* data_str, size_t len) {
 		if (COMPARE_MSG_STR(rid, id)) {
 			if (COMPARE_MSG_STR(cmd, cmd_str)) {
 				ret = GetReturnRC(&data);
+			} 
+			else if(COMPARE_MSG_STR(cmd, "TIMEOUT")) {
+				return -10000;
+			} 
+			else {
+				return -20000;
 			}
 		}
 		else {
@@ -167,6 +205,10 @@ int Heartbeat() {
 void Heartbeat_Timer(uv_timer_t* handle){
 	std::cout << "Send Heartbeat..." << std::endl;
 	int rc = Heartbeat();
+	if (rc == -10000) {
+		std::cerr << "Timeout!!! need login again" << std::endl;
+		exit(EXIT_FAILURE);
+	}
 }
 int main(int argc, char* argv[])
 {
@@ -183,6 +225,11 @@ int main(int argc, char* argv[])
 	std::cout << "Server IP: \t" << g_sip << std::endl;
 	std::cout << "Port_REQ: \t" << g_port_req << std::endl;
 	std::cout << "Port_SUB: \t" << g_port_sub << std::endl;
+
+	enet_initialize();
+
+	g_StreamMgr = new StreamMgr();
+	g_StreamMgr->Init();
 
 	void * ctx;
 	ctx = zmq_ctx_new();
@@ -225,51 +272,10 @@ int main(int argc, char* argv[])
 	zmq_close(g_req_socket);
 	zmq_close(g_sub_socket);
 	zmq_ctx_term(ctx);
+	
+	g_StreamMgr->Close();
+	delete g_StreamMgr;
+	enet_deinitialize();
+
     return 0;
 }
-
-
-/*
-#include <zmq.h>
-#include <cassert>
-#include <iostream>
-
-int main(int argc, char *argv[])
-{
-	//  Socket to talk to server
-	printf("Collecting updates from weather server¡­\n");
-	void *context = zmq_ctx_new();
-	void *subscriber = zmq_socket(context, ZMQ_SUB);
-	int rc = zmq_connect(subscriber, "tcp://127.0.0.1:6601");
-	assert(rc == 0);
-
-	//  Subscribe to zipcode, default is NYC, 10001
-	char *filter = (argc > 1) ? argv[1] : "ALL ";
-	rc = zmq_setsockopt(subscriber, ZMQ_SUBSCRIBE,
-		filter, strlen(filter));
-	assert(rc == 0);
-
-	//  Process 100 updates
-	int update_nbr;
-	long total_temp = 0;
-	for (update_nbr = 0; update_nbr < 100; update_nbr++) {
-		zmq_msg_t msg;
-		zmq_msg_init(&msg);
-		zmq_msg_recv(&msg, subscriber, 0);
-		//char *string = s_recv(subscriber);
-		char* string = (char*)zmq_msg_data(&msg);
-
-		int zipcode, temperature, relhumidity;
-		sscanf(string, "%d %d %d",
-			&zipcode, &temperature, &relhumidity);
-		total_temp += temperature;
-		free(string);
-	}
-	printf("Average temperature for zipcode '%s' was %dF\n",
-		filter, (int)(total_temp / update_nbr));
-
-	zmq_close(subscriber);
-	zmq_ctx_destroy(context);
-	return 0;
-}
-*/

@@ -11,7 +11,7 @@ CStreamHandler::~CStreamHandler()
 {
 }
 
-bool CStreamHandler::OnData(int channel, const unsigned char * data, size_t len)
+bool CStreamHandler::OnData(int channel, void * data, size_t len)
 {
 	if (m_data) {
 		m_data(channel, data, len, m_prv);

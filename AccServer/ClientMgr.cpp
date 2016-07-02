@@ -64,6 +64,17 @@ void CClientMgr::Close()
 void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 {
 	std::cout << __FUNCTION__ << ": " << cmd.id << "\t" << cmd.cmd << std::endl;
+	if (cmd.cmd != "LOGIN" && cmd.id != "@DEVICE@") {
+		if (m_Clients.find(cmd.id) == m_Clients.end()) {
+			std::cerr << "User does not login or heartbeat timeout" << cmd.id << std::endl;
+			std::stringstream ss;
+			ss << -10000;
+			KZPacket* p = (KZPacket*)&cmd;
+			p->cmd = "TIMEOUT";
+			koo_zmq_send_reply(m_pReply, cmd, ss.str());
+			return;
+		}
+	}
 
 	int nReturn = -1;
 	if (cmd.cmd == "LOGIN") {
@@ -112,11 +123,18 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 		ConnectionInfo info;
 		int channel = -99;
 		memcpy(&info, cmd.GetData(), sizeof(ConnectionInfo));
-		if (m_Database.Access(cmd.id, info.DevSN)) {
+		if (FindMapper(info.DevSN) && 0 == m_Database.Access(cmd.id, info.DevSN)) {
+			ClientData* pClient = FindClient(cmd.id);
+			assert(pClient);
 			channel = AllocStream(cmd.id, info.DevSN);
 			if (channel >= 0) {
+				info.Channel = channel;
 				std::cout << "Create Stream Channel " << channel << std::endl;
-				SendToMapper(info.DevSN, "CREATE", &info, sizeof(ConnectionInfo));
+				int len = sizeof(StreamProcess) + sizeof(ConnectionInfo);
+				char* buf = new char[len];
+				memcpy(buf, pClient->StreamServer, sizeof(StreamProcess));
+				memcpy(buf + sizeof(StreamProcess), &info, sizeof(ConnectionInfo));
+				SendToMapper(info.DevSN, "CREATE", buf, len);
 			}
 		}
 		std::stringstream ss;
@@ -129,10 +147,16 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 		int channel = atoi(cmd.GetStr().c_str());
 		if (channel > 0 && channel < RC_MAX_CONNECTION) {
 			MapperData* pMapper = FindStream(cmd.id, channel);
+			ClientData* pClient = FindClient(cmd.id);
+			assert(pClient);
 			if (pMapper) {
 				nReturn = FreeStream(cmd.id, channel);
 				if (nReturn == 0) {
 					std::cout << "Destroy Stream Channel " << channel << std::endl;
+					int len = sizeof(StreamProcess) + sizeof(int);
+					char* buf = new char[len];
+					memcpy(buf, pClient->StreamServer, sizeof(StreamProcess));
+					memcpy(buf + sizeof(StreamProcess), &channel, sizeof(int));
 					SendToMapper(pMapper->ID, "DESTROY", &channel, sizeof(int));
 				}
 			}
@@ -282,7 +306,7 @@ int CClientMgr::AddMapper(const std::string & id)
 	MapperData* pData = new MapperData();
 
 	pData->ID = id;
-	pData->Heartbeat = ::GetCurrentTime();
+	pData->Heartbeat = time(NULL);
 	m_Mappers[id] = pData;
 
 	return 0;
@@ -290,6 +314,8 @@ int CClientMgr::AddMapper(const std::string & id)
 
 int CClientMgr::RemoveMapper(const std::string & id)
 {
+	std::cout << "Remove Client " << id << std::endl;
+
 	MapperMap::iterator ptr = m_Mappers.find(id);
 	if (ptr == m_Mappers.end())
 		return -1;
@@ -302,6 +328,7 @@ int CClientMgr::RemoveMapper(const std::string & id)
 			for (int i = 0; i < RC_MAX_CONNECTION; ++i) {
 				ConnectionData* Data = pClient->Connections[i];
 				if (Data && Data->Mapper == ptr->second) {
+					std::cout << "Mapper Destroy Stream Channel " << i << std::endl;
 					delete Data;
 					pClient->Connections[i] = NULL;
 				}
@@ -314,6 +341,14 @@ int CClientMgr::RemoveMapper(const std::string & id)
 	return 0;
 }
 
+MapperData * CClientMgr::FindMapper(const std::string & id)
+{
+	MapperMap::iterator ptr = m_Mappers.find(id);
+	if (ptr == m_Mappers.end())
+		return NULL;
+	return ptr->second;;
+}
+
 int CClientMgr::AddClient(const std::string & id)
 {
 	if (m_Clients.find(id) != m_Clients.end()) {
@@ -322,27 +357,44 @@ int CClientMgr::AddClient(const std::string & id)
 	ClientData* pData = new ClientData();
 
 	pData->ID = id;
-	pData->Heartbeat = ::GetCurrentTime();
+	pData->Heartbeat = time(NULL);
 	pData->StreamServer = m_StreamMgr.Alloc();
+	memset(pData->Connections, 0, sizeof(ConnectionData*) * RC_MAX_CONNECTION);
 	m_Clients[id] = pData;
 	return 0;
 }
 
 int CClientMgr::RemoveClient(const std::string & id)
 {
+	std::cout << "Remove Client " << id << std::endl;
+
 	ClientMap::iterator ptr = m_Clients.find(id);
 	if (ptr == m_Clients.end())
 		return -1;
 
 	for (int i = 0; i < RC_MAX_CONNECTION; ++i){
-		delete ptr->second->Connections[i];
+		ConnectionData* pConn = ptr->second->Connections[i];
+		if (pConn) {
+			std::cout << "Client Destroy Stream Channel " << i << std::endl;
+			SendToMapper(pConn->Mapper->ID, "DESTROY", &i, sizeof(int));
+			delete pConn;
+		}
 	}
 
 	StreamProcess* StreamServer = ptr->second->StreamServer;
 	m_StreamMgr.Release(StreamServer);
 
 	delete ptr->second;
+	m_Clients.erase(ptr);
 	return 0;
+}
+
+ClientData * CClientMgr::FindClient(const std::string & id)
+{
+	ClientMap::iterator ptr = m_Clients.find(id);
+	if (ptr == m_Clients.end())
+		return NULL;
+	return ptr->second;
 }
 
 int CClientMgr::UpdateMapperHearbeat(const std::string & id)
@@ -350,7 +402,7 @@ int CClientMgr::UpdateMapperHearbeat(const std::string & id)
 	MapperMap::iterator ptr = m_Mappers.find(id);
 	if (ptr == m_Mappers.end())
 		return -1;
-	ptr->second->Heartbeat = ::GetCurrentTime();
+	ptr->second->Heartbeat = time(NULL);
 	return 0;
 }
 
@@ -359,7 +411,7 @@ int CClientMgr::UpdateClientHearbeat(const std::string & id)
 	ClientMap::iterator ptr = m_Clients.find(id);
 	if (ptr == m_Clients.end())
 		return -1;
-	ptr->second->Heartbeat = ::GetCurrentTime();
+	ptr->second->Heartbeat = time(NULL);
 	return 0;
 }
 
@@ -368,7 +420,7 @@ int CClientMgr::AllocStream(const std::string & id, const std::string & mapper_i
 	ClientMap::iterator ptr = m_Clients.find(id);
 	if (ptr == m_Clients.end())
 		return -1;
-	MapperMap::iterator mptr = m_Mappers.find(id);
+	MapperMap::iterator mptr = m_Mappers.find(mapper_id);
 	if (mptr == m_Mappers.end())
 		return -1;
 
@@ -388,7 +440,17 @@ int CClientMgr::AllocStream(const std::string & id, const std::string & mapper_i
 
 MapperData * CClientMgr::FindStream(const std::string & id, int channel)
 {
-	return nullptr;
+	ClientMap::iterator ptr = m_Clients.find(id);
+	if (ptr == m_Clients.end())
+		return NULL;
+
+	ClientData* pClient = ptr->second;
+	MapperData* pMapper = NULL;
+	if (pClient->Connections[channel]) {
+		pMapper = pClient->Connections[channel]->Mapper;
+	}
+
+	return pMapper;
 }
 
 int CClientMgr::FreeStream(const std::string& id, int channel)
@@ -413,7 +475,7 @@ void CClientMgr::OnTimer(int nTime)
 	// Check Clients
 	ClientMap::iterator ptr = m_Clients.begin();
 	for (; ptr != m_Clients.end(); ++ptr) {
-		if (nTime - ptr->second->Heartbeat > CLIENT_HEARTBEAT_TIME) {
+		if (nTime - ptr->second->Heartbeat > CLIENT_HEARTBEAT_TIME * 100) {
 			// Logger
 			rlist.push_back(ptr->first);
 		}
@@ -427,7 +489,7 @@ void CClientMgr::OnTimer(int nTime)
 	// Check Clients
 	MapperMap::iterator mptr = m_Mappers.begin();
 	for (; mptr != m_Mappers.end(); ++mptr) {
-		if (nTime - mptr->second->Heartbeat > MAPPER_HEARTBEAT_TIME) {
+		if (nTime - mptr->second->Heartbeat > MAPPER_HEARTBEAT_TIME * 100) {
 			// Logger
 			rlist.push_back(mptr->first);
 		}

@@ -12,7 +12,7 @@
 struct ClientData;
 struct MapperData {
 	std::string ID;
-	int Heartbeat;
+	time_t Heartbeat;
 };
 
 struct ConnectionData {
@@ -22,7 +22,7 @@ struct ConnectionData {
 
 struct ClientData {
 	std::string ID;
-	int Heartbeat;
+	time_t Heartbeat;
 	StreamProcess* StreamServer;
 	ConnectionData* Connections[RC_MAX_CONNECTION];
 };
@@ -46,8 +46,10 @@ private:
 private:
 	int AddMapper(const std::string& id);
 	int RemoveMapper(const std::string& id);
+	MapperData* FindMapper(const std::string& id);
 	int AddClient(const std::string& id);
 	int RemoveClient(const std::string& id);
+	ClientData* FindClient(const std::string& id);
 	int UpdateMapperHearbeat(const std::string& id);
 	int UpdateClientHearbeat(const std::string& id);
 

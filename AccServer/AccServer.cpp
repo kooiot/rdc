@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
 	void* sm_skt = StreamMgr.Init(ctx, bip, port_stream);
 	void* cli_skt = ClientMgr.Init(ctx, bip, port_rep, port_pub);
 
-	k_kill_process("StreamServer.exe");
+	//k_kill_process("StreamServer.exe");
 	std::stringstream args;
 	args << RC_STREAM_SERVER_ID_BASE << " ";
 	args << bip << " ";

@@ -96,7 +96,7 @@ END_MESSAGE_MAP()
 
 // CServerCPDlg 消息处理程序
 
-bool CServerCPDlg::OnData(int channel, const unsigned char * data, size_t len)
+bool CServerCPDlg::OnData(int channel, void * data, size_t len)
 {
 	std::string* p = new std::string((char*)data, len);
 	this->PostMessage(WM_USER_DATA, (WPARAM)channel, (LPARAM)p);
@@ -231,10 +231,6 @@ HCURSOR CServerCPDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-
-
-
-
 HRESULT CServerCPDlg::OnEventMsg(WPARAM wParam, LPARAM lParam)
 {
 	StreamEvent se = (StreamEvent)lParam;
@@ -253,7 +249,6 @@ HRESULT CServerCPDlg::OnDataMsg(WPARAM wParam, LPARAM lParam)
 	return 0L;
 }
 
-
 void CServerCPDlg::OnBnClickedButtonStart()
 {
 	if (m_pProcess)
@@ -266,13 +261,13 @@ void CServerCPDlg::OnBnClickedButtonStart()
 	m_pMapperProcess->start();
 }
 
-
 void CServerCPDlg::OnBnClickedButtonStop()
 {
 	if (m_pMapperProcess)
 		m_pMapperProcess->stop();
 	if (m_pProcess)
 		m_pProcess->stop();
+	k_kill_process("StreamServer.exe");
 	delete m_pMapperProcess;
 	m_pMapperProcess = NULL;
 	delete m_pProcess;

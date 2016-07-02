@@ -5,7 +5,7 @@
 class IStreamHandler
 {
 public:
-	virtual bool OnData(int channel, const unsigned char* data, size_t len) = 0;
+	virtual bool OnData(int channel, void * data, size_t len) = 0;
 	virtual bool OnEvent(StreamEvent event) = 0;
 };
 
@@ -22,7 +22,7 @@ public:
 	bool Connect(const char* ip, int port);
 	void Disconnect();
 
-	int SendData(int channel, const unsigned char* buf, size_t len);
+	int SendData(int channel, void * buf, size_t len);
 private:
 	IStreamHandler& m_Handler;
 	bool m_bAbort;

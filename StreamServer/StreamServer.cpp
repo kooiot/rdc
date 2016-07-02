@@ -125,8 +125,17 @@ int main(int argc, char* argv[])
 	printf("%s\n", "Initialized!");
 	ENetEvent event;
 	/* Wait up to 1000 milliseconds for an event. */
-	while (enet_host_service(server, &event, 1000) >= 0)
+	while (true)
 	{
+		int nRet = enet_host_service(server, &event, 1000);
+		if (nRet < 0) {
+			int nr = errno;
+			int i = 0;
+			i = i + 1;
+			printf("errno %d\n", errno);
+			break;
+		}
+
 		putc('.', stdout);
 		switch (event.type)
 		{
@@ -171,9 +180,8 @@ int main(int argc, char* argv[])
 			int nType = ((data & 0xFFFF0000) >> 16);
 			int nIndex = (data & 0xFFFF);
 
-			printf("A packet of length %u containing %s was received from %d-%d on channel %u.\n",
+			printf("A packet of length %u was received from %d-%d on channel %u.\n",
 				event.packet->dataLength,
-				event.packet->data,
 				nType,
 				nIndex,
 				event.channelID);
@@ -192,7 +200,8 @@ int main(int argc, char* argv[])
 			else if (nType == CLIENT_TYPE) {
 				ENetPeer* mapper = MapperPeers[nIndex];
 				if (mapper) {
-					enet_peer_send(mapper, event.channelID, event.packet);
+					ENetPacket *cp = enet_packet_create(event.packet->data, event.packet->dataLength, ENET_PACKET_FLAG_RELIABLE);
+					enet_peer_send(mapper, event.channelID, cp);
 				}
 				else {
 					std::stringstream ss;

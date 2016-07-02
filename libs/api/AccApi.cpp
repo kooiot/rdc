@@ -7,19 +7,35 @@
 
 
 #define RETURN_MSG_DATA_RC(data) \
-	if (!isdigit(*(char*)zmq_msg_data((zmq_msg_t*)&data.data))) \
+	if (!isdigit(*(char*)zmq_msg_data((zmq_msg_t*)&data.data)) \
+		&& *(char*)zmq_msg_data((zmq_msg_t*)&data.data) != '-') \
 		return -1; \
 	return atoi((char*)zmq_msg_data((zmq_msg_t*)&data.data));
 
+class AutoLock {
+public:
+	std::mutex & m_Lock;
+	AutoLock(std::mutex& lock) : m_Lock(lock) {
+		m_Lock.lock();
+	}
+	~AutoLock() {
+		m_Lock.unlock();
+	}
+};
 int CAccApi::SendRequest(KZPacket& packet, std::function< int(KZPacket&)> cb)
 {
+	AutoLock al(m_Lock);
 	int rc = koo_zmq_send_cmd(m_Socket, packet);
 	if (rc == 0) {
 		KZPacket data;
 		rc = koo_zmq_recv_cmd(m_Socket, data);
 		if (rc == 0) {
-			assert(packet.cmd == data.cmd);
-			return cb != nullptr ? cb(data) : rc;
+			if (packet.cmd == data.cmd)
+				return cb != nullptr ? cb(data) : rc;
+			else if (data.cmd == "TIMEOUT")
+				return -10000;
+			else
+				return -20000;
 		}
 	}
 	if (rc != 0) {
@@ -33,7 +49,7 @@ int CAccApi::SendRequest(KZPacket& packet, std::function< int(KZPacket&)> cb)
 	return rc;
 }
 
-CAccApi::CAccApi(void* ctx) : m_CTX(ctx), m_Socket(NULL)
+CAccApi::CAccApi(void* ctx) : m_CTX(ctx), m_Socket(NULL), m_pHBThread(NULL), m_bStop(false)
 {
 }
 
@@ -55,26 +71,29 @@ bool CAccApi::Connect(const char * sip, int port, const char * un, const char * 
 
 bool CAccApi::_Connect() 
 {
-	if (m_Socket != NULL) {
-		zmq_close(m_Socket);
-		m_Socket = NULL;
-	}
+	{
+		AutoLock al(m_Lock);
+		if (m_Socket != NULL) {
+			zmq_close(m_Socket);
+			m_Socket = NULL;
+		}
 
-	m_Socket = zmq_socket(m_CTX, ZMQ_REQ);
-	assert(m_Socket);
-	int timeo = 5 * 1000;
-	int rc = zmq_setsockopt(m_Socket, ZMQ_RCVTIMEO, &timeo, sizeof(int));
-	timeo = 0;
-	rc = zmq_setsockopt(m_Socket, ZMQ_LINGER, &timeo, sizeof(int));
-	rc = zmq_connect(m_Socket, m_Conn.c_str());
-	assert(rc != -1);
+		m_Socket = zmq_socket(m_CTX, ZMQ_REQ);
+		assert(m_Socket);
+		int timeo = 5 * 1000;
+		int rc = zmq_setsockopt(m_Socket, ZMQ_RCVTIMEO, &timeo, sizeof(int));
+		timeo = 0;
+		rc = zmq_setsockopt(m_Socket, ZMQ_LINGER, &timeo, sizeof(int));
+		rc = zmq_connect(m_Socket, m_Conn.c_str());
+		assert(rc != -1);
+	}
 
 	KZPacket login;
 	login.id = m_User;
 	login.cmd = "LOGIN";
 	login.SetStr(m_Pass.c_str());
 
-	rc = SendRequest(login, [](KZPacket& data) {
+	int rc = SendRequest(login, [](KZPacket& data) {
 		RETURN_MSG_DATA_RC(data)
 	});
 
@@ -82,7 +101,21 @@ bool CAccApi::_Connect()
 		zmq_close(m_Socket);
 		m_Socket = NULL;
 	}
-		
+	if (rc == 0) {
+		m_pHBThread = new std::thread([this]() {
+			int Count = 0;
+			int MaxCount = (20 * 1000) / 500;
+			while (!m_bStop) {
+				Sleep(500);
+				if (m_bStop)
+					break;
+				if (++Count >= MaxCount) {
+					Count = 0;
+					SendHeartbeat();
+				}
+			}
+		});
+	}
 	return rc == 0;
 }
 
@@ -94,9 +127,15 @@ int CAccApi::Disconnect()
 	logout.SetStr("LOGOUT");
 
 	int rc = SendRequest(logout);
+	
+	m_bStop = true;
+	if (m_pHBThread && m_pHBThread->joinable())
+		m_pHBThread->join();
+
+	m_Lock.lock();
 	zmq_close(m_Socket);
 	m_Socket = NULL;
-
+	m_Lock.unlock();
 	return rc;
 }
 
@@ -337,7 +376,7 @@ int CAccApi::CreateConnection(const ConnectionInfo * info)
 	KZPacket packet;
 	packet.id = m_User;
 	packet.cmd = "CREATE";
-	packet.SetData(&info, sizeof(ConnectionInfo));
+	packet.SetData(info, sizeof(ConnectionInfo));
 
 	int rc = SendRequest(packet, [](KZPacket& data) {
 		RETURN_MSG_DATA_RC(data)

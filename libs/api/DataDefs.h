@@ -3,6 +3,8 @@
 #ifndef _RDC_DATA_DEFS_H_
 #define _RDC_DATA_DEFS_H_
 
+#include <time.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -16,6 +18,9 @@ extern "C" {
 #define RC_MAX_SN_LEN 128
 #define RC_MAX_IP_LEN 128
 
+#define RC_MAX_ONLINE_DEVICE 2048
+#define RC_MAX_ONLINE_USER 512
+
 // Stream Server MAXs
 #define RC_MAX_CONNECTION 16
 #define RC_STREAM_SERVER_ID_BASE 10000
@@ -24,6 +29,9 @@ extern "C" {
 
 #define MAPPER_TYPE 1
 #define CLIENT_TYPE 2
+
+	typedef void* RC_HANDLE;
+	typedef int RC_CHANNEL;
 
 	struct IPInfo {
 		char sip[RC_MAX_IP_LEN];
@@ -67,7 +75,7 @@ extern "C" {
 	};
 	struct ConnectionInfo {
 		ConnectionType Type;
-		int Channel;
+		RC_CHANNEL Channel; // 客户端Channel(客户端唯一，设备端不能根据这个判断唯一性)
 		char DevSN[RC_MAX_SN_LEN];
 		union {
 			SerialInfo Serial;

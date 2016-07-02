@@ -89,7 +89,7 @@ void CStreamApi::Disconnect()
 		m_pThread->join();
 }
 
-int CStreamApi::SendData(int channel, const unsigned char * buf, size_t len)
+int CStreamApi::SendData(int channel, void * buf, size_t len)
 {
 	if (!m_Peer || m_bAbort)
 		return -1;

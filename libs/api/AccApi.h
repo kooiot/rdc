@@ -2,6 +2,8 @@
 
 #include <string>
 #include <functional>
+#include <mutex>
+#include <thread>
 #include "DataDefs.h"
 
 struct KZPacket;
@@ -42,6 +44,9 @@ private:
 	bool _Connect();
 	int SendRequest(KZPacket& packet, std::function< int(KZPacket&)> cb = nullptr);
 private:
+	std::mutex m_Lock;
+	std::thread* m_pHBThread;
+	bool m_bStop;
 	void* m_CTX;
 	void* m_Socket;
 	std::string m_Conn;

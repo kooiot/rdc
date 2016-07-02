@@ -130,7 +130,7 @@ int RC_SetStreamCallback(RC_HANDLE api, stream_data_callback data, stream_event_
 }
 
 extern "C"
-int RC_StreamSend(RC_HANDLE api, RC_CHANNEL channel, const unsigned char * buf, size_t len)
+int RC_StreamSend(RC_HANDLE api, RC_CHANNEL channel, void * buf, size_t len)
 {
 	ApiHandle* pHandle = (ApiHandle*)api;
 	if (!pHandle)
@@ -145,7 +145,7 @@ int RC_StreamSend(RC_HANDLE api, RC_CHANNEL channel, const unsigned char * buf, 
 }
 
 extern "C"
-RC_CHANNEL RC_ConnectSerial(RC_HANDLE api, const char * devid, const SerialInfo* info)
+RC_CHANNEL RC_ConnectSerial(RC_HANDLE api, const char * sn, const SerialInfo* info)
 {
 	ApiHandle* pHandle = (ApiHandle*)api;
 	if (!pHandle)
@@ -156,7 +156,7 @@ RC_CHANNEL RC_ConnectSerial(RC_HANDLE api, const char * devid, const SerialInfo*
 		ConnectionInfo ci;
 		ci.Type = CT_SERIAL;
 		memcpy(&ci.Serial, info, sizeof(SerialInfo));
-		memcpy(ci.DevSN, devid, RC_MAX_SN_LEN);
+		memcpy(ci.DevSN, sn, RC_MAX_SN_LEN);
 
 		return pApi->CreateConnection(&ci);
 	}
@@ -164,7 +164,7 @@ RC_CHANNEL RC_ConnectSerial(RC_HANDLE api, const char * devid, const SerialInfo*
 }
 
 extern "C"
-RC_CHANNEL RC_ConnectTCPC(RC_HANDLE api, const char * devid, const  TCPClientInfo* info)
+RC_CHANNEL RC_ConnectTCPC(RC_HANDLE api, const char * sn, const  TCPClientInfo* info)
 {
 	ApiHandle* pHandle = (ApiHandle*)api;
 	if (!pHandle)
@@ -175,7 +175,7 @@ RC_CHANNEL RC_ConnectTCPC(RC_HANDLE api, const char * devid, const  TCPClientInf
 		ConnectionInfo ci;
 		ci.Type = CT_TCPC;
 		memcpy(&ci.TCPClient, info, sizeof(TCPClientInfo));
-		memcpy(ci.DevSN, devid, RC_MAX_SN_LEN);
+		memcpy(ci.DevSN, sn, RC_MAX_SN_LEN);
 
 		return pApi->CreateConnection(&ci);
 	}
@@ -183,7 +183,7 @@ RC_CHANNEL RC_ConnectTCPC(RC_HANDLE api, const char * devid, const  TCPClientInf
 }
 
 extern "C"
-RC_CHANNEL RC_ConnectUDP(RC_HANDLE api, const char * devid, const UDPInfo* info)
+RC_CHANNEL RC_ConnectUDP(RC_HANDLE api, const char * sn, const UDPInfo* info)
 {
 	ApiHandle* pHandle = (ApiHandle*)api;
 	if (!pHandle)
@@ -194,7 +194,7 @@ RC_CHANNEL RC_ConnectUDP(RC_HANDLE api, const char * devid, const UDPInfo* info)
 		ConnectionInfo ci;
 		ci.Type = CT_UDP;
 		memcpy(&ci.Serial, info, sizeof(UDPInfo));
-		memcpy(ci.DevSN, devid, RC_MAX_SN_LEN);
+		memcpy(ci.DevSN, sn, RC_MAX_SN_LEN);
 
 		return pApi->CreateConnection(&ci);
 	}
