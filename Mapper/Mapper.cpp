@@ -13,8 +13,6 @@
 #include "../api/DataDefs.h"
 
 char* g_sn = "4C05D6F6-92EA-4a23-8EFF-179F91CBAA6A";
-//char* g_sip = "198.11.175.199";
-//char* g_sip = "kooiot.com";
 char* g_sip = "127.0.0.1";
 int g_port_req = 6600;
 int g_port_sub = 6601;

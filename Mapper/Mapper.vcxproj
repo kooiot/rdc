@@ -166,12 +166,15 @@
     <ClInclude Include="StreamMgr.h" />
     <ClInclude Include="StreamPort.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="TestStream.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Mapper.cpp" />
     <ClCompile Include="SerialStream.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="StreamMgr.cpp" />
+    <ClCompile Include="StreamPort.cpp" />
+    <ClCompile Include="TestStream.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\libs\api\api.vcxproj">

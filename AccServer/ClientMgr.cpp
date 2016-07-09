@@ -135,6 +135,7 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 				memcpy(buf, pClient->StreamServer, sizeof(StreamProcess));
 				memcpy(buf + sizeof(StreamProcess), &info, sizeof(ConnectionInfo));
 				SendToMapper(info.DevSN, "CREATE", buf, len);
+				delete[] buf;
 			}
 		}
 		std::stringstream ss;
@@ -145,7 +146,7 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 	}
 	else if (cmd.cmd == "DESTROY") {
 		int channel = atoi(cmd.GetStr().c_str());
-		if (channel > 0 && channel < RC_MAX_CONNECTION) {
+		if (channel >= 0 && channel < RC_MAX_CONNECTION) {
 			MapperData* pMapper = FindStream(cmd.id, channel);
 			ClientData* pClient = FindClient(cmd.id);
 			assert(pClient);
@@ -157,7 +158,8 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 					char* buf = new char[len];
 					memcpy(buf, pClient->StreamServer, sizeof(StreamProcess));
 					memcpy(buf + sizeof(StreamProcess), &channel, sizeof(int));
-					SendToMapper(pMapper->ID, "DESTROY", &channel, sizeof(int));
+					SendToMapper(pMapper->ID, "DESTROY", buf, len);
+					delete[] buf;
 				}
 			}
 		}
@@ -183,7 +185,9 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 		if (type != "ALL") {
 			MapperMap::iterator ptr = m_Mappers.begin();
 			for (; ptr != m_Mappers.end(); ++ptr) {
-				list.push_back(ptr->first);
+				if (0 == m_Database.Access(cmd.id, ptr->first)) {
+					list.push_back(ptr->first);
+				}
 			}
 		}
 		else {
@@ -209,7 +213,9 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 		}
 		DeviceInfo info;
 		memset(&info, 0, sizeof(DeviceInfo));
-		dbInfo.ToDeviceInfo(info);
+		if (0 == m_Database.Access(cmd.id, dbInfo.SN)) {
+			dbInfo.ToDeviceInfo(info);
+		}
 		koo_zmq_send_reply(m_pReply, cmd, &info, sizeof(DeviceInfo));
 		return;
 	}
@@ -461,7 +467,7 @@ int CClientMgr::FreeStream(const std::string& id, int channel)
 	
 	ClientData* pClient = ptr->second;
 
-	if (!pClient->Connections[channel]) {
+	if (pClient->Connections[channel]) {
 		delete pClient->Connections[channel];
 		pClient->Connections[channel] = NULL;
 		return 0;

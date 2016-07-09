@@ -64,7 +64,7 @@ RC_HANDLE RC_Connect(const char * sip, int port, const char * un, const char * p
 		int rc = pHandle->Acc->GetStreamServer(&sp);
 		if (rc == 0) {
 			pHandle->StreamHandler = new CStreamHandler();
-			pHandle->Stream = new CStreamApi(*pHandle->StreamHandler, sp.Index, CLIENT_TYPE);
+			pHandle->Stream = new CStreamApi(*pHandle->StreamHandler, CLIENT_TYPE, sp.Index, sp.Mask);
 			bool br = pHandle->Stream->Connect(sp.StreamIP, sp.Port);
 			if (br) {
 				g_HandleList.push_back(pHandle);
@@ -84,6 +84,14 @@ int RC_Disconnect(RC_HANDLE api)
 {
 	ApiHandle* pHandle = (ApiHandle*)api;
 	if (pHandle) {
+		ApiHandleList::iterator ptr = g_HandleList.begin();
+		for (; ptr != g_HandleList.end(); ++ptr) {
+			if (pHandle == *ptr) {
+				g_HandleList.remove(*ptr);
+				break;
+			}
+		}
+
 		CAccApi* pApi = pHandle->Acc;
 		int rc = pApi->Disconnect();
 		delete pApi;
@@ -142,6 +150,24 @@ int RC_StreamSend(RC_HANDLE api, RC_CHANNEL channel, void * buf, size_t len)
 
 	int rc = pStream->SendData(channel, buf, len);
 	return rc;
+}
+
+extern "C"
+RC_CHANNEL RC_ConnectTest(RC_HANDLE api, const char * sn)
+{
+	ApiHandle* pHandle = (ApiHandle*)api;
+	if (!pHandle)
+		return -1;
+
+	CAccApi* pApi = pHandle->Acc;
+	if (pApi) {
+		ConnectionInfo ci;
+		ci.Type = CT_TEST;
+		memcpy(ci.DevSN, sn, RC_MAX_SN_LEN);
+
+		return pApi->CreateConnection(&ci);
+	}
+	return -1;
 }
 
 extern "C"

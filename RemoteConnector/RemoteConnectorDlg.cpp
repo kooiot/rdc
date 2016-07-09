@@ -7,6 +7,7 @@
 #include "RemoteConnectorDlg.h"
 #include "afxdialogex.h"
 #include "SerialDlg.h"
+#include <cassert>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -72,6 +73,11 @@ void CRemoteConnectorDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_PORT, m_editPort);
 	DDX_Control(pDX, IDC_LIST_DEV, m_listDevs);
 	DDX_Control(pDX, IDC_LIST_CONNECTIONS, m_listConnections);
+	DDX_Control(pDX, IDC_EDIT_USER, m_editUser);
+	DDX_Control(pDX, IDC_EDIT_PASSWD, m_editPasswd);
+	DDX_Control(pDX, IDC_BUTTON_CONNECT, m_btnConnect);
+	DDX_Control(pDX, IDC_BUTTON_DISCONNECT, m_btnDisconnect);
+	DDX_Control(pDX, IDC_BUTTON_LISTDEV, m_btnListDevs);
 }
 
 BEGIN_MESSAGE_MAP(CRemoteConnectorDlg, CDialogEx)
@@ -85,8 +91,7 @@ BEGIN_MESSAGE_MAP(CRemoteConnectorDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_ADD, &CRemoteConnectorDlg::OnBnClickedButtonAdd)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_CONNECTIONS, &CRemoteConnectorDlg::OnNMDblclkListConnections)
 	ON_BN_CLICKED(IDC_BUTTON_DELETE, &CRemoteConnectorDlg::OnBnClickedButtonDelete)
-	ON_BN_CLICKED(IDC_BUTTON_START, &CRemoteConnectorDlg::OnBnClickedButtonStart)
-	ON_BN_CLICKED(IDC_BUTTON_STOP, &CRemoteConnectorDlg::OnBnClickedButtonStop)
+	ON_BN_CLICKED(IDC_BUTTON_ADD_SERIAL, &CRemoteConnectorDlg::OnBnClickedButtonAddSerial)
 END_MESSAGE_MAP()
 
 
@@ -123,7 +128,10 @@ BOOL CRemoteConnectorDlg::OnInitDialog()
 
 	// TODO: 在此添加额外的初始化代码
 	m_editIP.SetWindowText("127.0.0.1");
+	//m_editIP.SetWindowText("123.57.13.218 ");
 	m_editPort.SetWindowText("6600");
+	m_editUser.SetWindowText("test");
+	m_editPasswd.SetWindowText("test");
 
 	m_listDevs.InsertColumn(0, "Name", LVCFMT_LEFT, 120);
 	m_listDevs.InsertColumn(1, "SN", LVCFMT_LEFT, 240);
@@ -134,6 +142,10 @@ BOOL CRemoteConnectorDlg::OnInitDialog()
 	m_listConnections.InsertColumn(1, "DevSN", LVCFMT_LEFT, 120);
 	m_listConnections.SetExtendedStyle(m_listConnections.GetExtendedStyle() | LVS_EX_FULLROWSELECT);
 	
+	m_btnConnect.EnableWindow(TRUE);
+	m_btnDisconnect.EnableWindow(FALSE);
+	m_btnListDevs.EnableWindow(FALSE);
+
 	m_VSPortMgr.Init();
 	RC_Init();
 
@@ -209,23 +221,27 @@ void CRemoteConnectorDlg::StreamDataCallback(RC_CHANNEL channel, void * buf, siz
 
 void CRemoteConnectorDlg::__StreamDataCallback(RC_CHANNEL channel, void * buf, size_t len)
 {
+	TRACE("[STREAM_DATA] [%d] len %d\n", channel, len);
 	IStreamHandler* Handler = m_StreamPorts[channel];
 	if (Handler) {
 		Handler->OnData((void*)buf, len);
 	}
 }
 
-void CRemoteConnectorDlg::StreamEventCallback(StreamEvent evt, void * prv)
+void CRemoteConnectorDlg::StreamEventCallback(RC_CHANNEL channel, StreamEvent evt, void * prv)
 {
 	CRemoteConnectorDlg* pThis = (CRemoteConnectorDlg*)prv;
 	if (!pThis)
 		return;
-	pThis->__StreamEventCallback(evt);
+	pThis->__StreamEventCallback(channel, evt);
 }
 
-void CRemoteConnectorDlg::__StreamEventCallback(StreamEvent evt)
+void CRemoteConnectorDlg::__StreamEventCallback(RC_CHANNEL channel, StreamEvent evt)
 {
 	TRACE("[STREAM_EVENT] [%d]\n", evt);
+	if (evt == SE_CHANNEL_CONNECT) {
+		MessageBox("Channel connection ok");
+	}
 	// FIXME:
 }
 
@@ -251,9 +267,13 @@ void CRemoteConnectorDlg::AddConnection(ConnectionInfo * info)
 	if (info->Type == CT_SERIAL) {
 		pHandler = m_VSPortMgr.CreatePort(info->Channel, *this, "COM4");
 	}
+	if (info->Type == CT_TEST) {
+		pHandler = m_VSPortMgr.CreatePort(info->Channel, *this, "COM5");
+	}
 	if (!pHandler)
 		return;
 
+	m_ConnectionInfos[info->Channel] = info;
 	m_StreamPorts[info->Channel] = pHandler;
 
 	int nIndex = m_listConnections.GetItemCount();
@@ -272,6 +292,36 @@ void CRemoteConnectorDlg::RemoveConnection(RC_CHANNEL channel)
 	if (info->Type == CT_SERIAL) {
 		m_VSPortMgr.FreePort((VSPort*)pHandler);
 	}
+	if (info->Type == CT_TEST) {
+		m_VSPortMgr.FreePort((VSPort*)pHandler);
+	}
+	delete info;
+	m_StreamPorts[channel] = NULL;
+	m_ConnectionInfos[channel] = NULL;
+}
+
+DeviceInfo* CRemoteConnectorDlg::GetSelDeviceInfo()
+{
+	if (m_hApi == NULL)
+		return NULL;
+
+	POSITION pos = m_listDevs.GetFirstSelectedItemPosition();
+	if (pos == NULL) {
+		MessageBox("选择一个设备先", "提示", MB_OK | MB_ICONASTERISK);
+		return NULL;
+	}
+	int nItem = m_listDevs.GetNextSelectedItem(pos);
+	if (nItem < 0 || nItem > 2048) {
+		MessageBox("超出设备列表", "提示", MB_OK | MB_ICONERROR);
+		return NULL;
+	}
+
+	DeviceInfo& info = m_Devices[nItem];
+	if (strlen(info.SN) == 0) {
+		MessageBox("没有该设备", "提示", MB_OK | MB_ICONERROR);
+		return NULL;
+	}
+	return &info;
 }
 
 void CRemoteConnectorDlg::OnBnClickedButtonConnect()
@@ -280,14 +330,18 @@ void CRemoteConnectorDlg::OnBnClickedButtonConnect()
 	m_editIP.GetWindowText(ip);
 	CString port;
 	m_editPort.GetWindowText(port);
+	CString user;
+	m_editUser.GetWindowText(user);
+	CString passwd;
+	m_editPasswd.GetWindowText(passwd);
 
-	m_hApi = RC_Connect(ip, atoi(port), "admin", "admin");
+	m_hApi = RC_Connect(ip, atoi(port), user, passwd);
 	if (m_hApi != 0) {
 		RC_SetStreamCallback(m_hApi, StreamDataCallback, StreamEventCallback, this);
-		MessageBox("Connected");
-	}
-	else {
-		MessageBox("Failed");
+		m_btnConnect.EnableWindow(FALSE);
+		m_btnDisconnect.EnableWindow(TRUE);
+		m_btnListDevs.EnableWindow(TRUE);
+		OnBnClickedButtonListdev();
 	}
 }
 
@@ -297,12 +351,16 @@ void CRemoteConnectorDlg::OnBnClickedButtonDisconnect()
 	// TODO: 在此添加控件通知处理程序代码
 	RC_Disconnect(m_hApi);
 	m_hApi = NULL;
-	MessageBox("Disconnected");
+	m_btnConnect.EnableWindow(TRUE);
+	m_btnDisconnect.EnableWindow(FALSE);
+	m_btnListDevs.EnableWindow(FALSE);
 }
 
 
 void CRemoteConnectorDlg::OnBnClickedButtonListdev()
 {
+	m_listDevs.DeleteAllItems();
+
 	DeviceInfo* pInfo = m_Devices;
 	memset(pInfo, 0, sizeof(DeviceInfo) * RC_MAX_ONLINE_DEVICE);
 	int num = RC_ListDevices(m_hApi, pInfo, RC_MAX_ONLINE_DEVICE);
@@ -321,41 +379,21 @@ void CRemoteConnectorDlg::OnBnClickedButtonListdev()
 
 void CRemoteConnectorDlg::OnBnClickedButtonAdd()
 {
-	if (m_hApi == NULL)
+	DeviceInfo *info = GetSelDeviceInfo();
+	if (!info)
 		return;
 
-	POSITION pos = m_listDevs.GetFirstSelectedItemPosition();
-	if (pos == NULL) {
-		MessageBox("选择一个设备先", "提示", MB_OK | MB_ICONASTERISK);
+	RC_CHANNEL channel = RC_ConnectTest(m_hApi, info->SN);
+	if (channel < 0) {
+		MessageBox("创建串口", "提示", MB_OK | MB_ICONERROR);
 		return;
 	}
-	int nItem = m_listDevs.GetNextSelectedItem(pos);
-	if (nItem < 0 || nItem > 2048) {
-		MessageBox("超出设备列表", "提示", MB_OK | MB_ICONERROR);
-		return;
-	}
-
-	DeviceInfo& info = m_Devices[nItem];
-	if (strlen(info.SN) == 0) {
-		MessageBox("没有该设备", "提示", MB_OK | MB_ICONERROR);
-		return;
-	}
-	CSerialDlg dlg;
-	if (IDOK == dlg.DoModal()) {
-		RC_CHANNEL channel = RC_ConnectSerial(m_hApi, info.SN, &dlg.m_Info);
-		if (channel < 0) {
-			MessageBox("创建串口", "提示", MB_OK | MB_ICONERROR);
-			return;
-		}
-		assert(m_ConnectionInfos[channel] == NULL);
-		ConnectionInfo* ci = new ConnectionInfo();
-		ci->Type = CT_SERIAL;
-		memcpy(ci->DevSN, info.SN, RC_MAX_SN_LEN);
-		ci->Serial = dlg.m_Info;
-		ci->Channel = channel;
-		m_ConnectionInfos[channel] = ci;
-		AddConnection(ci);
-	}
+	assert(m_ConnectionInfos[channel] == NULL);
+	ConnectionInfo* ci = new ConnectionInfo();
+	ci->Type = CT_TEST;
+	memcpy(ci->DevSN, info->SN, RC_MAX_SN_LEN);
+	ci->Channel = channel;
+	AddConnection(ci);
 }
 
 
@@ -381,17 +419,53 @@ void CRemoteConnectorDlg::OnNMDblclkListConnections(NMHDR *pNMHDR, LRESULT *pRes
 
 void CRemoteConnectorDlg::OnBnClickedButtonDelete()
 {
-	// TODO: 在此添加控件通知处理程序代码
+	POSITION pos = m_listConnections.GetFirstSelectedItemPosition();
+	if (pos == NULL) {
+		MessageBox("选择一个连接先", "提示", MB_OK | MB_ICONASTERISK);
+		return;
+	}
+	int nItem = m_listConnections.GetNextSelectedItem(pos);
+	if (nItem < 0 || nItem > RC_MAX_CONNECTION) {
+		MessageBox("超出连接列表", "提示", MB_OK | MB_ICONERROR);
+		return;
+	}
+	int nChannel = m_listConnections.GetItemData(nItem);
+
+	IStreamHandler* pHandler = m_StreamPorts[nChannel];
+	ConnectionInfo* pInfo = m_ConnectionInfos[nChannel];
+	if (!pInfo || !pHandler)
+	{
+		MessageBox("BLALJAF", "提示", MB_OK | MB_ICONERROR);
+	}
+	assert(nChannel == pInfo->Channel);
+	int rc = RC_CloseChannel(m_hApi, nChannel);
+	if (rc == 0) {
+		MessageBox("OK");
+		RemoveConnection(nChannel);
+		m_listConnections.DeleteItem(nItem);
+	}
 }
 
 
-void CRemoteConnectorDlg::OnBnClickedButtonStart()
+void CRemoteConnectorDlg::OnBnClickedButtonAddSerial()
 {
-	// TODO: 在此添加控件通知处理程序代码
-}
+	DeviceInfo *info = GetSelDeviceInfo();
+	if (!info)
+		return;
 
-
-void CRemoteConnectorDlg::OnBnClickedButtonStop()
-{
-	// TODO: 在此添加控件通知处理程序代码
+	CSerialDlg dlg;
+	if (IDOK == dlg.DoModal()) {
+		RC_CHANNEL channel = RC_ConnectSerial(m_hApi, info->SN, &dlg.m_Info);
+		if (channel < 0) {
+			MessageBox("创建串口", "提示", MB_OK | MB_ICONERROR);
+			return;
+		}
+		assert(m_ConnectionInfos[channel] == NULL);
+		ConnectionInfo* ci = new ConnectionInfo();
+		ci->Type = CT_SERIAL;
+		memcpy(ci->DevSN, info->SN, RC_MAX_SN_LEN);
+		ci->Serial = dlg.m_Info;
+		ci->Channel = channel;
+		AddConnection(ci);
+	}
 }

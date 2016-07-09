@@ -40,6 +40,12 @@ protected:
 	CListCtrl m_listDevs;
 	CListCtrl m_listConnections;
 
+	CEdit m_editUser;
+	CEdit m_editPasswd;
+	CButton m_btnConnect;
+	CButton m_btnDisconnect;
+	CButton m_btnListDevs;
+
 	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
@@ -50,14 +56,16 @@ protected:
 
 	static void __stdcall StreamDataCallback(RC_CHANNEL channel, void * buf, size_t len, void* prv);
 	void __stdcall __StreamDataCallback(RC_CHANNEL channel, void * buf, size_t len);
-	static void __stdcall StreamEventCallback(StreamEvent evt, void* prv);
-	void __stdcall __StreamEventCallback(StreamEvent evt);
+	static void __stdcall StreamEventCallback(RC_CHANNEL channel, StreamEvent evt, void* prv);
+	void __stdcall __StreamEventCallback(RC_CHANNEL channel, StreamEvent evt);
 
 	virtual int OnLog(RC_CHANNEL channel, const char* type, const char* content);
 	virtual int Send(RC_CHANNEL channel, void* buf, size_t len);
 
 	void AddConnection(ConnectionInfo* info);
 	void RemoveConnection(RC_CHANNEL channel);
+
+	DeviceInfo* GetSelDeviceInfo();
 
 protected:
 	afx_msg void OnBnClickedButtonConnect();
@@ -66,6 +74,5 @@ protected:
 	afx_msg void OnBnClickedButtonAdd();
 	afx_msg void OnNMDblclkListConnections(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedButtonDelete();
-	afx_msg void OnBnClickedButtonStart();
-	afx_msg void OnBnClickedButtonStop();
+	afx_msg void OnBnClickedButtonAddSerial();
 };

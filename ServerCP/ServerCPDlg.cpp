@@ -8,6 +8,7 @@
 #include "afxdialogex.h"
 #include <koo_process.h>
 #include <zmq.h>
+#include <cassert>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -103,7 +104,7 @@ bool CServerCPDlg::OnData(int channel, void * data, size_t len)
 	return true;
 }
 
-bool CServerCPDlg::OnEvent(StreamEvent event)
+bool CServerCPDlg::OnEvent(int channel, StreamEvent event)
 {
 	this->PostMessage(WM_USER_DATA, NULL, (LPARAM)event);
 	return true;
@@ -284,7 +285,7 @@ void CServerCPDlg::OnBnClickedButtonConnect()
 		StreamProcess sp;
 		int rc = m_pAccApi->GetStreamServer(&sp);
 		if (rc == 0) {
-			m_pStreamApi = new CStreamApi(*this, sp.Index, CLIENT_TYPE);
+			m_pStreamApi = new CStreamApi(*this, CLIENT_TYPE, sp.Index, sp.Mask);
 			br = m_pStreamApi->Connect(sp.StreamIP, sp.Port);
 			if (br) {
 				MessageBox("Stream Connected");

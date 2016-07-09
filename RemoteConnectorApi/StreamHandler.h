@@ -10,7 +10,7 @@ public:
 	~CStreamHandler();
 
 	virtual bool OnData(int channel, void * data, size_t len);
-	virtual bool OnEvent(StreamEvent event);
+	virtual bool OnEvent(int channel, StreamEvent event);
 
 	void SetCallbacks(stream_data_callback data, stream_event_callback evt, void* prv);
 

@@ -99,6 +99,7 @@ StreamProcess * CStreamServerMgr::Alloc()
 				pV->Counter++;
 				pV->Used[i] = true;
 				pData = &pV->List[i];
+				pData->Mask = (long)time(NULL);
 				break;
 			}
 		}

@@ -1,10 +1,12 @@
 #include "StreamApi.h"
 #include <thread>
+#include <cassert>
 #include <enet\enet.h>
 #include "DataDefs.h"
 
-CStreamApi::CStreamApi(IStreamHandler & Handler, int nIndex, int nType)
+CStreamApi::CStreamApi(IStreamHandler & Handler, int nType, int nIndex, int nStreamMask)
 	: m_Handler(Handler),
+	m_nStreamMask(nStreamMask),
 	m_pThread(nullptr),
 	m_bAbort(false)
 {
@@ -53,7 +55,7 @@ bool CStreamApi::Connect(const char * ip, int port)
 						event.peer->address.port);
 					/* Store any relevant client information here. */
 					event.peer->data = "Client information";
-					m_Handler.OnEvent(SE_CONNECT);
+					m_Handler.OnEvent(-1, SE_CONNECT);
 					break;
 				case ENET_EVENT_TYPE_RECEIVE:
 					printf("A packet of length %u containing %s was received from %s on channel %u.\n",
@@ -61,7 +63,7 @@ bool CStreamApi::Connect(const char * ip, int port)
 						event.packet->data,
 						(char*)event.peer->data,
 						event.channelID);
-					m_Handler.OnData(event.channelID, event.packet->data, event.packet->dataLength);
+					this->OnData(event.channelID, event.packet->data, event.packet->dataLength);
 
 					/* Clean up the packet now that we're done using it. */
 					enet_packet_destroy(event.packet);
@@ -71,7 +73,7 @@ bool CStreamApi::Connect(const char * ip, int port)
 					printf("%s disconnected.\n", (char*)event.peer->data);
 					/* Reset the peer's client information. */
 					event.peer->data = NULL;
-					m_Handler.OnEvent(SE_DISCONNECT);
+					m_Handler.OnEvent(-1, SE_DISCONNECT);
 				}
 			}
 		}
@@ -93,8 +95,31 @@ int CStreamApi::SendData(int channel, void * buf, size_t len)
 {
 	if (!m_Peer || m_bAbort)
 		return -1;
-	ENetPacket* packet = enet_packet_create(buf, len, ENET_PACKET_FLAG_RELIABLE);
+	//ENetPacket* packet = enet_packet_create(buf, len, ENET_PACKET_FLAG_RELIABLE);
+	ENetPacket* packet = enet_packet_create(&m_nStreamMask, sizeof(int), ENET_PACKET_FLAG_RELIABLE);
+	enet_packet_resize(packet, sizeof(int) + len);
+	memcpy(packet->data + sizeof(int), buf, len);
 	int rc = enet_peer_send((ENetPeer*)m_Peer, channel, packet);
 
 	return rc;
+}
+
+int CStreamApi::OnData(int channel, void * data, size_t len)
+{
+	if (channel == RC_MAX_CONNECTION) {
+		assert(len == sizeof(StreamEventPacket));
+		StreamEventPacket* sp = (StreamEventPacket*)data;
+		m_Handler.OnEvent(sp->channel, sp->event);
+		return 0;
+	}
+	int Mask = *(long*)data;
+	if (Mask != m_nStreamMask) {
+		fprintf(stderr, "Incorrect Mask Packet %ld - %ld", Mask, m_nStreamMask);
+		return -1;
+	}
+	char* pbuf = (char*)data;
+	pbuf += sizeof(int);
+	m_Handler.OnData(channel, pbuf, len - sizeof(int));
+
+	return 0;
 }

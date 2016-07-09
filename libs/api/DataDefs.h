@@ -56,18 +56,58 @@ extern "C" {
 		IPInfo server;
 	};
 
+	/*!
+	* Enumeration defines the possible bytesizes for the serial port.
+	*/
+	typedef enum {
+		fivebits = 5,
+		sixbits = 6,
+		sevenbits = 7,
+		eightbits = 8
+	} bytesize;
+
+	/*!
+	* Enumeration defines the possible parity types for the serial port.
+	*/
+	typedef enum {
+		parity_none = 0,
+		parity_odd = 1,
+		parity_even = 2,
+		parity_mark = 3,
+		parity_space = 4
+	} parity;
+
+	/*!
+	* Enumeration defines the possible stopbit types for the serial port.
+	*/
+	typedef enum {
+		stopbits_one = 1,
+		stopbits_two = 2,
+		stopbits_one_point_five
+	} stopbits;
+
+	/*!
+	* Enumeration defines the possible flowcontrol types for the serial port.
+	*/
+	typedef enum {
+		flowcontrol_none = 0,
+		flowcontrol_software,
+		flowcontrol_hardware
+	} flowcontrol;
+
 	struct SerialInfo
 	{
 		char local[RC_MAX_NAME_LEN]; // Local Serial Port Name (COM1)
 		char dev[RC_MAX_NAME_LEN]; // Remote Serial Port Name (/dev/ttyS1)
 		int baudrate;
-		int bytesize;
-		int parity;
-		int stopbits;
-		int flowcontrol;
+		bytesize bytesize;
+		parity parity;
+		stopbits stopbits;
+		flowcontrol flowcontrol;
 	};
 	enum ConnectionType {
-		CT_SERIAL = 0,
+		CT_TEST = 0,
+		CT_SERIAL,
 		CT_TCPC,
 		CT_UDP,
 		//CT_TCPS,
@@ -122,6 +162,7 @@ extern "C" {
 
 	struct StreamProcess {
 		int Index;
+		int Mask; // For connection info
 		char StreamIP[128];
 		int Port;
 		void* __inner;
@@ -133,8 +174,16 @@ extern "C" {
 	enum StreamEvent {
 		SE_CONNECT,
 		SE_DISCONNECT,
+		SE_CHANNEL_CONNECT,
+		SE_CHANNEL_DISCONNECT,
+		SE_CHANNEL_NOT_SUPPORT,
 		SE_CLOSE,
 		SE_TIMEOUT,
+	};
+	struct StreamEventPacket {
+		StreamEvent event;
+		int channel;
+		char _data[0];
 	};
 #ifdef __cplusplus
 }

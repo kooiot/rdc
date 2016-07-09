@@ -20,10 +20,10 @@ bool CStreamHandler::OnData(int channel, void * data, size_t len)
 	return false;
 }
 
-bool CStreamHandler::OnEvent(StreamEvent event)
+bool CStreamHandler::OnEvent(int channel, StreamEvent event)
 {
 	if (m_evt) {
-		m_evt(event, m_prv);
+		m_evt(channel, event, m_prv);
 		return true;
 	}
 	return false;

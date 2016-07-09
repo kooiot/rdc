@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "VSPortMgr.h"
-
+#include <fstream>
 
 VSPortMgr::VSPortMgr()
 {
@@ -17,24 +17,13 @@ int VSPortMgr::Init()
 	if (!loaded)
 		return -1;
 
-	LPCTSTR key = NULL;
-	/*
-	// For example, how use your key:
-	LPCTSTR key = (_T("-----BEGIN VIRTUALSERIALPORTCONTROL KEY BLOCK-----")
-	_T("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-	_T("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-	_T("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-	_T("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-	_T("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-	_T("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-	_T("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-	_T("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-	_T("xxxxxxxx")
-	_T("-----END VIRTUALSERIALPORTCONTROL KEY BLOCK-----")
-	);
-	*/
+	std::fstream file("vspd.key");
 
-	if (!FtVspcApiInit(OnVspcControlEvents, (LONG_PTR)this, key)) {
+	char* buf = new char[4096];
+	memset(buf, 0, 4096);
+	file.read(buf, 4096);
+
+	if (!FtVspcApiInit(OnVspcControlEvents, (LONG_PTR)this, buf)) {
 		//ShowError();
 		return -1;
 	}

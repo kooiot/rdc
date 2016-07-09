@@ -1,6 +1,7 @@
 #include "StreamMgr.h"
 #include <cassert>
 #include "SerialStream.h"
+#include "TestStream.h"
 
 StreamMgr::StreamMgr() : m_ClientHost(NULL), m_pThread(NULL), m_bAbort(false)
 {
@@ -15,7 +16,7 @@ StreamMgr::~StreamMgr()
 bool StreamMgr::Init()
 {
 	m_bAbort = false;
-	m_ClientHost = enet_host_create(NULL, RC_MAX_CONNECTION, RC_MAX_CONNECTION, 0, 0);
+	m_ClientHost = enet_host_create(NULL, RC_MAX_CONNECTION, RC_MAX_CONNECTION + 1, 0, 0);
 	if (m_ClientHost == NULL)
 	{
 		fprintf(stderr,
@@ -72,6 +73,10 @@ bool StreamMgr::Close()
 
 bool StreamMgr::OnData(ENetPeer* peer, int channel, void * data, size_t len)
 {
+	if (channel == RC_MAX_CONNECTION) {
+		return true;
+	}
+
 	std::pair<ENetPeer*, int> key = std::make_pair(peer, channel);
 	PeerChannel2PortMap::iterator ptr = m_PeerChannel2Port.find(key);
 	if (ptr == m_PeerChannel2Port.end()) {
@@ -122,15 +127,15 @@ int StreamMgr::Create(const StreamProcess& StreamServer, const ConnectionInfo & 
 		enet_address_set_host(&address, StreamServer.StreamIP);
 		address.port = StreamServer.Port;
 		int nData = ((MAPPER_TYPE & 0xFFFF) << 16) + (StreamServer.Index & 0xFFFF);
-		peer = enet_host_connect(m_ClientHost, &address, RC_MAX_CONNECTION, nData);
+		peer = enet_host_connect(m_ClientHost, &address, RC_MAX_CONNECTION + 1, nData);
 		if (peer == NULL)
 		{
 			fprintf(stderr,
 				"No available peers for initiating an ENet connection.\n");
 			return -1;
 		}
-		long i = 1;
-		peer->data = (void*)i;
+		long ld = 1;
+		peer->data = (void*)ld;
 		m_StreamServers[i] = new StreamProcess(StreamServer);
 		m_Peers[i] = peer;
 	}
@@ -139,13 +144,22 @@ int StreamMgr::Create(const StreamProcess& StreamServer, const ConnectionInfo & 
 		// The connection is built and used by other channel.
 		peer = m_Peers[i];
 	}
-	assert(info.Type == CT_SERIAL);
 
-	// Create StreamPort here: FIXME:
-	SerialStream* pStream = new SerialStream(peer, info);
-	pStream->Open();
-	m_PortInfo[pStream] = info;
-	m_PeerChannel2Port[std::make_pair(peer, info.Channel)] = pStream;
+	IStreamPort* pPort = NULL;
+	switch (info.Type) {
+	case CT_SERIAL:
+		pPort = new SerialStream(peer, info, StreamServer.Mask);
+		break;
+	default:
+		pPort = new TestStream(peer, info, StreamServer.Mask);
+		break;
+	}
+	if (!pPort) {
+		return -1;
+	}
+	pPort->Start();
+	m_PortInfo[pPort] = info;
+	m_PeerChannel2Port[std::make_pair(peer, info.Channel)] = pPort;
 	return 0;
 }
 
@@ -158,6 +172,13 @@ int StreamMgr::Destroy(const StreamProcess& StreamServer, int channel)
 			&& 0 == strcmp(m_StreamServers[i]->StreamIP, StreamServer.StreamIP)
 			&& m_StreamServers[i]->Port == StreamServer.Port)
 		{
+			IStreamPort* pPort = m_PeerChannel2Port[std::make_pair(m_Peers[i], channel)];
+			if (pPort) {
+				pPort->Close();
+				delete pPort;
+				m_PortInfo.erase(pPort);
+			}
+
 			long* count = (long*)&m_Peers[i]->data;
 			*count--;
 			if (*count <= 0) {
@@ -165,7 +186,6 @@ int StreamMgr::Destroy(const StreamProcess& StreamServer, int channel)
 			}
 			delete m_StreamServers[i];
 			m_StreamServers[i] = NULL;
-			// TODO: Close stream
 			return 0;
 		}
 	}

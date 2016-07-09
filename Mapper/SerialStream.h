@@ -1,24 +1,22 @@
 #pragma once
 
 #include "StreamPort.h"
-#include <enet/enet.h>
 #include <serial/serial.h>
-#include <string>
-#include "../api/DataDefs.h"
 
-class SerialStream  : public IStreamPort
+class SerialStream  : public StreamPortBase
 {
 public:
-	SerialStream(ENetPeer* peer, const ConnectionInfo& info);
+	SerialStream(ENetPeer* peer, const ConnectionInfo& info, int mask);
 	~SerialStream();
 
 	virtual bool Open();
 	virtual void Close();
 
-	virtual int OnClientData(void* data, size_t len);
+	virtual void Run();
+	virtual int OnWrite(void* data, size_t len);
 
 private:
-	ENetPeer* m_Peer;
 	serial::Serial* m_Serial;
+
 };
 
