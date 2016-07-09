@@ -7,17 +7,17 @@
 
 #include "StreamServerMgr.h"
 #include "ClientMgr.h"
-#include "koo_process.h"
+//#include "koo_process.h"
 
 void* ctx = NULL;
 CStreamServerMgr StreamMgr;
 CClientMgr ClientMgr(StreamMgr);
-koo_process *process = NULL;
+//koo_process *process = NULL;
 
 void on_close() {
 	printf("Exit function called\n");
-	if (process)
-		process->stop();
+	//if (process)
+	//	process->stop();
 	StreamMgr.Close();
 	ClientMgr.Close();
 	zmq_ctx_term(ctx);
@@ -61,8 +61,8 @@ int main(int argc, char* argv[])
 	args << bip << " ";
 	args << 6800 << " ";
 
-	process = new koo_process("StreamServer", "", "StreamServer.exe", args.str(), true);
-	process->start();
+	//process = new koo_process("StreamServer", "", "StreamServer.exe", args.str(), true);
+	//process->start();
 
 	while (true) {
 		zmq_pollitem_t items[] = {

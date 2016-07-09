@@ -32,6 +32,7 @@ protected:
 	RC_HANDLE m_hApi;
 	DeviceInfo* m_Devices;
 	ConnectionInfo* m_ConnectionInfos[RC_MAX_CONNECTION];
+	ConnectionInfo* m_LocalConnectionInfos[RC_MAX_CONNECTION];
 	IStreamHandler* m_StreamPorts[RC_MAX_CONNECTION];
 	VSPortMgr m_VSPortMgr;
 
@@ -62,7 +63,7 @@ protected:
 	virtual int OnLog(RC_CHANNEL channel, const char* type, const char* content);
 	virtual int Send(RC_CHANNEL channel, void* buf, size_t len);
 
-	void AddConnection(ConnectionInfo* info);
+	void AddConnection(ConnectionInfo* info, ConnectionInfo * local);
 	void RemoveConnection(RC_CHANNEL channel);
 
 	DeviceInfo* GetSelDeviceInfo();
@@ -71,8 +72,8 @@ protected:
 	afx_msg void OnBnClickedButtonConnect();
 	afx_msg void OnBnClickedButtonDisconnect();
 	afx_msg void OnBnClickedButtonListdev();
-	afx_msg void OnBnClickedButtonAdd();
 	afx_msg void OnNMDblclkListConnections(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedButtonDelete();
+	afx_msg void OnBnClickedButtonAdd();
 	afx_msg void OnBnClickedButtonAddSerial();
 };

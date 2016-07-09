@@ -35,6 +35,7 @@ public:
 protected:
 	HICON m_hIcon;
 	koo_process* m_pProcess;
+	koo_process* m_pStreamProcess;
 	koo_process* m_pMapperProcess;
 	CAccApi* m_pAccApi;
 	CStreamApi* m_pStreamApi;

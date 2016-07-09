@@ -258,6 +258,9 @@ void CServerCPDlg::OnBnClickedButtonStart()
 	m_pProcess = new koo_process("AccServer", "", "AccServer.exe", "", true);
 	m_pProcess->start();
 
+	m_pStreamProcess = new koo_process("StreamServer", "", "StreamServer.exe", "", true);
+	m_pStreamProcess->start();
+
 	m_pMapperProcess = new koo_process("Mapper", "", "Mapper.exe", "", true);
 	m_pMapperProcess->start();
 }
@@ -266,11 +269,15 @@ void CServerCPDlg::OnBnClickedButtonStop()
 {
 	if (m_pMapperProcess)
 		m_pMapperProcess->stop();
+	if (m_pStreamProcess)
+		m_pStreamProcess->stop();
 	if (m_pProcess)
 		m_pProcess->stop();
-	k_kill_process("StreamServer.exe");
+	//k_kill_process("StreamServer.exe");
 	delete m_pMapperProcess;
 	m_pMapperProcess = NULL;
+	delete m_pStreamProcess;
+	m_pStreamProcess = NULL;
 	delete m_pProcess;
 	m_pProcess = NULL;
 }

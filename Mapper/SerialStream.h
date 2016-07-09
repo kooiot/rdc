@@ -18,5 +18,7 @@ public:
 private:
 	serial::Serial* m_Serial;
 
+	std::thread* m_pThread;
+	bool m_bAbort;
 };
 

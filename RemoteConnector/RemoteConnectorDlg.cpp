@@ -57,6 +57,7 @@ CRemoteConnectorDlg::CRemoteConnectorDlg(CWnd* pParent /*=NULL*/)
 	m_Devices = new DeviceInfo[RC_MAX_ONLINE_DEVICE];
 	memset(m_Devices, 0, sizeof(DeviceInfo) * RC_MAX_ONLINE_DEVICE);
 	memset(m_ConnectionInfos, 0, sizeof(ConnectionInfo*) * RC_MAX_CONNECTION);
+	memset(m_LocalConnectionInfos, 0, sizeof(ConnectionInfo*) * RC_MAX_CONNECTION);
 	memset(m_StreamPorts, 0, sizeof(IStreamHandler*) * RC_MAX_CONNECTION);
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -138,7 +139,8 @@ BOOL CRemoteConnectorDlg::OnInitDialog()
 	m_listDevs.InsertColumn(2, "Desc", LVCFMT_LEFT, 240);
 	m_listDevs.SetExtendedStyle(m_listDevs.GetExtendedStyle() | LVS_EX_FULLROWSELECT);
 
-	m_listConnections.InsertColumn(0, "Type", LVCFMT_LEFT, 60);
+	m_listConnections.InsertColumn(0, "RT", LVCFMT_LEFT, 60);
+	m_listConnections.InsertColumn(0, "LT", LVCFMT_LEFT, 60);
 	m_listConnections.InsertColumn(1, "DevSN", LVCFMT_LEFT, 120);
 	m_listConnections.SetExtendedStyle(m_listConnections.GetExtendedStyle() | LVS_EX_FULLROWSELECT);
 	
@@ -257,47 +259,51 @@ int CRemoteConnectorDlg::Send(RC_CHANNEL channel, void * buf, size_t len)
 	return RC_StreamSend(m_hApi, channel, buf, len);
 }
 
-void CRemoteConnectorDlg::AddConnection(ConnectionInfo * info)
+void CRemoteConnectorDlg::AddConnection(ConnectionInfo * info, ConnectionInfo * local)
 {
 	if (m_StreamPorts[info->Channel] != NULL) {
 		MessageBox("EEE");
+		delete info;
+		delete local;
 		return;
 	}
 	IStreamHandler* pHandler = NULL;
-	if (info->Type == CT_SERIAL) {
-		pHandler = m_VSPortMgr.CreatePort(info->Channel, *this, "COM4");
+	if (local->Type == CT_SERIAL) {
+		pHandler = m_VSPortMgr.CreatePort(info->Channel, *this, local->Serial.dev);
 	}
-	if (info->Type == CT_TEST) {
-		pHandler = m_VSPortMgr.CreatePort(info->Channel, *this, "COM5");
-	}
-	if (!pHandler)
+	if (!pHandler) {
+		delete info;
+		delete local;
 		return;
+	}
 
 	m_ConnectionInfos[info->Channel] = info;
+	m_LocalConnectionInfos[info->Channel] = local;
 	m_StreamPorts[info->Channel] = pHandler;
 
 	int nIndex = m_listConnections.GetItemCount();
-	nIndex = m_listConnections.InsertItem(nIndex, "串口");
-	m_listConnections.SetItemText(nIndex, 1, info->DevSN);
+	nIndex = m_listConnections.InsertItem(nIndex, "Serial");
+	m_listConnections.SetItemText(nIndex, 1, "Serial");
+	m_listConnections.SetItemText(nIndex, 2, info->DevSN);
 	m_listConnections.SetItemData(nIndex, info->Channel);
 }
 
 void CRemoteConnectorDlg::RemoveConnection(RC_CHANNEL channel)
 {
-	if (m_StreamPorts[channel] != NULL) {
+	if (m_StreamPorts[channel] == NULL) {
 		return;
 	}
 	IStreamHandler* pHandler = m_StreamPorts[channel];
 	ConnectionInfo * info = m_ConnectionInfos[channel];
-	if (info->Type == CT_SERIAL) {
+	ConnectionInfo * local_info = m_LocalConnectionInfos[channel];
+	if (local_info->Type == CT_SERIAL) {
 		m_VSPortMgr.FreePort((VSPort*)pHandler);
 	}
-	if (info->Type == CT_TEST) {
-		m_VSPortMgr.FreePort((VSPort*)pHandler);
-	}
+	delete local_info;
 	delete info;
 	m_StreamPorts[channel] = NULL;
 	m_ConnectionInfos[channel] = NULL;
+	m_LocalConnectionInfos[channel] = NULL;
 }
 
 DeviceInfo* CRemoteConnectorDlg::GetSelDeviceInfo()
@@ -377,25 +383,6 @@ void CRemoteConnectorDlg::OnBnClickedButtonListdev()
 }
 
 
-void CRemoteConnectorDlg::OnBnClickedButtonAdd()
-{
-	DeviceInfo *info = GetSelDeviceInfo();
-	if (!info)
-		return;
-
-	RC_CHANNEL channel = RC_ConnectTest(m_hApi, info->SN);
-	if (channel < 0) {
-		MessageBox("创建串口", "提示", MB_OK | MB_ICONERROR);
-		return;
-	}
-	assert(m_ConnectionInfos[channel] == NULL);
-	ConnectionInfo* ci = new ConnectionInfo();
-	ci->Type = CT_TEST;
-	memcpy(ci->DevSN, info->SN, RC_MAX_SN_LEN);
-	ci->Channel = channel;
-	AddConnection(ci);
-}
-
 
 void CRemoteConnectorDlg::OnNMDblclkListConnections(NMHDR *pNMHDR, LRESULT *pResult)
 {
@@ -404,10 +391,12 @@ void CRemoteConnectorDlg::OnNMDblclkListConnections(NMHDR *pNMHDR, LRESULT *pRes
 	if (channel < 0 || channel > RC_MAX_CONNECTION)
 		return;
 
-	ConnectionInfo* pi = m_ConnectionInfos[channel];
-	if (pi->Type = CT_SERIAL) {
+	ConnectionInfo * info = m_ConnectionInfos[channel];
+	ConnectionInfo * local_info = m_LocalConnectionInfos[channel];
+	if (info->Type = CT_SERIAL) {
 		CSerialDlg dlg;
-		dlg.m_Info = pi->Serial;
+		dlg.m_Info = info->Serial;
+		dlg.m_LocalInfo = local_info->Serial;
 		dlg.m_Editable = false;
 		if (IDOK == dlg.DoModal()) {
 			
@@ -433,6 +422,7 @@ void CRemoteConnectorDlg::OnBnClickedButtonDelete()
 
 	IStreamHandler* pHandler = m_StreamPorts[nChannel];
 	ConnectionInfo* pInfo = m_ConnectionInfos[nChannel];
+	ConnectionInfo * local_info = m_LocalConnectionInfos[nChannel];
 	if (!pInfo || !pHandler)
 	{
 		MessageBox("BLALJAF", "提示", MB_OK | MB_ICONERROR);
@@ -446,6 +436,31 @@ void CRemoteConnectorDlg::OnBnClickedButtonDelete()
 	}
 }
 
+
+void CRemoteConnectorDlg::OnBnClickedButtonAdd()
+{
+	DeviceInfo *info = GetSelDeviceInfo();
+	if (!info)
+		return;
+
+	RC_CHANNEL channel = RC_ConnectTest(m_hApi, info->SN);
+	if (channel < 0) {
+		MessageBox("创建串口", "提示", MB_OK | MB_ICONERROR);
+		return;
+	}
+	assert(m_ConnectionInfos[channel] == NULL);
+	ConnectionInfo* ci = new ConnectionInfo();
+	ConnectionInfo* lci = new ConnectionInfo();
+	ci->Type = CT_TEST;
+	memcpy(ci->DevSN, info->SN, RC_MAX_SN_LEN);
+	ci->Channel = channel;
+
+	lci->Type = CT_SERIAL;
+	memcpy(lci->DevSN, info->SN, RC_MAX_SN_LEN);
+	lci->Channel = channel;
+	sprintf(lci->Serial.dev, "%s", "COM5");
+	AddConnection(ci, lci);
+}
 
 void CRemoteConnectorDlg::OnBnClickedButtonAddSerial()
 {
@@ -462,10 +477,15 @@ void CRemoteConnectorDlg::OnBnClickedButtonAddSerial()
 		}
 		assert(m_ConnectionInfos[channel] == NULL);
 		ConnectionInfo* ci = new ConnectionInfo();
+		ConnectionInfo* lci = new ConnectionInfo();
 		ci->Type = CT_SERIAL;
 		memcpy(ci->DevSN, info->SN, RC_MAX_SN_LEN);
 		ci->Serial = dlg.m_Info;
 		ci->Channel = channel;
-		AddConnection(ci);
+
+		lci->Type = CT_SERIAL;
+		memcpy(lci->DevSN, info->SN, RC_MAX_SN_LEN);
+		lci->Serial = dlg.m_LocalInfo;
+		AddConnection(ci, lci);
 	}
 }

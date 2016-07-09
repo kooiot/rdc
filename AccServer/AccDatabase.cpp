@@ -309,7 +309,7 @@ int CAccDatabase::Access(const std::string & id, const std::string & sn)
 	if (devid == INVALID_INDEX)
 		return -AUTH_ERROR;
 
-	if (id == "admin")
+	if (GetUserLevel(id) >= 99)
 		return 0;
 
 	return _Access(uid, devid);
@@ -687,6 +687,35 @@ int CAccDatabase::GetUserIndex(const std::string & id)
 
 	m_Lock.unlock();
 	return nID;
+}
+
+int CAccDatabase::GetUserLevel(const std::string & id)
+{
+	if (!m_pDB)
+		return INVALID_INDEX;
+
+	m_Lock.lock();
+
+	std::stringstream sql;
+	sql << "select level from users where id='" << id << "'";
+
+	std::string valid_time;
+	int nLevel = -1;
+	int rc = sqlite3_exec(m_pDB, sql.str().c_str(), [](void* data, int row, char** vals, char** cols) {
+		int* nID = (int*)data;
+		if (vals[0] != NULL) {
+			*nID = atoi(vals[0]);
+		}
+		return 0;
+	}, &nLevel, NULL);
+
+	if (rc != SQLITE_OK) {
+		std::cerr << "SQL Error: " << sqlite3_errmsg(m_pDB) << std::endl;
+		std::cerr << "SQL: " << sql.str() << std::endl;
+	}
+
+	m_Lock.unlock();
+	return nLevel;
 }
 
 int CAccDatabase::GetDeviceIndex(const std::string & id)

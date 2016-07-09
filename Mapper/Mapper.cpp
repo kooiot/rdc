@@ -33,18 +33,46 @@ void handle_sub_msg(zmq_msg_t& cmd, zmq_msg_t& data) {
 
 	pCmd = pCmd + strlen(g_sn) + 1;
 	if (0 == strncmp(pCmd, "CREATE", strlen("CREATE"))) {
-		StreamProcess sp;
-		ConnectionInfo info;
-		memcpy(&sp, zmq_msg_data(&data), sizeof(StreamProcess));
-		memcpy(&info, (char*)zmq_msg_data(&data) + sizeof(StreamProcess), sizeof(ConnectionInfo));
-		int rc = g_StreamMgr->Create(sp, info);
-		// FIXME: For failure handlesss
+		if (zmq_msg_size(&data) >= sizeof(StreamProcess) + sizeof(ConnectionInfo)) {
+			StreamProcess sp;
+			ConnectionInfo info;
+			memcpy(&sp, zmq_msg_data(&data), sizeof(StreamProcess));
+			memcpy(&info, (char*)zmq_msg_data(&data) + sizeof(StreamProcess), sizeof(ConnectionInfo));
+			int rc = g_StreamMgr->Create(sp, info);
+			// FIXME: For failure handlesss
+			if (rc != 0) {
+				std::cerr << "StreamMgr Create failure, returns " << rc << std::endl;
+			}
+			else {
+				std::cout << "StreamMgr Create OK" << std::endl;
+			}
+		}
+		else {
+			std::cerr << "Recevied Incorrect Size of CREATE " << std::endl;
+			std::cerr << "Received Size " << zmq_msg_size(&data);
+			std::cerr << " Expected Size " << sizeof(StreamProcess) + sizeof(ConnectionInfo);
+			std::cerr << std::endl;
+		}
 	}
 	else if (0 == strncmp(pCmd, "DESTROY", strlen("DESTROY"))) {
-		StreamProcess sp;
-		memcpy(&sp, zmq_msg_data(&data), sizeof(StreamProcess));
-		int channel = atoi((char*)zmq_msg_data(&data) + sizeof(StreamProcess));
-		int rc = g_StreamMgr->Destroy(sp, channel);
+		if (zmq_msg_size(&data) < sizeof(StreamProcess) + sizeof(int)) {
+			std::cerr << "Recevied Incorrect Size of DESTROY " << std::endl;
+			std::cerr << "Received Size " << zmq_msg_size(&data);
+			std::cerr << " Expected Size " << sizeof(StreamProcess) + sizeof(int);
+			std::cerr << std::endl;
+		}
+		else {
+			StreamProcess sp;
+			memcpy(&sp, zmq_msg_data(&data), sizeof(StreamProcess));
+			int channel = atoi((char*)zmq_msg_data(&data) + sizeof(StreamProcess));
+			int rc = g_StreamMgr->Destroy(sp, channel);
+			if (rc != 0) {
+				std::cerr << "StreamMgr Destroy failure, returns " << rc << std::endl;
+			}
+			else {
+				std::cout << "StreamMgr Destroy OK" << std::endl;
+			}
+		}
 	}
 	else {
 	}
@@ -225,8 +253,10 @@ int main(int argc, char* argv[])
 	std::cout << "Port_SUB: \t" << g_port_sub << std::endl;
 
 	enet_initialize();
+	
+	uv_loop_t *loop = uv_default_loop();
 
-	g_StreamMgr = new StreamMgr();
+	g_StreamMgr = new StreamMgr(loop);
 	g_StreamMgr->Init();
 
 	void * ctx;
@@ -242,8 +272,6 @@ int main(int argc, char* argv[])
 	if (rc != 0)
 		exit(EXIT_FAILURE);
 	
-	uv_loop_t *loop = uv_default_loop();
-
 	uv_poll_t poll_sub;
 	uv_os_sock_t socket;
 	size_t len = sizeof(uv_os_sock_t);

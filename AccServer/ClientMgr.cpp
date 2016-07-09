@@ -147,21 +147,7 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 	else if (cmd.cmd == "DESTROY") {
 		int channel = atoi(cmd.GetStr().c_str());
 		if (channel >= 0 && channel < RC_MAX_CONNECTION) {
-			MapperData* pMapper = FindStream(cmd.id, channel);
-			ClientData* pClient = FindClient(cmd.id);
-			assert(pClient);
-			if (pMapper) {
-				nReturn = FreeStream(cmd.id, channel);
-				if (nReturn == 0) {
-					std::cout << "Destroy Stream Channel " << channel << std::endl;
-					int len = sizeof(StreamProcess) + sizeof(int);
-					char* buf = new char[len];
-					memcpy(buf, pClient->StreamServer, sizeof(StreamProcess));
-					memcpy(buf + sizeof(StreamProcess), &channel, sizeof(int));
-					SendToMapper(pMapper->ID, "DESTROY", buf, len);
-					delete[] buf;
-				}
-			}
+			nReturn = FreeStream(cmd.id, channel);
 		}
 	}
 	else if (cmd.cmd == "ADD_DEV") {
@@ -191,7 +177,14 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 			}
 		}
 		else {
-			m_Database.ListDevices(list);
+			std::list<std::string> all;
+			m_Database.ListDevices(all);
+			for (std::list<std::string>::iterator ptr = all.begin();
+				ptr != all.end(); ++ptr) {
+				if (0 == m_Database.Access(cmd.id, *ptr)) {
+					list.push_back(*ptr);
+				}
+			}
 		}
 
 		std::string data;
@@ -381,9 +374,7 @@ int CClientMgr::RemoveClient(const std::string & id)
 	for (int i = 0; i < RC_MAX_CONNECTION; ++i){
 		ConnectionData* pConn = ptr->second->Connections[i];
 		if (pConn) {
-			std::cout << "Client Destroy Stream Channel " << i << std::endl;
-			SendToMapper(pConn->Mapper->ID, "DESTROY", &i, sizeof(int));
-			delete pConn;
+			FreeStream(id, i);
 		}
 	}
 
@@ -468,7 +459,17 @@ int CClientMgr::FreeStream(const std::string& id, int channel)
 	ClientData* pClient = ptr->second;
 
 	if (pClient->Connections[channel]) {
-		delete pClient->Connections[channel];
+		ConnectionData * pData = pClient->Connections[channel];
+
+		std::cout << "Client " << id << " Destroy Stream Channel " << channel << std::endl;
+		int len = sizeof(StreamProcess) + sizeof(int);
+		char* buf = new char[len];
+		memcpy(buf, pClient->StreamServer, sizeof(StreamProcess));
+		memcpy(buf + sizeof(StreamProcess), &channel, sizeof(int));
+		SendToMapper(pData->Mapper->ID, "DESTROY", buf, len);
+		delete[] buf;
+
+		delete pData;
 		pClient->Connections[channel] = NULL;
 		return 0;
 	}

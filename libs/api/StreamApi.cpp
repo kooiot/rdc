@@ -20,7 +20,7 @@ CStreamApi::~CStreamApi()
 bool CStreamApi::Connect(const char * ip, int port)
 {
 	ENetHost * client;
-	client = enet_host_create(NULL, 2, RC_MAX_CONNECTION, 0, 0);
+	client = enet_host_create(NULL, 2, RC_MAX_CONNECTION + 1, 0, 0);
 	if (client == NULL)
 	{
 		fprintf(stderr,
@@ -32,7 +32,7 @@ bool CStreamApi::Connect(const char * ip, int port)
 
 	enet_address_set_host(&address, ip);
 	address.port = port;
-	peer = enet_host_connect(client, &address, RC_MAX_CONNECTION, m_nData);
+	peer = enet_host_connect(client, &address, RC_MAX_CONNECTION + 1, m_nData);
 	if (peer == NULL)
 	{
 		fprintf(stderr,
@@ -63,8 +63,13 @@ bool CStreamApi::Connect(const char * ip, int port)
 						event.packet->data,
 						(char*)event.peer->data,
 						event.channelID);
-					this->OnData(event.channelID, event.packet->data, event.packet->dataLength);
-
+					if (RC_MAX_CONNECTION == event.channelID) {
+						StreamEventPacket* sep = (StreamEventPacket*)event.packet->data;
+						m_Handler.OnEvent(sep->channel, sep->event);
+					}
+					else {
+						this->OnData(event.channelID, event.packet->data, event.packet->dataLength);
+					}
 					/* Clean up the packet now that we're done using it. */
 					enet_packet_destroy(event.packet);
 					break;

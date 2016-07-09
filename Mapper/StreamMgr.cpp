@@ -3,7 +3,19 @@
 #include "SerialStream.h"
 #include "TestStream.h"
 
-StreamMgr::StreamMgr() : m_ClientHost(NULL), m_pThread(NULL), m_bAbort(false)
+class AutoLock {
+public:
+	std::mutex & m_Lock;
+	AutoLock(std::mutex& lock) : m_Lock(lock) {
+		m_Lock.lock();
+	}
+	~AutoLock() {
+		m_Lock.unlock();
+	}
+};
+
+StreamMgr::StreamMgr(uv_loop_t * uv_loop)
+	: m_UVLoop(uv_loop), m_ClientHost(NULL), m_pThread(NULL), m_pWorkerThread(NULL), m_bAbort(false)
 {
 	memset(m_Peers, 0, sizeof(ENetPeer*) * RC_MAX_CONNECTION);
 }
@@ -35,11 +47,12 @@ bool StreamMgr::Init()
 					printf("Connection to %d:%d succeeded.\n",
 						event.peer->address.host,
 						event.peer->address.port);
+					OnConnected(event.peer);
 					break;
 				case ENET_EVENT_TYPE_RECEIVE:
-					printf("A packet of length %u was received from %d on channel %u.\n",
+					printf("A packet of length %u was received from %ld on channel %u.\n",
 						event.packet->dataLength,
-						(int)event.peer->data,
+						(long)event.peer->data,
 						event.channelID);
 					OnData(event.peer, event.channelID, event.packet->data, event.packet->dataLength);
 
@@ -48,11 +61,8 @@ bool StreamMgr::Init()
 					break;
 
 				case ENET_EVENT_TYPE_DISCONNECT:
-					printf("ENet peer disconnected, count %d.\n", (long)event.peer->data);
-					if ((long)event.peer->data != 0)
-					{
-						// TODO:
-					}
+					printf("ENet peer disconnected, count %ld.\n", (long)event.peer->data);
+					OnDisconnected(event.peer);
 				}
 			}
 		}
@@ -71,11 +81,55 @@ bool StreamMgr::Close()
 	return false;
 }
 
+bool StreamMgr::OnConnected(ENetPeer * peer)
+{
+	fprintf(stdout, "ENet Peer connected!.\n");
+
+	AutoLock lock(m_Lock);
+
+	std::map<ENetPeer*, std::list<IStreamPort*>>::iterator ptr = m_PendingPorts.find(peer);
+	if (ptr == m_PendingPorts.end())
+		return true;
+	std::list<IStreamPort*>::iterator lptr = ptr->second.begin();
+	for (; lptr != ptr->second.end(); ++lptr) {
+		(*lptr)->Open();
+	}
+
+	m_PendingPorts.erase(peer);
+}
+
+void StreamMgr::OnDisconnected(ENetPeer * peer)
+{
+	StreamProcess sp;
+	int nIndex = -1;
+	{
+		AutoLock lock(m_Lock);
+		for (int i = 0; i < RC_MAX_CONNECTION; ++i) {
+			if (m_Peers[i] == peer) {
+				nIndex = i;
+				memcpy(&sp, m_StreamServers[i], sizeof(StreamProcess));
+				break;
+			}
+		}
+	}
+	
+	if (nIndex == -1) {
+		return;
+	}
+
+	for (int i = 0; i < RC_MAX_CONNECTION; ++i) {
+		Destroy(sp, i);
+	}
+	assert(m_Peers[nIndex] == NULL);
+	assert(m_StreamServers[nIndex] == NULL);
+}
+
 bool StreamMgr::OnData(ENetPeer* peer, int channel, void * data, size_t len)
 {
 	if (channel == RC_MAX_CONNECTION) {
 		return true;
 	}
+	AutoLock lock(m_Lock);
 
 	std::pair<ENetPeer*, int> key = std::make_pair(peer, channel);
 	PeerChannel2PortMap::iterator ptr = m_PeerChannel2Port.find(key);
@@ -86,7 +140,7 @@ bool StreamMgr::OnData(ENetPeer* peer, int channel, void * data, size_t len)
 	IStreamPort* port = ptr->second;
 	int rc = port->OnClientData(data, len);
 	if (rc < 0)
-		return -1;
+		return false;
 	return true;
 }
 
@@ -97,7 +151,9 @@ bool StreamMgr::OnData(ENetPeer* peer, int channel, void * data, size_t len)
 
 int StreamMgr::Create(const StreamProcess& StreamServer, const ConnectionInfo & info)
 {
+	AutoLock lock(m_Lock);
 	int i = 0;
+	// Search for same enet connection
 	for (; i < RC_MAX_CONNECTION; ++i) {
 		if (m_StreamServers[i] == NULL)
 			continue;
@@ -108,6 +164,7 @@ int StreamMgr::Create(const StreamProcess& StreamServer, const ConnectionInfo & 
 			break;
 		}
 	}
+	// Search for free enet peer
 	if (i >= RC_MAX_CONNECTION) {
 		i = 0;
 		for (; i < RC_MAX_CONNECTION; ++i) {
@@ -134,8 +191,8 @@ int StreamMgr::Create(const StreamProcess& StreamServer, const ConnectionInfo & 
 				"No available peers for initiating an ENet connection.\n");
 			return -1;
 		}
-		long ld = 1;
-		peer->data = (void*)ld;
+		long& count = *(long*)&peer->data;
+		count = 1;
 		m_StreamServers[i] = new StreamProcess(StreamServer);
 		m_Peers[i] = peer;
 	}
@@ -143,6 +200,8 @@ int StreamMgr::Create(const StreamProcess& StreamServer, const ConnectionInfo & 
 	{
 		// The connection is built and used by other channel.
 		peer = m_Peers[i];
+		long& count = *(long*)&peer->data;
+		count++;
 	}
 
 	IStreamPort* pPort = NULL;
@@ -157,7 +216,13 @@ int StreamMgr::Create(const StreamProcess& StreamServer, const ConnectionInfo & 
 	if (!pPort) {
 		return -1;
 	}
-	pPort->Start();
+	if (peer->state != ENET_PEER_STATE_CONNECTED) {
+		m_PendingPorts[peer].push_back(pPort);
+	}
+	else {
+		pPort->Open();
+	}
+
 	m_PortInfo[pPort] = info;
 	m_PeerChannel2Port[std::make_pair(peer, info.Channel)] = pPort;
 	return 0;
@@ -165,6 +230,7 @@ int StreamMgr::Create(const StreamProcess& StreamServer, const ConnectionInfo & 
 
 int StreamMgr::Destroy(const StreamProcess& StreamServer, int channel)
 {
+	AutoLock lock(m_Lock);
 	for (int i = 0; i < RC_MAX_CONNECTION; ++i) {
 		if (m_StreamServers[i] == NULL)
 			continue;
@@ -179,13 +245,15 @@ int StreamMgr::Destroy(const StreamProcess& StreamServer, int channel)
 				m_PortInfo.erase(pPort);
 			}
 
-			long* count = (long*)&m_Peers[i]->data;
-			*count--;
-			if (*count <= 0) {
+			long& count = *(long*)&m_Peers[i]->data;
+			count--;
+			if (count <= 0) {
 				enet_peer_disconnect(m_Peers[i], 0);
+
+				delete m_StreamServers[i];
+				m_StreamServers[i] = NULL;
+				m_Peers[i] = NULL;
 			}
-			delete m_StreamServers[i];
-			m_StreamServers[i] = NULL;
 			return 0;
 		}
 	}

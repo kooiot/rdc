@@ -16,6 +16,7 @@ CSerialDlg::CSerialDlg(CWnd* pParent /*=NULL*/)
 	m_Editable(true)
 {
 	sprintf(m_Info.dev, "%s", "COM8");//
+	sprintf(m_LocalInfo.dev, "%s", "COM4");//
 	m_Info.baudrate = 9600;
 	m_Info.bytesize = eightbits;
 	m_Info.stopbits = stopbits_one;

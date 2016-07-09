@@ -9,7 +9,6 @@ class IStreamPort {
 public:
 	virtual ~IStreamPort() {};
 	
-	virtual void Start() = 0;
 	virtual bool Open() = 0;
 	virtual void Close() = 0;
 
@@ -22,15 +21,13 @@ public:
 	StreamPortBase(ENetPeer* peer, const ConnectionInfo& info, int mask);
 	~StreamPortBase();
 
-	virtual void Start();
-	virtual bool Open();
-	virtual void Close();
-
-	virtual void Run() = 0;
+	virtual bool Open() = 0;
+	virtual void Close() = 0;
 	virtual int OnWrite(void* data, size_t len) = 0;
 
 	virtual int SendData(void* data, size_t len);
-
+	virtual int OnOpened();
+	virtual int OnClosed();
 private:
 	virtual int OnClientData(void* data, size_t len);
 
@@ -38,7 +35,4 @@ protected:
 	ConnectionInfo m_Info;
 	ENetPeer* m_Peer;
 	int m_Mask;
-
-	std::thread* m_pThread;
-	bool m_bAbort;
 };

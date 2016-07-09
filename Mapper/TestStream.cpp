@@ -1,7 +1,7 @@
 #include "TestStream.h"
 
 TestStream::TestStream(ENetPeer* peer, const ConnectionInfo& info, int mask)
-	: StreamPortBase(peer, info, mask)
+	: StreamPortBase(peer, info, mask), m_pThread(NULL), m_bAbort(false)
 {
 }
 
@@ -21,12 +21,26 @@ bool TestStream::Open()
 		printf("Send Not Support returns %d\n", rc);
 		return rc >= 0;
 	}
-	return __super::Open();
+	int rc = OnOpened();
+	if (rc >= 0) {
+		m_pThread = new std::thread([this]() {
+			while (!m_bAbort) {
+				this->Run();
+			}
+		});
+	}
+	return 0;
 }
 
 void TestStream::Close()
 {
-	__super::Close();
+	m_bAbort = true;
+	if (m_pThread && m_pThread->joinable())
+		m_pThread->join();
+	delete m_pThread;
+	m_pThread = NULL;
+
+	OnClosed();
 }
 
 void TestStream::Run()

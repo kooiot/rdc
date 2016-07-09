@@ -83,6 +83,7 @@ public:
 
 protected:
 	int GetUserIndex(const std::string& id);
+	int GetUserLevel(const std::string& id);
 	int GetDeviceIndex(const std::string& id);
 	int _Access(int user, int dev);
 	int _Allow(int user, int dev, time_t* _Time = NULL);

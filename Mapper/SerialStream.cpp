@@ -4,28 +4,8 @@ using namespace serial;
 
 
 SerialStream::SerialStream(ENetPeer* peer, const ConnectionInfo& info, int mask)
-	: StreamPortBase(peer, info, mask)
+	: StreamPortBase(peer, info, mask), m_Serial(NULL), m_pThread(NULL), m_bAbort(false)
 {
-	printf("Open Serial On PORT %s", info.Serial.dev);
-	try {
-		m_Serial = new Serial(info.Serial.dev,
-			info.Serial.baudrate,
-			Timeout::simpleTimeout(1000),
-			(bytesize_t)info.Serial.bytesize,
-			(parity_t)info.Serial.parity,
-			(stopbits_t)info.Serial.stopbits,
-			(flowcontrol_t)info.Serial.flowcontrol);
-	}
-	catch (const IOException& ex) {
-		printf("%s\n", ex.what());
-	}
-	catch (const std::exception ex) {
-		printf("%s\n", ex.what());
-	}
-	catch (...) {
-		// 
-		m_Serial = NULL;
-	}
 }
 
 
@@ -36,20 +16,60 @@ SerialStream::~SerialStream()
 
 bool SerialStream::Open()
 {
-	if (m_Serial->isOpen())
-		return true;
+	printf("Open Serial On PORT %s", m_Info.Serial.dev);
+	try {
+		m_Serial = new Serial(m_Info.Serial.dev,
+			m_Info.Serial.baudrate,
+			Timeout::simpleTimeout(1000),
+			(bytesize_t)m_Info.Serial.bytesize,
+			(parity_t)m_Info.Serial.parity,
+			(stopbits_t)m_Info.Serial.stopbits,
+			(flowcontrol_t)m_Info.Serial.flowcontrol);
+	}
+	catch (const IOException& ex) {
+		printf("%s\n", ex.what());
+		return false;
+	}
+	catch (const std::exception ex) {
+		printf("%s\n", ex.what());
+		return false;
+	}
+	catch (...) {
+		// 
+		m_Serial = NULL;
+		return false;
+	}
+	if (!m_Serial)
+		return false;
 
-	m_Serial->open();
+	if (!m_Serial->isOpen())
+		m_Serial->open();
 	
-	if (m_Serial->isOpen())
-		return __super::Open();
+	if (m_Serial->isOpen()) {
+		int rc = OnOpened();
+
+		m_pThread = new std::thread([this]() {
+			while (!m_bAbort) {
+				this->Run();
+			}
+		});
+
+		return true;
+	}
 	return false;
 }
 
 void SerialStream::Close()
 {
-	__super::Open();
+	m_bAbort = true;
+	if (m_pThread && m_pThread->joinable())
+		m_pThread->join();
+	delete m_pThread;
+	m_pThread = NULL;
+
 	m_Serial->close();
+
+	OnClosed();
 }
 
 void SerialStream::Run()
