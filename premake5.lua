@@ -31,7 +31,8 @@ project "mapper"
 
 	files {"./Mapper/**.h", "./Mapper/**.cpp" }
 	links { "pthread", "rt", "zmq", "enet", "uv", "serial"}
-	includedirs { ".", "libs/api", "libs/serial/include" }
+	includedirs { ".", "libs/api", "libs/serial/include", "libs/enet/include", "libs/zeromq/include", "libs/libuv-v1.9.1/include" }
+	libdirs {"libs/.libs"}
 
 	filter "configurations:Debug"
 		defines { "DEBUG" }
