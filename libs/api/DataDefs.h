@@ -52,7 +52,6 @@ extern "C" {
 	struct UDPInfo
 	{
 		IPInfo local;
-		IPInfo bind;
 		IPInfo server;
 	};
 

@@ -2,6 +2,8 @@
 #include <cassert>
 #include "SerialStream.h"
 #include "TestStream.h"
+#include "TcpClientStream.h"
+#include "UdpStream.h"
 
 class AutoLock {
 public:
@@ -208,6 +210,12 @@ int StreamMgr::Create(const StreamProcess& StreamServer, const ConnectionInfo & 
 	switch (info.Type) {
 	case CT_SERIAL:
 		pPort = new SerialStream(peer, info, StreamServer.Mask);
+		break;
+	case CT_TCPC:
+		pPort = new TcpClientStream(m_UVLoop, peer, info, StreamServer.Mask);
+		break;
+	case CT_UDP:
+		pPort = new UdpStream(m_UVLoop, peer, info, StreamServer.Mask);
 		break;
 	default:
 		pPort = new TestStream(peer, info, StreamServer.Mask);

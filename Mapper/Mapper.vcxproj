@@ -168,6 +168,7 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TcpClientStream.h" />
     <ClInclude Include="TestStream.h" />
+    <ClInclude Include="UdpStream.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Mapper.cpp" />
@@ -177,6 +178,7 @@
     <ClCompile Include="StreamPort.cpp" />
     <ClCompile Include="TcpClientStream.cpp" />
     <ClCompile Include="TestStream.cpp" />
+    <ClCompile Include="UdpStream.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\libs\api\api.vcxproj">

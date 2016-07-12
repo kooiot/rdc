@@ -13,10 +13,6 @@ TcpClientStream::~TcpClientStream()
 {
 }
 
-static void fail_cb(void) {
-	printf("%s\n", "fail_cb called");
-}
-
 void TcpClientStream::ConnectCB(uv_connect_t* req, int status) {
 	TcpClientStream* pThis = (TcpClientStream*)req->data;
 	pThis->_ConnectCB(req, status);
@@ -28,7 +24,7 @@ void TcpClientStream::_ConnectCB(uv_connect_t * req, int status)
 		// Failed
 		return;
 	}
-	if (0 != uv_read_start(req->handle, (uv_alloc_cb)fail_cb, (uv_read_cb)ReadCB)) {
+	if (0 != uv_read_start(req->handle, NULL, (uv_read_cb)ReadCB)) {
 
 	}
 	m_bConnected = true;
@@ -55,17 +51,37 @@ bool TcpClientStream::Open()
 	m_bConnected = false;
 	struct sockaddr_in addr;
 
-	if (0 != uv_ip4_addr(m_Info.TCPClient.server.sip, m_Info.TCPClient.server.port, &addr)) {
+	int rc = uv_ip4_addr(m_Info.TCPClient.server.sip, m_Info.TCPClient.server.port, &addr);
+	if (0 != rc) {
+		printf("Incorrect TCP server address %d\n", rc);
 		return false;
 	}
 	
-	if (0 != uv_tcp_init(m_uv_loop, &m_tcp_handle)) {
+	rc = uv_tcp_init(m_uv_loop, &m_tcp_handle);
+	if (0 != rc) {
+		printf("Cannot Init TCP handle %d\n", rc);
 		return false;
 	}
 	m_tcp_handle.data = this;
 	m_connect_req.data = this;
-	int rc = uv_tcp_connect(&m_connect_req, &m_tcp_handle, (const struct sockaddr*) &addr, ConnectCB);
+
+	if (m_Info.TCPClient.local.port != 0) {
+		struct sockaddr_in bind_addr;
+		rc = uv_ip4_addr(m_Info.UDP.local.sip, m_Info.UDP.local.port, &bind_addr);
+		if (0 != rc) {
+			printf("Incorrect TCP local address %d\n", rc);
+			return false;
+		}
+		rc = uv_tcp_bind(&m_tcp_handle, (const struct sockaddr*)&bind_addr, 0);
+		if (0 != rc) {
+			printf("Cannot Bind TCP to local ip %d\n", rc);
+			return false;
+		}
+	}
+
+	rc = uv_tcp_connect(&m_connect_req, &m_tcp_handle, (const struct sockaddr*) &addr, ConnectCB);
 	if (0 != rc) {
+		printf("Cannot Connect TCP to server %d\n", rc);
 		return false;
 	}
 
@@ -74,6 +90,7 @@ bool TcpClientStream::Open()
 
 void TcpClientStream::Close()
 {
+	uv_read_stop((uv_stream_t*)&m_tcp_handle.stream.conn);
 	uv_close((uv_handle_t*)&m_tcp_handle, NULL);
 	OnClosed();
 }
