@@ -92,11 +92,11 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include;../libs/api</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../libs/libuv/include;../libs/enet/include;../libs/zeromq/include;../libs/api</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>libzmq.lib;ws2_32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libzmq.lib;libuv.lib;ws2_32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\libs\libuv;..\libs\zeromq\bin\$(PlatformName)\$(ConfigurationName)\$(PlatformToolset)\dynamic;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Midl>
@@ -144,13 +144,13 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include;../libs/api</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../libs/libuv/include;../libs/enet/include;../libs/zeromq/include;../libs/api</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>libzmq.lib;ws2_32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libzmq.lib;libuv.lib;ws2_32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\libs\libuv;..\libs\zeromq\bin\$(PlatformName)\$(ConfigurationName)\$(PlatformToolset)\dynamic;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Midl>
@@ -204,6 +204,9 @@
     <ClInclude Include="SerialDlg.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="UVMgr.h" />
+    <ClInclude Include="UVTcpServer.h" />
+    <ClInclude Include="UVUdp.h" />
     <ClInclude Include="vspd\ftvspc.h" />
     <ClInclude Include="vspd\ftvspcstructs.h" />
     <ClInclude Include="vspd\ftvspctypes.h" />
@@ -220,6 +223,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="UVMgr.cpp" />
+    <ClCompile Include="UVTcpServer.cpp" />
+    <ClCompile Include="UVUdp.cpp" />
     <ClCompile Include="vspd\ftvspc.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>

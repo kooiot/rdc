@@ -24,7 +24,7 @@ void TcpClientStream::_ConnectCB(uv_connect_t * req, int status)
 		// Failed
 		return;
 	}
-	if (0 != uv_read_start(req->handle, NULL, (uv_read_cb)ReadCB)) {
+	if (0 != uv_read_start(req->handle, NULL, ReadCB)) {
 
 	}
 	m_bConnected = true;
@@ -67,7 +67,7 @@ bool TcpClientStream::Open()
 
 	if (m_Info.TCPClient.local.port != 0) {
 		struct sockaddr_in bind_addr;
-		rc = uv_ip4_addr(m_Info.UDP.local.sip, m_Info.UDP.local.port, &bind_addr);
+		rc = uv_ip4_addr(m_Info.TCPClient.local.sip, m_Info.TCPClient.local.port, &bind_addr);
 		if (0 != rc) {
 			printf("Incorrect TCP local address %d\n", rc);
 			return false;
