@@ -7,6 +7,10 @@
 #include "RemoteConnectorDlg.h"
 #include "afxdialogex.h"
 #include "SerialDlg.h"
+#include "TCPDlg.h"
+#include "UDPDlg.h"
+#include "UVTcpServer.h"
+#include "UVUdp.h"
 #include <cassert>
 
 #ifdef _DEBUG
@@ -59,6 +63,7 @@ CRemoteConnectorDlg::CRemoteConnectorDlg(CWnd* pParent /*=NULL*/)
 	memset(m_ConnectionInfos, 0, sizeof(ConnectionInfo*) * RC_MAX_CONNECTION);
 	memset(m_LocalConnectionInfos, 0, sizeof(ConnectionInfo*) * RC_MAX_CONNECTION);
 	memset(m_StreamPorts, 0, sizeof(IStreamHandler*) * RC_MAX_CONNECTION);
+	m_bStop = false;
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
 
@@ -93,6 +98,8 @@ BEGIN_MESSAGE_MAP(CRemoteConnectorDlg, CDialogEx)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_CONNECTIONS, &CRemoteConnectorDlg::OnNMDblclkListConnections)
 	ON_BN_CLICKED(IDC_BUTTON_DELETE, &CRemoteConnectorDlg::OnBnClickedButtonDelete)
 	ON_BN_CLICKED(IDC_BUTTON_ADD_SERIAL, &CRemoteConnectorDlg::OnBnClickedButtonAddSerial)
+	ON_BN_CLICKED(IDC_BUTTON_ADD_TCP, &CRemoteConnectorDlg::OnBnClickedButtonAddTcp)
+	ON_BN_CLICKED(IDC_BUTTON_ADD_UDP, &CRemoteConnectorDlg::OnBnClickedButtonAddUdp)
 END_MESSAGE_MAP()
 
 
@@ -151,6 +158,13 @@ BOOL CRemoteConnectorDlg::OnInitDialog()
 	m_VSPortMgr.Init();
 	RC_Init();
 
+	m_UVLoop = uv_default_loop();
+	m_pThread = new std::thread([this]() {
+		while (!m_bStop) {
+			uv_run(m_UVLoop, UV_RUN_ONCE);
+		}
+	});
+
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -198,6 +212,12 @@ void CRemoteConnectorDlg::OnPaint()
 
 void CRemoteConnectorDlg::OnClose()
 {
+	uv_loop_close(m_UVLoop);
+	m_bStop = true;
+	if (m_pThread && m_pThread->joinable()) {
+		m_pThread->join();
+	}
+
 	m_VSPortMgr.Close();
 
 	if (m_hApi != NULL)
@@ -270,6 +290,15 @@ void CRemoteConnectorDlg::AddConnection(ConnectionInfo * info, ConnectionInfo * 
 	IStreamHandler* pHandler = NULL;
 	if (local->Type == CT_SERIAL) {
 		pHandler = m_VSPortMgr.CreatePort(info->Channel, *this, local->Serial.dev);
+	}
+	if (local->Type == CT_TEST) {
+		pHandler = new CTestPortDlg(info->Channel, *this);
+	}
+	if (local->Type == CT_UDP) {
+		pHandler = new UVUdp(m_UVLoop, info->Channel, *this, local->UDP);
+	}
+	if (local->Type == CT_TCPS) {
+		pHandler = new UVTcpServer(m_UVLoop, info->Channel, *this, local->TCPServer);
 	}
 	if (!pHandler) {
 		delete info;
@@ -360,6 +389,7 @@ void CRemoteConnectorDlg::OnBnClickedButtonDisconnect()
 	m_btnConnect.EnableWindow(TRUE);
 	m_btnDisconnect.EnableWindow(FALSE);
 	m_btnListDevs.EnableWindow(FALSE);
+	m_listDevs.DeleteAllItems();
 }
 
 
@@ -387,6 +417,9 @@ void CRemoteConnectorDlg::OnBnClickedButtonListdev()
 void CRemoteConnectorDlg::OnNMDblclkListConnections(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	if (-1 == pNMItemActivate->iItem)
+		return;
+
 	int channel = m_listConnections.GetItemData(pNMItemActivate->iItem);
 	if (channel < 0 || channel > RC_MAX_CONNECTION)
 		return;
@@ -400,6 +433,33 @@ void CRemoteConnectorDlg::OnNMDblclkListConnections(NMHDR *pNMHDR, LRESULT *pRes
 		dlg.m_Editable = false;
 		if (IDOK == dlg.DoModal()) {
 			
+		}
+	}
+	else if (info->Type = CT_TCPC) {
+		CTCPDlg dlg;
+		dlg.m_Info = info->TCPClient;
+		dlg.m_LocalInfo = local_info->TCPClient;
+		dlg.m_Editable = false;
+		if (IDOK == dlg.DoModal()) {
+
+		}
+	}
+	else if (info->Type = CT_UDP) {
+		CUDPDlg dlg;
+		dlg.m_Info = info->UDP;
+		dlg.m_LocalInfo = local_info->UDP;
+		dlg.m_Editable = false;
+		if (IDOK == dlg.DoModal()) {
+
+		}
+	}
+	else {
+		CSerialDlg dlg;
+		dlg.m_Info = info->Serial;
+		dlg.m_LocalInfo = local_info->Serial;
+		dlg.m_Editable = false;
+		if (IDOK == dlg.DoModal()) {
+
 		}
 	}
 	*pResult = 0;
@@ -440,14 +500,17 @@ void CRemoteConnectorDlg::OnBnClickedButtonDelete()
 void CRemoteConnectorDlg::OnBnClickedButtonAdd()
 {
 	DeviceInfo *info = GetSelDeviceInfo();
-	if (!info)
+	if (!info) {
+		MessageBox("请选择要连接的设备", "错误", MB_OK | MB_ICONERROR);
 		return;
+	}
 
 	RC_CHANNEL channel = RC_ConnectTest(m_hApi, info->SN);
 	if (channel < 0) {
-		MessageBox("创建串口", "提示", MB_OK | MB_ICONERROR);
+		MessageBox("创建测试连接失败", "错误", MB_OK | MB_ICONERROR);
 		return;
 	}
+
 	assert(m_ConnectionInfos[channel] == NULL);
 	ConnectionInfo* ci = new ConnectionInfo();
 	ConnectionInfo* lci = new ConnectionInfo();
@@ -455,24 +518,25 @@ void CRemoteConnectorDlg::OnBnClickedButtonAdd()
 	memcpy(ci->DevSN, info->SN, RC_MAX_SN_LEN);
 	ci->Channel = channel;
 
-	lci->Type = CT_SERIAL;
+	lci->Type = CT_TEST;
 	memcpy(lci->DevSN, info->SN, RC_MAX_SN_LEN);
 	lci->Channel = channel;
-	sprintf(lci->Serial.dev, "%s", "COM5");
 	AddConnection(ci, lci);
 }
 
 void CRemoteConnectorDlg::OnBnClickedButtonAddSerial()
 {
 	DeviceInfo *info = GetSelDeviceInfo();
-	if (!info)
+	if (!info) {
+		MessageBox("请选择要连接的设备", "错误", MB_OK | MB_ICONERROR);
 		return;
+	}
 
 	CSerialDlg dlg;
 	if (IDOK == dlg.DoModal()) {
 		RC_CHANNEL channel = RC_ConnectSerial(m_hApi, info->SN, &dlg.m_Info);
 		if (channel < 0) {
-			MessageBox("创建串口", "提示", MB_OK | MB_ICONERROR);
+			MessageBox("创建串口连接失败", "错误", MB_OK | MB_ICONERROR);
 			return;
 		}
 		assert(m_ConnectionInfos[channel] == NULL);
@@ -486,6 +550,77 @@ void CRemoteConnectorDlg::OnBnClickedButtonAddSerial()
 		lci->Type = CT_SERIAL;
 		memcpy(lci->DevSN, info->SN, RC_MAX_SN_LEN);
 		lci->Serial = dlg.m_LocalInfo;
+		AddConnection(ci, lci);
+	}
+}
+
+
+void CRemoteConnectorDlg::OnBnClickedButtonAddTcp()
+{
+	DeviceInfo *info = GetSelDeviceInfo();
+	if (!info) {
+		MessageBox("请选择要连接的设备", "错误", MB_OK | MB_ICONERROR);
+		return;
+	}
+
+	//static TCPClientInfo server_info;
+	//static TCPClientInfo localInfo;
+	//CTCPDlg dlg;
+	//dlg.m_Info = server_info;
+	//dlg.m_LocalInfo = localInfo;
+	//dlg.DoModal();
+	//server_info = dlg.m_Info;
+	//localInfo = dlg.m_LocalInfo;
+
+	CTCPDlg dlg;
+	if (IDOK == dlg.DoModal()) {
+		RC_CHANNEL channel = RC_ConnectTCPC(m_hApi, info->SN, &dlg.m_Info);
+		if (channel < 0) {
+			MessageBox("创建TCP连接失败", "错误", MB_OK | MB_ICONERROR);
+			return;
+		}
+		assert(m_ConnectionInfos[channel] == NULL);
+		ConnectionInfo* ci = new ConnectionInfo();
+		ConnectionInfo* lci = new ConnectionInfo();
+		ci->Type = CT_TCPC;
+		memcpy(ci->DevSN, info->SN, RC_MAX_SN_LEN);
+		ci->TCPClient = dlg.m_Info;
+		ci->Channel = channel;
+
+		lci->Type = CT_TCPC;
+		memcpy(lci->DevSN, info->SN, RC_MAX_SN_LEN);
+		lci->TCPClient = dlg.m_LocalInfo;
+		AddConnection(ci, lci);
+	}
+}
+
+
+void CRemoteConnectorDlg::OnBnClickedButtonAddUdp()
+{
+	DeviceInfo *info = GetSelDeviceInfo();
+	if (!info) {
+		MessageBox("请选择要连接的设备", "错误", MB_OK | MB_ICONERROR);
+		return;
+	}
+
+	CUDPDlg dlg;
+	if (IDOK == dlg.DoModal()) {
+		RC_CHANNEL channel = RC_ConnectUDP(m_hApi, info->SN, &dlg.m_Info);
+		if (channel < 0) {
+			MessageBox("创建UDP连接失败", "错误", MB_OK | MB_ICONERROR);
+			return;
+		}
+		assert(m_ConnectionInfos[channel] == NULL);
+		ConnectionInfo* ci = new ConnectionInfo();
+		ConnectionInfo* lci = new ConnectionInfo();
+		ci->Type = CT_UDP;
+		memcpy(ci->DevSN, info->SN, RC_MAX_SN_LEN);
+		ci->UDP = dlg.m_Info;
+		ci->Channel = channel;
+
+		lci->Type = CT_UDP;
+		memcpy(lci->DevSN, info->SN, RC_MAX_SN_LEN);
+		lci->UDP = dlg.m_LocalInfo;
 		AddConnection(ci, lci);
 	}
 }

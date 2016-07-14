@@ -8,7 +8,7 @@ public:
 	UVTcpServer(uv_loop_t* uv_loop,
 		RC_CHANNEL channel,
 		IPortHandler& Handler,
-		const TCPClientInfo& Info);
+		const TCPServerInfo& Info);
 	~UVTcpServer();
 
 public:
@@ -17,7 +17,8 @@ public:
 	virtual bool Open();
 	virtual void Close();
 
-	virtual int OnWrite(void* data, size_t len);
+	virtual int OnData(void* buf, size_t len);
+	virtual int OnEvent(StreamEvent evt);
 
 private:
 	static void ConnectionCB(uv_stream_t* server, int status);
@@ -28,7 +29,7 @@ private:
 private:
 	RC_CHANNEL m_nChannel;
 	IPortHandler& m_Handler;
-	TCPClientInfo m_Info;
+	TCPServerInfo m_Info;
 
 	uv_loop_t * m_uv_loop;
 	uv_tcp_t m_tcp_server;

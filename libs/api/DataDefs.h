@@ -43,11 +43,10 @@ extern "C" {
 		IPInfo server;
 	};
 
-	//struct TCPServerInfo
-	//{
-	//	IPInfo local;
-	//	IPInfo bind;
-	//};
+	struct TCPServerInfo
+	{
+		IPInfo local;
+	};
 
 	struct UDPInfo
 	{
@@ -109,7 +108,7 @@ extern "C" {
 		CT_SERIAL,
 		CT_TCPC,
 		CT_UDP,
-		//CT_TCPS,
+		CT_TCPS,
 		CT_COUNT,
 	};
 	struct ConnectionInfo {
@@ -120,7 +119,7 @@ extern "C" {
 			SerialInfo Serial;
 			TCPClientInfo TCPClient;
 			UDPInfo UDP;
-			//TCPServerInfo TCPServer;
+			TCPServerInfo TCPServer;
 		};
 	};
 

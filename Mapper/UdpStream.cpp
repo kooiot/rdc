@@ -70,7 +70,8 @@ bool UdpStream::Open()
 		return false;
 	}
 
-	return true;
+	rc = OnOpened();
+	return rc == 0;
 }
 
 void UdpStream::Close()

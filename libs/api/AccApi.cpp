@@ -24,23 +24,26 @@ public:
 };
 int CAccApi::SendRequest(KZPacket& packet, std::function< int(KZPacket&)> cb)
 {
-	AutoLock al(m_Lock);
-	int rc = koo_zmq_send_cmd(m_Socket, packet);
-	if (rc == 0) {
-		KZPacket data;
-		rc = koo_zmq_recv_cmd(m_Socket, data);
+	int rc = 0;
+	{
+		AutoLock al(m_Lock);
+		rc = koo_zmq_send_cmd(m_Socket, packet);
 		if (rc == 0) {
-			if (packet.cmd == data.cmd)
-				return cb != nullptr ? cb(data) : rc;
-			else if (data.cmd == "TIMEOUT")
-				return -10000;
-			else
-				return -20000;
+			KZPacket data;
+			rc = koo_zmq_recv_cmd(m_Socket, data);
+			if (rc == 0) {
+				if (packet.cmd == data.cmd)
+					return cb != nullptr ? cb(data) : rc;
+				else if (data.cmd == "TIMEOUT")
+					return -10000;
+				else
+					return -20000;
+			}
 		}
 	}
 	if (rc != 0) {
 		int err = errno;
-		if (EAGAIN == errno) {
+		if (EAGAIN == errno && packet.cmd != "LOGIN") {
 			// Recreate the socket.
 			bool br = _Connect();
 			assert(br);

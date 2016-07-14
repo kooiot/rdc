@@ -6,7 +6,11 @@
 #include "afxwin.h"
 #include "afxcmn.h"
 #include "VSPortMgr.h"
+#include "TestPortDlg.h"
 #include <vector>
+#include <thread>
+#include <map>
+#include <uv.h>
 
 class IStreamHandler;
 // CRemoteConnectorDlg ¶Ô»°¿ò
@@ -35,6 +39,10 @@ protected:
 	ConnectionInfo* m_LocalConnectionInfos[RC_MAX_CONNECTION];
 	IStreamHandler* m_StreamPorts[RC_MAX_CONNECTION];
 	VSPortMgr m_VSPortMgr;
+	std::map<RC_HANDLE, CTestPortDlg*> m_TestPorts;
+	uv_loop_t * m_UVLoop;
+	std::thread * m_pThread;
+	bool m_bStop;
 
 	CEdit m_editIP;
 	CEdit m_editPort;
@@ -76,4 +84,7 @@ protected:
 	afx_msg void OnBnClickedButtonDelete();
 	afx_msg void OnBnClickedButtonAdd();
 	afx_msg void OnBnClickedButtonAddSerial();
+public:
+	afx_msg void OnBnClickedButtonAddTcp();
+	afx_msg void OnBnClickedButtonAddUdp();
 };
