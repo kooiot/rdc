@@ -7,6 +7,7 @@
 *.db
 *.opendb
 *.filters
+*.exe
 
 # User-specific files
 *.suo
