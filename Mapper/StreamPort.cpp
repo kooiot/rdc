@@ -1,4 +1,5 @@
 #include "StreamPort.h"
+#include <cstring>
 
 StreamPortBase::StreamPortBase(ENetPeer* peer, const ConnectionInfo& info, int mask)
 	: m_Peer(peer), m_Mask(mask), m_Info(info)

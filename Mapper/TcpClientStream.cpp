@@ -90,7 +90,7 @@ bool TcpClientStream::Open()
 
 void TcpClientStream::Close()
 {
-	uv_read_stop((uv_stream_t*)&m_tcp_handle.stream.conn);
+	uv_read_stop((uv_stream_t*)&m_tcp_handle);
 	uv_close((uv_handle_t*)&m_tcp_handle, NULL);
 	OnClosed();
 }

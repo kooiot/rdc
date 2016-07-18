@@ -1,4 +1,5 @@
 #include "TestStream.h"
+#include <cstring>
 
 TestStream::TestStream(ENetPeer* peer, const ConnectionInfo& info, int mask)
 	: StreamPortBase(peer, info, mask), m_pThread(NULL), m_bAbort(false)
@@ -45,7 +46,11 @@ void TestStream::Close()
 
 void TestStream::Run()
 {
+#ifdef RDC_LINUX_SYS
+	usleep(1000 * 1000);
+#else
 	Sleep(1000);
+#endif
 	if (m_Info.Type != CT_TEST)
 		return;
 

@@ -5,6 +5,7 @@
 #include <iostream>
 #include <sstream>
 #include <cassert>
+#include <cstring>
 #include <zmq.h>
 #include <uv.h>
 #include <enet/enet.h>
@@ -12,8 +13,8 @@
 #include "StreamMgr.h"
 #include "../api/DataDefs.h"
 
-char* g_sn = "4C05D6F6-92EA-4a23-8EFF-179F91CBAA6A";
-char* g_sip = "127.0.0.1";
+const char* g_sn = "4C05D6F6-92EA-4a23-8EFF-179F91CBAA6A";
+const char* g_sip = "127.0.0.1";
 int g_port_req = 6600;
 int g_port_sub = 6601;
 
@@ -165,7 +166,7 @@ int GetReturnRC(zmq_msg_t* data) {
 	return atoi(pBuf);
 }
 
-int SendCmd(const char* id, const char* cmd_str, void* data_str, size_t len) {
+int SendCmd(const char* id, const char* cmd_str, const void* data_str, size_t len) {
 	void* sock = g_req_socket;
 	int rc = zmq_send(sock, id, strlen(id), ZMQ_SNDMORE);
 	if (rc == -1)
