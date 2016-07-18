@@ -103,14 +103,21 @@ extern "C" {
 		stopbits stopbits;
 		flowcontrol flowcontrol;
 	};
+	struct PluginInfo
+	{
+		char Name[16];
+		char Data[512];
+	};
 	enum ConnectionType {
 		CT_TEST = 0,
 		CT_SERIAL,
 		CT_TCPC,
 		CT_UDP,
 		CT_TCPS,
+		CT_PLUGIN,
 		CT_COUNT,
 	};
+
 	struct ConnectionInfo {
 		ConnectionType Type;
 		RC_CHANNEL Channel; // 客户端Channel(客户端唯一，设备端不能根据这个判断唯一性)
@@ -120,6 +127,7 @@ extern "C" {
 			TCPClientInfo TCPClient;
 			UDPInfo UDP;
 			TCPServerInfo TCPServer;
+			PluginInfo Plugin;
 		};
 	};
 

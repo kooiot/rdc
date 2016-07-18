@@ -217,6 +217,9 @@ int StreamMgr::Create(const StreamProcess& StreamServer, const ConnectionInfo & 
 	case CT_UDP:
 		pPort = new UdpStream(m_UVLoop, peer, info, StreamServer.Mask);
 		break;
+	case CT_PLUGIN:
+		//pPort = PluginMgr.Create(info.Plugin.Name, info.Plugin.Data);
+		break;
 	default:
 		pPort = new TestStream(peer, info, StreamServer.Mask);
 		break;

@@ -86,11 +86,11 @@ void SerialStream::Run()
 	}
 	int len = m_Serial->read(buf, 1024);
 	if (len == 0) {
-#ifdef RDC_LINUX_SYS
-		usleep(50 * 1000);
-#else
-		Sleep(50);
-#endif
+//#ifdef RDC_LINUX_SYS
+//		usleep(50 * 1000);
+//#else
+//		Sleep(50);
+//#endif
 		return;
 	}
 	SendData(buf, len);

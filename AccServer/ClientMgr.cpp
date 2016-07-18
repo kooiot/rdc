@@ -88,8 +88,7 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 			}
 		}
 		else if (m_Database.Login(cmd.id, cmd.GetStr()) == 0) {
-			AddClient(cmd.id);
-			nReturn = 0;
+			nReturn = AddClient(cmd.id);
 		}
 	}
 	else if (cmd.cmd == "HEARTBEAT") {
@@ -132,7 +131,7 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 				std::cout << "Create Stream Channel " << channel << std::endl;
 				int len = sizeof(StreamProcess) + sizeof(ConnectionInfo);
 				char* buf = new char[len];
-				memcpy(buf, pClient->StreamServer, sizeof(StreamProcess));
+				memcpy(buf, pClient->StreamServer, sizeof(StreamProcess)); // TODO: Stream Failure
 				memcpy(buf + sizeof(StreamProcess), &info, sizeof(ConnectionInfo));
 				SendToMapper(info.DevSN, "CREATE", buf, len);
 				delete[] buf;
@@ -353,11 +352,15 @@ int CClientMgr::AddClient(const std::string & id)
 	if (m_Clients.find(id) != m_Clients.end()) {
 		RemoveClient(id);
 	}
+	StreamProcess* pStreamServer = m_StreamMgr.Alloc();
+	if (!pStreamServer)
+		return -100;
+
 	ClientData* pData = new ClientData();
 
 	pData->ID = id;
 	pData->Heartbeat = time(NULL);
-	pData->StreamServer = m_StreamMgr.Alloc();
+	pData->StreamServer = pStreamServer;
 	memset(pData->Connections, 0, sizeof(ConnectionData*) * RC_MAX_CONNECTION);
 	m_Clients[id] = pData;
 	return 0;
