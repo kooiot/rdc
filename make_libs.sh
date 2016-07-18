@@ -4,7 +4,7 @@ cd libs/enet
 ./configure --host=arm-linux-gnueabihf --enable-static
 make
 cp .libs/*.a ../.libs/
-make clean
+make distclean
 cd ../../
 
 cd libs/libuv-v1.9.1
@@ -12,14 +12,14 @@ cd libs/libuv-v1.9.1
 ./configure --host=arm-linux-gnueabihf --enable-static
 make
 cp .libs/*.a ../.libs/
-make clean
+make distclean
 cd ../../
 
 cd libs/zeromq
 ./configure --host=arm-linux-gnueabihf --enable-static
 make
 cp .libs/*.a ../.libs/
-make clean
+make distclean
 cd ../../
 
 
