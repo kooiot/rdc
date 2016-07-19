@@ -279,35 +279,35 @@ int CRemoteConnectorDlg::Send(RC_CHANNEL channel, void * buf, size_t len)
 	return RC_StreamSend(m_hApi, channel, buf, len);
 }
 
-void CRemoteConnectorDlg::AddConnection(ConnectionInfo * info, ConnectionInfo * local)
+void CRemoteConnectorDlg::AddConnection(ConnectionInfo * info, ConnectionInfo * bind)
 {
 	if (m_StreamPorts[info->Channel] != NULL) {
 		MessageBox("EEE");
 		delete info;
-		delete local;
+		delete bind;
 		return;
 	}
 	IStreamHandler* pHandler = NULL;
-	if (local->Type == CT_SERIAL) {
-		pHandler = m_VSPortMgr.CreatePort(info->Channel, *this, local->Serial.dev);
+	if (bind->Type == CT_SERIAL) {
+		pHandler = m_VSPortMgr.CreatePort(info->Channel, *this, bind->Serial.dev);
 	}
-	if (local->Type == CT_TEST) {
+	if (bind->Type == CT_TEST) {
 		pHandler = new CTestPortDlg(info->Channel, *this);
 	}
-	if (local->Type == CT_UDP) {
-		pHandler = new UVUdp(m_UVLoop, info->Channel, *this, local->UDP);
+	if (bind->Type == CT_UDP) {
+		pHandler = new UVUdp(m_UVLoop, info->Channel, *this, bind->UDP);
 	}
-	if (local->Type == CT_TCPS) {
-		pHandler = new UVTcpServer(m_UVLoop, info->Channel, *this, local->TCPServer);
+	if (bind->Type == CT_TCPS) {
+		pHandler = new UVTcpServer(m_UVLoop, info->Channel, *this, bind->TCPServer);
 	}
 	if (!pHandler) {
 		delete info;
-		delete local;
+		delete bind;
 		return;
 	}
 
 	m_ConnectionInfos[info->Channel] = info;
-	m_LocalConnectionInfos[info->Channel] = local;
+	m_LocalConnectionInfos[info->Channel] = bind;
 	m_StreamPorts[info->Channel] = pHandler;
 
 	int nIndex = m_listConnections.GetItemCount();

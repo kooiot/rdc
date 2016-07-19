@@ -2,6 +2,13 @@
 #include "UVTcpServer.h"
 
 
+static void echo_alloc(uv_handle_t* handle,
+	size_t suggested_size,
+	uv_buf_t* buf) {
+	buf->base = (char*)malloc(suggested_size);
+	buf->len = suggested_size;
+}
+
 
 UVTcpServer::UVTcpServer(uv_loop_t* uv_loop,
 	RC_CHANNEL channel,
@@ -17,12 +24,12 @@ UVTcpServer::~UVTcpServer()
 {
 }
 
-void UVTcpServer::ConnectionCB(uv_stream_t* server, int status) {
-	UVTcpServer* pThis = (UVTcpServer*)server->data;
-	pThis->_ConnectionCB(server, status);
+void UVTcpServer::ConnectionCB(uv_stream_t* remote, int status) {
+	UVTcpServer* pThis = (UVTcpServer*)remote->data;
+	pThis->_ConnectionCB(remote, status);
 }
 
-void UVTcpServer::_ConnectionCB(uv_stream_t* server, int status)
+void UVTcpServer::_ConnectionCB(uv_stream_t* remote, int status)
 {
 	if (0 != status) {
 		// Failed
@@ -38,12 +45,12 @@ void UVTcpServer::_ConnectionCB(uv_stream_t* server, int status)
 		return;
 	}
 
-	int rc = uv_accept(server, (uv_stream_t*)client);
+	int rc = uv_accept(remote, (uv_stream_t*)client);
 	if (rc != 0) {
 		return;
 	}
 
-	rc = uv_read_start((uv_stream_t*)client, NULL, ReadCB);
+	rc = uv_read_start((uv_stream_t*)client, echo_alloc, ReadCB);
 	if (rc != 0) {
 
 	}
@@ -52,8 +59,15 @@ void UVTcpServer::_ConnectionCB(uv_stream_t* server, int status)
 
 void UVTcpServer::ReadCB(uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf)
 {
-	UVTcpServer* pThis = (UVTcpServer*)stream->data;
-	pThis->m_Handler.Send(pThis->m_nChannel, buf->base, buf->len);
+	if (nread < 0) {
+		fprintf(stderr, "read_cb error: %s\n", uv_err_name(nread));
+		assert(nread == UV_ECONNRESET || nread == UV_EOF);
+		uv_close((uv_handle_t*)stream, NULL);
+	}
+	else {
+		UVTcpServer* pThis = (UVTcpServer*)stream->data;
+		pThis->m_Handler.Send(pThis->m_nChannel, buf->base, buf->len);
+	}
 }
 
 void UVTcpServer::WriteCB(uv_write_t * req, int status)
@@ -68,7 +82,7 @@ bool UVTcpServer::Open()
 {
 	struct sockaddr_in addr;
 
-	int rc = uv_ip4_addr(m_Info.local.sip, m_Info.local.port, &addr);
+	int rc = uv_ip4_addr(m_Info.bind.sip, m_Info.bind.port, &addr);
 	if (0 != rc) {
 		printf("Incorrect TCP server address %d\n", rc);
 		return false;
@@ -84,7 +98,7 @@ bool UVTcpServer::Open()
 
 	rc = uv_tcp_bind(&m_tcp_server, (const struct sockaddr*)&addr, 0);
 	if (0 != rc) {
-		printf("Cannot Bind TCP to local ip %d\n", rc);
+		printf("Cannot Bind TCP to bind ip %d\n", rc);
 		return false;
 	}
 

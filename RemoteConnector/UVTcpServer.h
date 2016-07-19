@@ -21,8 +21,8 @@ public:
 	virtual int OnEvent(StreamEvent evt);
 
 private:
-	static void ConnectionCB(uv_stream_t* server, int status);
-	void _ConnectionCB(uv_stream_t* server, int status);
+	static void ConnectionCB(uv_stream_t* remote, int status);
+	void _ConnectionCB(uv_stream_t* remote, int status);
 	static void ReadCB(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
 	static void WriteCB(uv_write_t* req, int status);
 

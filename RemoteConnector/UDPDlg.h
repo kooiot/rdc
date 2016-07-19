@@ -35,7 +35,7 @@ protected:
 	CEdit m_portLocalR;
 	CEdit m_portLocalL;
 	CButton m_checkDevBind;
-	CButton m_checkLocalBind;
+	CButton m_checkRemotetLimit;
 
 public:
 	virtual BOOL OnInitDialog();

@@ -6,6 +6,13 @@ using namespace serial;
 SerialStream::SerialStream(ENetPeer* peer, const ConnectionInfo& info, int mask)
 	: StreamPortBase(peer, info, mask), m_Serial(NULL), m_pThread(NULL), m_bAbort(false)
 {
+	printf("Create Serial Stream  DEV:%s Baudrate:%d ByteSize:%d Stopbits:%d FlowControl %d, Parity:%d\n",
+		info.Serial.dev,
+		info.Serial.baudrate,
+		info.Serial.bytesize,
+		info.Serial.stopbits,
+		info.Serial.flowcontrol,
+		info.Serial.parity);
 }
 
 

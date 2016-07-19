@@ -71,7 +71,7 @@ protected:
 	virtual int OnLog(RC_CHANNEL channel, const char* type, const char* content);
 	virtual int Send(RC_CHANNEL channel, void* buf, size_t len);
 
-	void AddConnection(ConnectionInfo* info, ConnectionInfo * local);
+	void AddConnection(ConnectionInfo* info, ConnectionInfo * bind);
 	void RemoveConnection(RC_CHANNEL channel);
 
 	DeviceInfo* GetSelDeviceInfo();

@@ -39,19 +39,19 @@ extern "C" {
 	};
 	struct TCPClientInfo
 	{
-		IPInfo local;
-		IPInfo server;
+		IPInfo bind;
+		IPInfo remote;
 	};
 
 	struct TCPServerInfo
 	{
-		IPInfo local;
+		IPInfo bind;
 	};
 
 	struct UDPInfo
 	{
-		IPInfo local;
-		IPInfo server;
+		IPInfo bind;
+		IPInfo remote;
 	};
 
 	/*!
@@ -95,7 +95,7 @@ extern "C" {
 
 	struct SerialInfo
 	{
-		char local[RC_MAX_NAME_LEN]; // Local Serial Port Name (COM1)
+		//char bind[RC_MAX_NAME_LEN]; // Local Serial Port Name (COM1)
 		char dev[RC_MAX_NAME_LEN]; // Remote Serial Port Name (/dev/ttyS1)
 		int baudrate;
 		bytesize bytesize;

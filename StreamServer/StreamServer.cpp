@@ -100,7 +100,7 @@ int main(int argc, char* argv[])
 	enet_initialize();
 
 	ENetAddress address;
-	ENetHost * server;
+	ENetHost * remote;
 	if (strcmp(bip, "*") == 0) {
 		address.host = ENET_HOST_ANY;
 	}
@@ -109,12 +109,12 @@ int main(int argc, char* argv[])
 	}
 	address.port = port;
 
-	server = enet_host_create(&address /* the address to bind the server host to */,
+	remote = enet_host_create(&address /* the address to bind the server host to */,
 		RC_MAX_CONNECTION_PER_SERVER      /* allow up to 32 clients and/or outgoing connections */,
 		RC_MAX_CONNECTION + 1      /* allow up to 2 channels to be used, 0 and 1 */,
 		0      /* assume any amount of incoming bandwidth */,
 		0      /* assume any amount of outgoing bandwidth */);
-	if (server == NULL)
+	if (remote == NULL)
 	{
 		fprintf(stderr,
 			"An error occurred while trying to create an ENet server host.\n");
@@ -139,19 +139,18 @@ int main(int argc, char* argv[])
 
 	printf("%s\n", "Initialized!");
 	ENetEvent event;
-	/* Wait up to 1000 milliseconds for an event. */
+	/* Wait up to 5000 milliseconds for an event. */
 	while (true)
 	{
-		int nRet = enet_host_service(server, &event, 1000);
+		int nRet = enet_host_service(remote, &event, 5000);
 		if (nRet < 0) {
 			int nr = errno;
-			int i = 0;
-			i = i + 1;
 			printf("errno %d\n", errno);
 			break;
 		}
-
+#ifdef _DEBUG
 		putc('.', stdout);
+#endif
 		switch (event.type)
 		{
 		case ENET_EVENT_TYPE_CONNECT:
@@ -160,7 +159,7 @@ int main(int argc, char* argv[])
 
 			int nType = ((event.data & 0xFFFF0000) >> 16);
 			int nIndex = (event.data & 0xFFFF);
-			printf("A new connection %d - %d connected from %x:%u.\n", 
+			printf("A new connection %d - %d connected from %x:%u.\n",
 				nType,
 				nIndex,
 				event.peer->address.host,
@@ -200,11 +199,13 @@ int main(int argc, char* argv[])
 			int nType = ((data & 0xFFFF0000) >> 16);
 			int nIndex = (data & 0xFFFF);
 
+#ifdef _DEBUG
 			printf("A packet of length %u was received from %d-%d on channel %u.\n",
 				event.packet->dataLength,
 				nType,
 				nIndex,
 				event.channelID);
+#endif
 			if (RC_MAX_CONNECTION != event.channelID && nType == MAPPER_TYPE) {
 				ENetPeer* client = ClientPeers[nIndex];
 				if (client) {
@@ -316,7 +317,7 @@ CLOSE:
 	zmq_close(req);
 	zmq_ctx_term(ctx);
 
-	enet_host_destroy(server);
+	enet_host_destroy(remote);
 	enet_deinitialize();
     return 0;
 }
