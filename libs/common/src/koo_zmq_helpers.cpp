@@ -1,4 +1,5 @@
 #include "koo_zmq_helpers.h"
+#include <cstring>
 
 KZPacket::KZPacket()
 {

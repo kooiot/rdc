@@ -2,6 +2,7 @@
 #include "ClientMgr.h"
 #include <zmq.h>
 #include <sstream>
+#include <cstring>
 #include <DataDefs.h>
 
 

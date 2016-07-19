@@ -1,16 +1,34 @@
 #include "AccDatabase.h"
+#ifndef RDC_LINUX_SYS
 #include <Windows.h>
+#endif
 #include <iostream>
 #include <cassert>
 #include <sstream>
+#include <cstring>
 #include "AccDatabase.h"
 
 #include <DataDefs.h>
 
+#ifdef RDC_LINUX_SYS
+#define MAX_PATH 512
+int GetModuleFileName( char* sModuleName, char* sFileName, int nSize)
+{
+	int ret = -1;
+	char* p = getenv("_");
+	if( p != NULL && strstr( p, sModuleName ) != NULL )
+	{
+		ret = 0;
+		strcpy( sFileName, p );
+	}
+	return ret;
+}
+#endif
+
 std::string GetModuleFilePath()
 {
-	TCHAR szFile[MAX_PATH] = { 0 };
-	DWORD dwRet = ::GetModuleFileName(NULL, szFile, 255);
+	char szFile[MAX_PATH] = { 0 };
+	int dwRet = ::GetModuleFileName(NULL, szFile, 255);
 	if (dwRet != 0)
 	{
 		std::string str = szFile;

@@ -1,4 +1,5 @@
 #include "base64.h"
+#include <cstring>
 
 std::string ZBase64::Encode(const unsigned char* Data,int DataByte)
 {

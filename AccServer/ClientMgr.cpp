@@ -6,6 +6,7 @@
 #include <sstream>
 #include <cassert>
 #include <iostream>
+#include <cstring>
 
 #ifdef WIN32
 #include <Windows.h>

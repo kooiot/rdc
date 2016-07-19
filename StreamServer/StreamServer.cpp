@@ -6,9 +6,10 @@
 #include <cstdlib>
 #include <cstdio>
 #include <sstream>
+#include <cstring>
 #include <map>
 #include <vector>
-#include <enet\enet.h>
+#include <enet/enet.h>
 #include <zmq.h>
 #include <koo_zmq_helpers.h>
 #include <DataDefs.h>
@@ -66,9 +67,9 @@ bool send_remove_stream(int id, void* socket) {
 int main(int argc, char* argv[])
 {
 	int id = RC_STREAM_SERVER_ID_BASE;
-	char* sip = "127.0.0.1";
+	const char* sip = "127.0.0.1";
 	int sport = 6602;
-	char* bip = "127.0.0.1";
+	const char* bip = "127.0.0.1";
 	int port = 6800;
 
 	if (argc >= 2)
@@ -155,7 +156,7 @@ int main(int argc, char* argv[])
 		{
 		case ENET_EVENT_TYPE_CONNECT:
 		{
-			event.peer->data = (void*)event.data;
+			event.peer->data = (void*)(long)event.data;
 
 			int nType = ((event.data & 0xFFFF0000) >> 16);
 			int nIndex = (event.data & 0xFFFF);
@@ -195,7 +196,7 @@ int main(int argc, char* argv[])
 		}break;
 		case ENET_EVENT_TYPE_RECEIVE:
 		{
-			int data = (int)event.peer->data;
+			int data = (long)event.peer->data;
 			int nType = ((data & 0xFFFF0000) >> 16);
 			int nIndex = (data & 0xFFFF);
 
@@ -275,7 +276,7 @@ int main(int argc, char* argv[])
 
 		} break;
 		case ENET_EVENT_TYPE_DISCONNECT:
-			int data = (int)event.peer->data;
+			int data = (long)event.peer->data;
 			int nType = ((data & 0xFFFF0000) >> 16);
 			int nIndex = (data & 0xFFFF);
 			printf("connection %d - %d disconnected.\n", nType, nIndex);

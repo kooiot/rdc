@@ -58,7 +58,7 @@ private:
 	void _append(T&& first, Args... args)
 	{
 		_append(first);
-		_append(forward<Args>(args)...);
+		_append(std::forward<Args>(args)...);
 	}
 public:
 	template<typename T, typename... Args>
@@ -66,7 +66,7 @@ public:
 	{
 		m_temp = msg;
 		m_format.str("");
-		_append(first, forward<Args>(args)...);
+		_append(first, std::forward<Args>(args)...);
 		std::string pattern = m_format.str();
 		REGEX e(pattern);
 		m_reg_iter = REGEX_ITERATOR(m_temp.begin(), m_temp.end(), e);
@@ -76,7 +76,7 @@ public:
 	std::string replace(const std::string& msg, const std::string& pattern, T&& first, Args&&... args)
 	{
 		m_format.str("");
-		_append(first, forward<Args>(args)...);
+		_append(first, std::forward<Args>(args)...);
 		std::string replacement = m_format.str();
 		REGEX e(pattern);
 		std::string result = REGEX_REPLACE(msg, e, replacement);

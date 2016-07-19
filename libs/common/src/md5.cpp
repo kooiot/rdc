@@ -7,6 +7,7 @@ converted to C++ class by Frank Thilo (thilo@unix-ag.org)
 /* system implementation headers */
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 
 // Constants for MD5Transform routine.
 #define S11 7

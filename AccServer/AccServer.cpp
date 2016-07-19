@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
 {
 	int r = atexit(on_close);
 
-	char* bip = "127.0.0.1";
+	const char* bip = "127.0.0.1";
 	int port_rep = 6600;
 	int port_pub = 6601;
 	int port_stream = 6602;

@@ -110,12 +110,12 @@ void koo_process::_close_process()
         memset(&m_proc_info, 0, sizeof (m_proc_info));
     }
 #else
-	vvprint_s("process: " << m_pid << " will be killed...");
+    std::cout << "process: " << m_pid << " will be killed...";
     if (m_pid != 0)
     {
         kill(m_pid, 9);
 		waitpid(m_pid, NULL, 0);
-		vvprint_s("process: " << m_pid << " has been killed...");
+		std::cout << "process: " << m_pid << " has been killed...";
         m_pid = 0;
     }
 #endif
@@ -155,7 +155,7 @@ int koo_process::_open_process()
         return K_ERR_PROCESS_OPEN_FAILURE;
     }
 #else
-    vector<string> arg_list;
+    std::vector<std::string> arg_list;
     arg_list.push_back(m_execname);
     k_str_split(m_arguments, arg_list, " ");
     char* argv[64] = {0};
@@ -167,7 +167,7 @@ int koo_process::_open_process()
     __pid_t pid = vfork();
     if (pid < 0)
     {
-		vvprint_w("fork error; failed to create process;");
+	    std::cout << "fork error; failed to create process;";
         _exit(0);
     }
     else if (pid == 0)
@@ -178,7 +178,7 @@ int koo_process::_open_process()
     else
     {
         m_pid = pid;
-		vvprint_s("process: " << m_pid << " has been created...");
+	std::cout << "process: " << m_pid << " has been created...";
         return K_OK;
     }
 #endif

@@ -174,7 +174,7 @@
     <ClInclude Include="include\koo_string_util.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="koo_zmq_helpers.cpp" />
+    <ClCompile Include="src\koo_zmq_helpers.cpp" />
     <ClCompile Include="src\authentication_util.cpp" />
     <ClCompile Include="src\base64.cpp" />
     <ClCompile Include="src\koo_compress_util.cpp" />

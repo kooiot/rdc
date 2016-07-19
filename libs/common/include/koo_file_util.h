@@ -15,7 +15,7 @@ namespace fsys = boost::filesystem;
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-inline int k_file_chmod(const string& target, int mod)
+inline int k_file_chmod(const std::string& target, int mod)
 {
     boost::system::error_code ec;
     fsys::path p(target);
