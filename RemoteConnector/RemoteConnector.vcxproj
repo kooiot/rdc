@@ -97,7 +97,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <AdditionalDependencies>libzmq.lib;libuv.lib;ws2_32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\libs\libuv;..\libs\zeromq\bin\$(PlatformName)\$(ConfigurationName)\$(PlatformToolset)\dynamic;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\libs\libuv\$(PlatformName);..\libs\zeromq\bin\$(PlatformName)\$(ConfigurationName)\$(PlatformToolset)\dynamic;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -117,12 +117,12 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include;../libs/api</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../libs/libuv/include;../libs/enet/include;../libs/zeromq/include;../libs/api</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>libzmq.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\libs\zeromq\bin\$(PlatformName)\$(DebugOrRelease)\$(PlatformToolset)\static;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libzmq.lib;libuv.lib;ws2_32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\libs\libuv\$(PlatformName);..\libs\zeromq\bin\$(PlatformName)\$(ConfigurationName)\$(PlatformToolset)\dynamic;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -151,7 +151,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>libzmq.lib;libuv.lib;ws2_32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\libs\libuv;..\libs\zeromq\bin\$(PlatformName)\$(ConfigurationName)\$(PlatformToolset)\dynamic;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\libs\libuv\$(PlatformName);..\libs\zeromq\bin\$(PlatformName)\$(ConfigurationName)\$(PlatformToolset)\dynamic;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -173,14 +173,14 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../libs/enet/include;../libs/zeromq/include;../libs/api</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../libs/libuv/include;../libs/enet/include;../libs/zeromq/include;../libs/api</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>libzmq.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\libs\zeromq\bin\$(PlatformName)\$(DebugOrRelease)\$(PlatformToolset)\static;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libzmq.lib;libuv.lib;ws2_32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\libs\libuv\$(PlatformName);..\libs\zeromq\bin\$(PlatformName)\$(ConfigurationName)\$(PlatformToolset)\dynamic;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -254,9 +254,6 @@
     <ProjectReference Include="..\RemoteConnectorApi\RemoteConnectorApi.vcxproj">
       <Project>{32697b75-21ca-424e-a680-e748130241b4}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Manifest Include="..\windows.manifest" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

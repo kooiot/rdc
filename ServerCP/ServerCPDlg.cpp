@@ -232,14 +232,14 @@ HCURSOR CServerCPDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-HRESULT CServerCPDlg::OnEventMsg(WPARAM wParam, LPARAM lParam)
+LRESULT CServerCPDlg::OnEventMsg(WPARAM wParam, LPARAM lParam)
 {
 	StreamEvent se = (StreamEvent)lParam;
 
 	return 0L;
 }
 
-HRESULT CServerCPDlg::OnDataMsg(WPARAM wParam, LPARAM lParam)
+LRESULT CServerCPDlg::OnDataMsg(WPARAM wParam, LPARAM lParam)
 {
 	int channel = (int)wParam;
 	std::string* p = (std::string*)lParam;

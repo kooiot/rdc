@@ -54,8 +54,8 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
-	afx_msg HRESULT OnEventMsg(WPARAM wParam, LPARAM lParam);
-	afx_msg HRESULT OnDataMsg(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnEventMsg(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnDataMsg(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnBnClickedButtonStart();
 	afx_msg void OnBnClickedButtonStop();
 	afx_msg void OnBnClickedButtonConnect();

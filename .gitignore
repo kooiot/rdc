@@ -6,7 +6,6 @@
 *.key
 *.db
 *.opendb
-*.filters
 *.exe
 
 # User-specific files

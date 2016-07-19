@@ -187,14 +187,14 @@ int k_compress_dir(const std::string& dir, const std::string& output)
 		{
 			koo_compress_header vch;
 			vch.magic = 0xffffffff;
-			vch.filelength = buffer.size();
+			vch.filelength = (uint32_t)buffer.size();
 			memcpy(vch.filename, x.data(), x.length());
 			sink.write((char*)&vch, sizeof(vch));
 			md5_output.update((char*)&vch, sizeof(vch));
 			if (!buffer.empty())
 			{
 				sink.write((char*)buffer.data(), buffer.size());
-				md5_output.update((char*)buffer.data(), buffer.size());
+				md5_output.update((char*)buffer.data(), (uint32_t)buffer.size());
 				buffer.resize(0);
 			}
 		}
@@ -239,14 +239,14 @@ int k_compress_path(const std::string& filename, const std::string& output)
 		{
 			koo_compress_header vch;
 			vch.magic = 0xffffffff;
-			vch.filelength = buffer.size();
+			vch.filelength = (uint32_t)buffer.size();
 			memcpy(vch.filename, x.data(), x.length());
 			sink.write((char*)&vch, sizeof(vch));
 			md5_output.update((char*)&vch, sizeof(vch));
 			if (!buffer.empty())
 			{
 				sink.write((char*)buffer.data(), buffer.size());
-				md5_output.update((char*)buffer.data(), buffer.size());
+				md5_output.update((char*)buffer.data(), (uint32_t)buffer.size());
 				buffer.resize(0);
 			}
 		}
@@ -307,7 +307,7 @@ int k_decompress_buffer_to_mem(std::vector<uint8_t> src, std::vector<koo_file_in
 		return K_OK;
 	}
 	uint8_t* buffer = src.data();
-	int size = src.size();
+	long size = (long)src.size();
 	int vch_size = sizeof(koo_compress_header);
 	while (size>0)
 	{
@@ -385,7 +385,7 @@ int koo_compressor::compress()
 				{
 					koo_compress_header vch;
 					memcpy(vch.filename, x.data(), x.length());
-					vch.filelength = buffer.size();
+					vch.filelength = (uint32_t)buffer.size();
 					sink.write((char*)&vch, sizeof(vch));
 					sink.write((char*)buffer.data(), buffer.size());
 				}
