@@ -14,12 +14,15 @@
 #define MAX_PATH 512
 int GetModuleFileName( char* sModuleName, char* sFileName, int nSize)
 {
-	int ret = -1;
+	int ret = 0;
 	char* p = getenv("_");
-	if( p != NULL && strstr( p, sModuleName ) != NULL )
+	if (p != NULL)
 	{
-		ret = 0;
-		strcpy( sFileName, p );
+		if (sModuleName != NULL)
+			strstr( p, sModuleName );
+		if (p != NULL)
+			strcpy( sFileName, p );
+		ret = strlen(sFileName);
 	}
 	return ret;
 }
@@ -31,8 +34,13 @@ std::string GetModuleFilePath()
 	int dwRet = ::GetModuleFileName(NULL, szFile, 255);
 	if (dwRet != 0)
 	{
+		printf("Module File Name: %s \n", szFile);
 		std::string str = szFile;
+#ifndef RDC_LINUX_SYS
 		size_t nPos = str.rfind('\\');
+#else
+		size_t nPos = str.rfind('/');
+#endif
 		if (nPos != std::string::npos)
 		{
 			str = str.substr(0, nPos);
@@ -197,7 +205,11 @@ CAccDatabase::~CAccDatabase()
 int CAccDatabase::Init()
 {
 	m_Lock.lock();
+#ifndef RDC_LINUX_SYS
 	std::string db_file = GetModuleFilePath() + "\\data.sqlite3.db";
+#else
+	std::string db_file = GetModuleFilePath() + "/data.sqlite3.db";
+#endif
 	int rc = sqlite3_open(db_file.c_str(), &m_pDB);
 	if (SQLITE_OK == rc) {
 		rc = sqlite3_exec(m_pDB, CREATE_DEVICES, NULL, NULL, NULL);
