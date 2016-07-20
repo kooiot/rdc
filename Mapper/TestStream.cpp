@@ -22,7 +22,7 @@ bool TestStream::Open()
 		printf("Send Not Support returns %d\n", rc);
 		return rc >= 0;
 	}
-	int rc = OnOpened();
+	int rc = FireEvent(SE_CHANNEL_OPENED);
 	if (rc >= 0) {
 		m_pThread = new std::thread([this]() {
 			while (!m_bAbort) {
@@ -41,7 +41,7 @@ void TestStream::Close()
 	delete m_pThread;
 	m_pThread = NULL;
 
-	OnClosed();
+	FireEvent(SE_CHANNEL_CLOSED);
 }
 
 void TestStream::Run()

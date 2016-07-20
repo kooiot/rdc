@@ -261,8 +261,8 @@ void CRemoteConnectorDlg::StreamEventCallback(RC_CHANNEL channel, StreamEvent ev
 void CRemoteConnectorDlg::__StreamEventCallback(RC_CHANNEL channel, StreamEvent evt)
 {
 	TRACE("[STREAM_EVENT] [%d]\n", evt);
-	if (evt == SE_CHANNEL_CONNECT) {
-		MessageBox("Channel connection ok");
+	if (evt == SE_CHANNEL_OPENED) {
+		MessageBox("Channel Opened ok");
 	}
 	// FIXME:
 }

@@ -26,8 +26,7 @@ public:
 	virtual int OnWrite(void* data, size_t len) = 0;
 
 	virtual int SendData(void* data, size_t len);
-	virtual int OnOpened();
-	virtual int OnClosed();
+	virtual int FireEvent(StreamEvent se, const char* msg = "");
 private:
 	virtual int OnClientData(void* data, size_t len);
 

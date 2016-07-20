@@ -29,7 +29,7 @@ void TcpClientStream::_ConnectCB(uv_connect_t * req, int status)
 	}
 	m_bConnected = true;
 
-	int rc = OnOpened();
+	int rc = FireEvent(SE_CHANNEL_OPENED);
 }
 
 void TcpClientStream::ReadCB(uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf)
@@ -92,7 +92,7 @@ void TcpClientStream::Close()
 {
 	uv_read_stop((uv_stream_t*)&m_tcp_handle);
 	uv_close((uv_handle_t*)&m_tcp_handle, NULL);
-	OnClosed();
+	FireEvent(SE_CHANNEL_CLOSED);
 }
 
 int TcpClientStream::OnWrite(void * data, size_t len)

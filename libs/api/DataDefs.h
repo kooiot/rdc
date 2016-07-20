@@ -180,16 +180,18 @@ extern "C" {
 	enum StreamEvent {
 		SE_CONNECT,
 		SE_DISCONNECT,
-		SE_CHANNEL_CONNECT,
-		SE_CHANNEL_DISCONNECT,
+		SE_CHANNEL_OPENED,
+		SE_CHANNEL_CLOSED,
 		SE_CHANNEL_NOT_SUPPORT,
+		SE_CHANNEL_OPEN_FAILED,
+		SE_CHANNEL_READ_ERROR,
 		SE_CLOSE,
 		SE_TIMEOUT,
 	};
 	struct StreamEventPacket {
 		StreamEvent event;
 		int channel;
-		char _data[0];
+		char msg[128];
 	};
 #ifdef __cplusplus
 }

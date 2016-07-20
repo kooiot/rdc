@@ -70,7 +70,7 @@ bool UdpStream::Open()
 		return false;
 	}
 
-	rc = OnOpened();
+	rc = FireEvent(SE_CHANNEL_OPENED);
 	return rc == 0;
 }
 
@@ -78,7 +78,7 @@ void UdpStream::Close()
 {
 	uv_udp_recv_stop(&m_udp_handle);
 	uv_close((uv_handle_t*)&m_udp_handle, NULL);
-	OnClosed();
+	FireEvent(SE_CHANNEL_CLOSED);
 }
 
 int UdpStream::OnWrite(void * data, size_t len)

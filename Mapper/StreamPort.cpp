@@ -37,26 +37,17 @@ int StreamPortBase::SendData(void * data, size_t len)
 	return 0;
 }
 
-int StreamPortBase::OnOpened()
+int StreamPortBase::FireEvent(StreamEvent se, const char* msg)
 {
+	printf("Channel %d Send StreamEvent %d:%s returns %d\n", m_Info.Channel, se, msg);
+
 	StreamEventPacket sp;
-	sp.event = SE_CHANNEL_CONNECT;
+	sp.event = se;
 	sp.channel = m_Info.Channel;
+	sprintf(sp.msg, "%s", msg);
 	ENetPacket* packet = enet_packet_create(&sp, sizeof(StreamEventPacket), ENET_PACKET_FLAG_RELIABLE);
 	int rc = enet_peer_send(m_Peer, RC_MAX_CONNECTION, packet);
-	printf("Send SE_CHANNEL_CONNECT returns %d\n", rc);
-	return rc;
-}
+	printf("Send StreamEvent %d returns %d\n", rc);
 
-int StreamPortBase::OnClosed()
-{
-	StreamEventPacket sp;
-	sp.event = SE_CHANNEL_DISCONNECT;
-	sp.channel = m_Info.Channel;
-	ENetPacket* packet = enet_packet_create(&sp, sizeof(StreamEventPacket), ENET_PACKET_FLAG_RELIABLE);
-	int rc = enet_peer_send(m_Peer, RC_MAX_CONNECTION, packet);
-	printf("Send SE_CHANNEL_DISCONNECT returns %d\n", rc);
-
-	printf("StreamPort Closed Channel %d", m_Info.Channel);
 	return rc;
 }
