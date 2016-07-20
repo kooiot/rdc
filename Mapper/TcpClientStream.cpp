@@ -21,7 +21,7 @@ void TcpClientStream::ConnectCB(uv_connect_t* req, int status) {
 void TcpClientStream::_ConnectCB(uv_connect_t * req, int status)
 {
 	if (0 != status) {
-		// Failed
+		FireEvent(SE_CHANNEL_OPEN_FAILED, "Connect to TCP server failed, status %d", status);
 		return;
 	}
 	if (0 != uv_read_start(req->handle, NULL, ReadCB)) {
@@ -53,13 +53,13 @@ bool TcpClientStream::Open()
 
 	int rc = uv_ip4_addr(m_Info.TCPClient.server.sip, m_Info.TCPClient.server.port, &addr);
 	if (0 != rc) {
-		printf("Incorrect TCP server address %d\n", rc);
+		FireEvent(SE_CHANNEL_OPEN_FAILED, "Incorrect TCP server address %d", rc);
 		return false;
 	}
 	
 	rc = uv_tcp_init(m_uv_loop, &m_tcp_handle);
 	if (0 != rc) {
-		printf("Cannot Init TCP handle %d\n", rc);
+		FireEvent(SE_CHANNEL_OPEN_FAILED, "Cannot Init TCP handle %d", rc);
 		return false;
 	}
 	m_tcp_handle.data = this;
@@ -69,19 +69,19 @@ bool TcpClientStream::Open()
 		struct sockaddr_in bind_addr;
 		rc = uv_ip4_addr(m_Info.TCPClient.local.sip, m_Info.TCPClient.local.port, &bind_addr);
 		if (0 != rc) {
-			printf("Incorrect TCP local address %d\n", rc);
+			FireEvent(SE_CHANNEL_OPEN_FAILED, "Incorrect TCP local address %d", rc);
 			return false;
 		}
 		rc = uv_tcp_bind(&m_tcp_handle, (const struct sockaddr*)&bind_addr, 0);
 		if (0 != rc) {
-			printf("Cannot Bind TCP to local ip %d\n", rc);
+			FireEvent(SE_CHANNEL_OPEN_FAILED, "Cannot Bind TCP to local ip %d", rc);
 			return false;
 		}
 	}
 
 	rc = uv_tcp_connect(&m_connect_req, &m_tcp_handle, (const struct sockaddr*) &addr, ConnectCB);
 	if (0 != rc) {
-		printf("Cannot Connect TCP to server %d\n", rc);
+		FireEvent(SE_CHANNEL_OPEN_FAILED, "Cannot Connect TCP to server %d", rc);
 		return false;
 	}
 

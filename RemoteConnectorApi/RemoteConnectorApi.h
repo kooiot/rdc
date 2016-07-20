@@ -17,7 +17,7 @@ extern "C" {
 #endif
 
 	typedef void(__stdcall *stream_data_callback)(RC_CHANNEL channel, void* buf, size_t len, void* prv);
-	typedef void(__stdcall *stream_event_callback)(RC_CHANNEL channel, StreamEvent evt, void* prv);
+	typedef void(__stdcall *stream_event_callback)(RC_CHANNEL channel, StreamEvent evt, const char* msg, void* prv);
 
 	REMOTECONNECTORAPI_API int RC_Init();
 	REMOTECONNECTORAPI_API int RC_Close();

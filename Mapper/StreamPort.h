@@ -26,8 +26,9 @@ public:
 	virtual int OnWrite(void* data, size_t len) = 0;
 
 	virtual int SendData(void* data, size_t len);
-	virtual int FireEvent(StreamEvent se, const char* msg = "");
+	virtual int FireEvent(StreamEvent se, const char* msgfmt = "", ...);
 private:
+	virtual int _FireEvent(StreamEvent se, const char* msg);
 	virtual int OnClientData(void* data, size_t len);
 
 protected:

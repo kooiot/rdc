@@ -55,7 +55,7 @@ bool CStreamApi::Connect(const char * ip, int port)
 						event.peer->address.port);
 					/* Store any relevant client information here. */
 					event.peer->data = "Client information";
-					m_Handler.OnEvent(-1, SE_CONNECT);
+					m_Handler.OnEvent(-1, SE_CONNECT, "");
 					break;
 				case ENET_EVENT_TYPE_RECEIVE:
 					printf("A packet of length %u containing %s was received from %s on channel %u.\n",
@@ -63,13 +63,7 @@ bool CStreamApi::Connect(const char * ip, int port)
 						event.packet->data,
 						(char*)event.peer->data,
 						event.channelID);
-					if (RC_MAX_CONNECTION == event.channelID) {
-						StreamEventPacket* sep = (StreamEventPacket*)event.packet->data;
-						m_Handler.OnEvent(sep->channel, sep->event);
-					}
-					else {
-						this->OnData(event.channelID, event.packet->data, event.packet->dataLength);
-					}
+					OnData(event.channelID, event.packet->data, event.packet->dataLength);
 					/* Clean up the packet now that we're done using it. */
 					enet_packet_destroy(event.packet);
 					break;
@@ -78,7 +72,7 @@ bool CStreamApi::Connect(const char * ip, int port)
 					printf("%s disconnected.\n", (char*)event.peer->data);
 					/* Reset the peer's client information. */
 					event.peer->data = NULL;
-					m_Handler.OnEvent(-1, SE_DISCONNECT);
+					m_Handler.OnEvent(-1, SE_DISCONNECT, "");
 				}
 			}
 		}
@@ -114,7 +108,7 @@ int CStreamApi::OnData(int channel, void * data, size_t len)
 	if (channel == RC_MAX_CONNECTION) {
 		assert(len == sizeof(StreamEventPacket));
 		StreamEventPacket* sp = (StreamEventPacket*)data;
-		m_Handler.OnEvent(sp->channel, sp->event);
+		m_Handler.OnEvent(sp->channel, sp->event, sp->msg);
 		return 0;
 	}
 	int Mask = *(long*)data;

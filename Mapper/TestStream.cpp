@@ -14,12 +14,7 @@ TestStream::~TestStream()
 bool TestStream::Open()
 {
 	if (m_Info.Type != CT_TEST) {
-		StreamEventPacket sp;
-		sp.event = SE_CHANNEL_NOT_SUPPORT;
-		sp.channel = m_Info.Channel;
-		ENetPacket* packet = enet_packet_create(&sp, sizeof(StreamEventPacket), ENET_PACKET_FLAG_RELIABLE);
-		int rc = enet_peer_send(m_Peer, RC_MAX_CONNECTION, packet);
-		printf("Send Not Support returns %d\n", rc);
+		int rc = FireEvent(SE_CHANNEL_NOT_SUPPORT);
 		return rc >= 0;
 	}
 	int rc = FireEvent(SE_CHANNEL_OPENED);

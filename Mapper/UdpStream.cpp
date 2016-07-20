@@ -35,13 +35,13 @@ bool UdpStream::Open()
 
 	int rc = uv_ip4_addr(m_Info.UDP.server.sip, m_Info.UDP.server.port, &m_peer_addr);
 	if (0 != rc) {
-		printf("Incorrect UDP server address %d\n", rc);
+		FireEvent(SE_CHANNEL_OPEN_FAILED, "Incorrect UDP server address %d", rc);
 		return false;
 	}
 
 	rc = uv_udp_init(m_uv_loop, &m_udp_handle);
 	if (0 != rc) {
-		printf("Cannot init UDP handle %d\n", rc);
+		FireEvent(SE_CHANNEL_OPEN_FAILED, "Cannot init UDP handle %d", rc);
 		return false;
 	}
 
@@ -51,14 +51,14 @@ bool UdpStream::Open()
 		rc = uv_ip4_addr(m_Info.UDP.local.sip, m_Info.UDP.local.port, &addr);
 		if (0 != rc) {
 			uv_close((uv_handle_t*)&m_udp_handle, NULL);
-			printf("Incorrect UDP local address %d\n", rc);
+			FireEvent(SE_CHANNEL_OPEN_FAILED, "Incorrect UDP local address %d", rc);
 			return false;
 		}
 
 		rc = uv_udp_bind(&m_udp_handle, (const struct sockaddr*)&addr, UV_UDP_REUSEADDR);
 		if (0 != rc) {
 			uv_close((uv_handle_t*)&m_udp_handle, NULL);
-			printf("Cannot bind UDP local address %d\n", rc);
+			FireEvent(SE_CHANNEL_OPEN_FAILED, "Cannot bind UDP local address %d", rc);
 			return false;
 		}
 	}
@@ -66,7 +66,7 @@ bool UdpStream::Open()
 	rc = uv_udp_recv_start(&m_udp_handle, NULL, UdpRecvCB);
 	if (0 != rc) {
 		uv_close((uv_handle_t*)&m_udp_handle, NULL);
-		printf("Cannot start UDP recv callback %d\n", rc);
+		FireEvent(SE_CHANNEL_OPEN_FAILED, "Cannot start UDP recv callback %d", rc);
 		return false;
 	}
 

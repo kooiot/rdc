@@ -250,7 +250,7 @@ void CRemoteConnectorDlg::__StreamDataCallback(RC_CHANNEL channel, void * buf, s
 	}
 }
 
-void CRemoteConnectorDlg::StreamEventCallback(RC_CHANNEL channel, StreamEvent evt, void * prv)
+void CRemoteConnectorDlg::StreamEventCallback(RC_CHANNEL channel, StreamEvent evt, const char* msg, void * prv)
 {
 	CRemoteConnectorDlg* pThis = (CRemoteConnectorDlg*)prv;
 	if (!pThis)
@@ -258,11 +258,14 @@ void CRemoteConnectorDlg::StreamEventCallback(RC_CHANNEL channel, StreamEvent ev
 	pThis->__StreamEventCallback(channel, evt);
 }
 
-void CRemoteConnectorDlg::__StreamEventCallback(RC_CHANNEL channel, StreamEvent evt)
+void CRemoteConnectorDlg::__StreamEventCallback(RC_CHANNEL channel, StreamEvent evt, const char* msg)
 {
-	TRACE("[STREAM_EVENT] [%d]\n", evt);
+	TRACE("[STREAM_EVENT] [%d] %s\n", evt, msg);
 	if (evt == SE_CHANNEL_OPENED) {
-		MessageBox("Channel Opened ok");
+		MessageBox(msg, "Channel Opened");
+	}
+	else {
+		MessageBox(msg);
 	}
 	// FIXME:
 }
