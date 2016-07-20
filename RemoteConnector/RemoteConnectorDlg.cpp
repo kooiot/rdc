@@ -148,7 +148,7 @@ BOOL CRemoteConnectorDlg::OnInitDialog()
 
 	m_listConnections.InsertColumn(0, "RT", LVCFMT_LEFT, 60);
 	m_listConnections.InsertColumn(0, "LT", LVCFMT_LEFT, 60);
-	m_listConnections.InsertColumn(1, "DevSN", LVCFMT_LEFT, 120);
+	m_listConnections.InsertColumn(1, "DevSN", LVCFMT_LEFT, 360);
 	m_listConnections.SetExtendedStyle(m_listConnections.GetExtendedStyle() | LVS_EX_FULLROWSELECT);
 	
 	m_btnConnect.EnableWindow(TRUE);
@@ -258,7 +258,7 @@ void CRemoteConnectorDlg::StreamEventCallback(RC_CHANNEL channel, StreamEvent ev
 	pThis->__StreamEventCallback(channel, evt, msg);
 }
 
-const std::string StreamEventNames[] = {
+const static char* StreamEventNames[] = {
 	"SE_CONNECT",
 	"SE_DISCONNECT",
 	"SE_CHANNEL_OPENED",
@@ -272,15 +272,13 @@ const std::string StreamEventNames[] = {
 
 void CRemoteConnectorDlg::__StreamEventCallback(RC_CHANNEL channel, StreamEvent evt, const char* msg)
 {
-	TRACE("[STREAM_EVENT] %s[%d] %s\n", StreamEventNames[evt].c_str(), evt, msg);
-	MessageBox(msg, StreamEventNames[evt].c_str());
-	// FIXME:
+	TRACE("[STREAM_EVENT] %s[%d] %s\n", StreamEventNames[evt], evt, msg);
+	MessageBox(msg, StreamEventNames[evt]);
 }
 
 int CRemoteConnectorDlg::OnLog(RC_CHANNEL channel, const char * type, const char * content)
 {
 	TRACE("[LOG] [%d]\t [%s] %s\n", channel, type, content);
-	// FIXME:
 	return 0;
 }
 
@@ -289,6 +287,15 @@ int CRemoteConnectorDlg::Send(RC_CHANNEL channel, void * buf, size_t len)
 	return RC_StreamSend(m_hApi, channel, buf, len);
 }
 
+const static char* CTNames[] = {
+	"TEST",
+	"SERIAL",
+	"TCPC",
+	"UDP",
+	"TCPS",
+	"PLUGIN",
+	"",
+};
 void CRemoteConnectorDlg::AddConnection(ConnectionInfo * info, ConnectionInfo * bind)
 {
 	if (m_StreamPorts[info->Channel] != NULL) {
@@ -298,6 +305,8 @@ void CRemoteConnectorDlg::AddConnection(ConnectionInfo * info, ConnectionInfo * 
 		return;
 	}
 	IStreamHandler* pHandler = NULL;
+	const char* LocalType = CTNames[info->Type];
+	const char* RemoteType = CTNames[bind->Type];
 	if (bind->Type == CT_SERIAL) {
 		pHandler = m_VSPortMgr.CreatePort(info->Channel, *this, bind->Serial.dev);
 	}
@@ -321,8 +330,8 @@ void CRemoteConnectorDlg::AddConnection(ConnectionInfo * info, ConnectionInfo * 
 	m_StreamPorts[info->Channel] = pHandler;
 
 	int nIndex = m_listConnections.GetItemCount();
-	nIndex = m_listConnections.InsertItem(nIndex, "Serial");
-	m_listConnections.SetItemText(nIndex, 1, "Serial");
+	nIndex = m_listConnections.InsertItem(nIndex, RemoteType);
+	m_listConnections.SetItemText(nIndex, 1, LocalType);
 	m_listConnections.SetItemText(nIndex, 2, info->DevSN);
 	m_listConnections.SetItemData(nIndex, info->Channel);
 }
@@ -448,7 +457,7 @@ void CRemoteConnectorDlg::OnNMDblclkListConnections(NMHDR *pNMHDR, LRESULT *pRes
 	else if (info->Type = CT_TCPC) {
 		CTCPDlg dlg;
 		dlg.m_Info = info->TCPClient;
-		dlg.m_LocalInfo = local_info->TCPClient;
+		dlg.m_LocalInfo = local_info->TCPServer;
 		dlg.m_Editable = false;
 		if (IDOK == dlg.DoModal()) {
 
@@ -597,9 +606,9 @@ void CRemoteConnectorDlg::OnBnClickedButtonAddTcp()
 		ci->TCPClient = dlg.m_Info;
 		ci->Channel = channel;
 
-		lci->Type = CT_TCPC;
+		lci->Type = CT_TCPS;
 		memcpy(lci->DevSN, info->SN, RC_MAX_SN_LEN);
-		lci->TCPClient = dlg.m_LocalInfo;
+		lci->TCPServer = dlg.m_LocalInfo;
 		AddConnection(ci, lci);
 	}
 }

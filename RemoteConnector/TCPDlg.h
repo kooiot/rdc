@@ -18,7 +18,7 @@ public:
 	enum { IDD = IDD_TCP_DIALOG };
 #endif
 	TCPClientInfo m_Info;
-	TCPClientInfo m_LocalInfo;
+	TCPServerInfo m_LocalInfo;
 	bool m_Editable;
 
 protected:

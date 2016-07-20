@@ -165,15 +165,6 @@ int main(int argc, char* argv[])
 				event.peer->address.host,
 				event.peer->address.port);
 			if (nType == MAPPER_TYPE) {
-				/*
-				ENetPeer* pOldPeer = MapperPeers[nIndex];
-				// This is the mapper
-				if (pOldPeer != NULL && pOldPeer != event.peer) {
-					printf("New mapper for index %u, disconnect old one\n", nIndex);
-					enet_peer_disconnect(pOldPeer, -2);
-				}
-				MapperPeers[nIndex] = event.peer;
-				*/
 				MapperData* data = new MapperData();
 				data->Peer = event.peer;
 				ClientMapperMap[nIndex].push_back(data);
@@ -283,10 +274,6 @@ int main(int argc, char* argv[])
 			printf("connection %d - %d disconnected.\n", nType, nIndex);
 
 			if (nType == MAPPER_TYPE) {
-				/*ENetPeer* client = ClientPeers[nIndex];
-				if (client) {
-					enet_peer_disconnect(client, -3);
-				}*/
 				std::vector<MapperData*>::iterator ptr = ClientMapperMap[nIndex].begin();
 				for (; ptr != ClientMapperMap[nIndex].end(); ++ptr) {
 					if (event.peer == (*ptr)->Peer) {
@@ -296,13 +283,9 @@ int main(int argc, char* argv[])
 				}
 			}
 			else if (nType == CLIENT_TYPE) {
-				//ENetPeer* mapper = MapperPeers[nIndex];
-				//if (mapper) {
-				//	enet_peer_disconnect(mapper, -3);
-				//}
 				std::vector<MapperData*>::iterator ptr = ClientMapperMap[nIndex].begin();
 				for (; ptr != ClientMapperMap[nIndex].end(); ++ptr) {
-					enet_peer_disconnect((*ptr)->Peer, -3);
+					enet_peer_disconnect_later((*ptr)->Peer, -3);
 				}
 				ClientMapperMap.erase(nIndex);
 			}

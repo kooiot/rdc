@@ -124,8 +124,6 @@ void StreamMgr::OnDisconnected(ENetPeer * peer)
 	for (int i = 0; i < RC_MAX_CONNECTION; ++i) {
 		Destroy(sp, i);
 	}
-	assert(m_Peers[nIndex] == NULL);
-	assert(m_StreamServers[nIndex] == NULL);
 }
 
 bool StreamMgr::OnData(ENetPeer* peer, int channel, void * data, size_t len)
@@ -259,7 +257,7 @@ int StreamMgr::Destroy(const StreamProcess& StreamServer, int channel)
 			IStreamPort* pPort = m_PeerChannel2Port[std::make_pair(m_Peers[i], channel)];
 			if (pPort) {
 				pPort->Close();
-				delete pPort;
+				m_PendingDelete.push_back(pPort);
 				m_PortInfo.erase(pPort);
 				m_PeerChannel2Port[std::make_pair(m_Peers[i], channel)] = NULL;
 			}
@@ -310,7 +308,7 @@ int StreamMgr::ProcessPending()
 	std::list<int>::iterator ptr = m_PendingClose.begin();
 	for (; ptr != m_PendingClose.end(); ++ptr) {
 		int i = *ptr;
-		enet_peer_disconnect(m_Peers[i], 0);
+		enet_peer_disconnect_later(m_Peers[i], 0);
 
 		delete m_StreamServers[i];
 		m_StreamServers[i] = NULL;

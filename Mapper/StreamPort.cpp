@@ -3,7 +3,7 @@
 #include <cstring>
 #include <cstdarg>
 
-const std::string StreamEventNames[] = {
+const static char* StreamEventNames[] = {
 	"SE_CONNECT",
 	"SE_DISCONNECT",
 	"SE_CHANNEL_OPENED",
@@ -74,7 +74,7 @@ int StreamPortBase::OnStreamClose()
 
 int StreamPortBase::_FireEvent(StreamEvent se, const char* msg)
 {
-	printf("Channel %d Send StreamEvent %s:%s\n", m_Info.ConnInfo.Channel, StreamEventNames[se].c_str(), msg);
+	printf("Channel %d Send StreamEvent %s:%s\n", m_Info.ConnInfo.Channel, StreamEventNames[se], msg);
 
 	StreamEventPacket sp;
 	sp.event = se;
