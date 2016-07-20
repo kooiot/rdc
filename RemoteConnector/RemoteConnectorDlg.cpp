@@ -258,15 +258,22 @@ void CRemoteConnectorDlg::StreamEventCallback(RC_CHANNEL channel, StreamEvent ev
 	pThis->__StreamEventCallback(channel, evt, msg);
 }
 
+const std::string StreamEventNames[] = {
+	"SE_CONNECT",
+	"SE_DISCONNECT",
+	"SE_CHANNEL_OPENED",
+	"SE_CHANNEL_CLOSED",
+	"SE_CHANNEL_NOT_SUPPORT",
+	"SE_CHANNEL_OPEN_FAILED",
+	"SE_CHANNEL_READ_ERROR",
+	"SE_CLOSE",
+	"SE_TIMEOUT",
+};
+
 void CRemoteConnectorDlg::__StreamEventCallback(RC_CHANNEL channel, StreamEvent evt, const char* msg)
 {
-	TRACE("[STREAM_EVENT] [%d] %s\n", evt, msg);
-	if (evt == SE_CHANNEL_OPENED) {
-		MessageBox(msg, "Channel Opened");
-	}
-	else {
-		MessageBox(msg);
-	}
+	TRACE("[STREAM_EVENT] %s[%d] %s\n", StreamEventNames[evt].c_str(), evt, msg);
+	MessageBox(msg, StreamEventNames[evt].c_str());
 	// FIXME:
 }
 

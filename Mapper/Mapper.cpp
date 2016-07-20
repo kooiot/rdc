@@ -289,9 +289,11 @@ int main(int argc, char* argv[])
 	rc = uv_timer_start(&timer, Heartbeat_Timer, 1000, 20 * 1000);
 	assert(rc == 0);
 
-	while (true) {
-		rc = uv_run(loop, UV_RUN_ONCE);
-	}
+	//while (true) {
+	//	rc = uv_run(loop, UV_RUN_ONCE);
+	//}
+
+	uv_run(loop, UV_RUN_DEFAULT);
 
 	rc = Logout();
 
@@ -305,6 +307,8 @@ int main(int argc, char* argv[])
 	g_StreamMgr->Close();
 	delete g_StreamMgr;
 	enet_deinitialize();
-
+#ifdef _DEBUG
+	system("pause");
+#endif
     return 0;
 }

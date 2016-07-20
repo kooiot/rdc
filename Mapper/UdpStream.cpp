@@ -8,6 +8,9 @@ static void echo_alloc(uv_handle_t* handle,
 	buf->len = suggested_size;
 }
 
+static void close_cb(uv_handle_t* handle) {
+}
+
 UdpStream::UdpStream(uv_loop_t* uv_loop, StreamPortInfo& info)
 	: StreamPortBase(info)
 	, m_uv_loop(uv_loop)
@@ -70,14 +73,14 @@ bool UdpStream::Open()
 	if (m_Info.ConnInfo.UDP.bind.port != 0) {
 		rc = uv_ip4_addr(m_Info.ConnInfo.UDP.bind.sip, m_Info.ConnInfo.UDP.bind.port, &addr);
 		if (0 != rc) {
-			uv_close((uv_handle_t*)&m_udp_handle, NULL);
+			uv_close((uv_handle_t*)&m_udp_handle, close_cb);
 			FireEvent(SE_CHANNEL_OPEN_FAILED,"Incorrect UDP bind address %d\n", rc);
 			return false;
 		}
 
 		rc = uv_udp_bind(&m_udp_handle, (const struct sockaddr*)&addr, UV_UDP_REUSEADDR);
 		if (0 != rc) {
-			uv_close((uv_handle_t*)&m_udp_handle, NULL);
+			uv_close((uv_handle_t*)&m_udp_handle, close_cb);
 			FireEvent(SE_CHANNEL_OPEN_FAILED,"Cannot bind UDP bind address %d\n", rc);
 			return false;
 		}
@@ -85,7 +88,7 @@ bool UdpStream::Open()
 
 	rc = uv_udp_recv_start(&m_udp_handle, echo_alloc, UdpRecvCB);
 	if (0 != rc) {
-		uv_close((uv_handle_t*)&m_udp_handle, NULL);
+		uv_close((uv_handle_t*)&m_udp_handle, close_cb);
 		FireEvent(SE_CHANNEL_OPEN_FAILED,"Cannot start UDP recv callback %d\n", rc);
 		return false;
 	}
@@ -98,7 +101,7 @@ bool UdpStream::Open()
 void UdpStream::Close()
 {
 	uv_udp_recv_stop(&m_udp_handle);
-	uv_close((uv_handle_t*)&m_udp_handle, NULL);
+	uv_close((uv_handle_t*)&m_udp_handle, close_cb);
 	FireEvent(SE_CHANNEL_CLOSED);
 }
 

@@ -39,5 +39,5 @@ private:
 	virtual int OnClientData(void* data, size_t len);
 
 protected:
-	StreamPortInfo& m_Info;
+	StreamPortInfo m_Info;
 };

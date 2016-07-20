@@ -7,6 +7,10 @@ static void echo_alloc(uv_handle_t* handle,
 	buf->base = (char*)malloc(suggested_size);
 	buf->len = suggested_size;
 }
+
+static void close_cb(uv_handle_t* handle) {
+}
+
 UVUdp::UVUdp(uv_loop_t* uv_loop,
 			RC_CHANNEL channel,
 			IPortHandler& Handler,
@@ -44,14 +48,14 @@ bool UVUdp::Open()
 
 	rc = uv_udp_bind(&m_udp_handle, (const struct sockaddr*)&addr, UV_UDP_REUSEADDR);
 	if (0 != rc) {
-		uv_close((uv_handle_t*)&m_udp_handle, NULL);
+		uv_close((uv_handle_t*)&m_udp_handle, close_cb);
 		printf("Cannot bind UDP bind address %d\n", rc);
 		return false;
 	}
 
 	rc = uv_udp_recv_start(&m_udp_handle, echo_alloc, UdpRecvCB);
 	if (0 != rc) {
-		uv_close((uv_handle_t*)&m_udp_handle, NULL);
+		uv_close((uv_handle_t*)&m_udp_handle, close_cb);
 		printf("Cannot start UDP recv callback %d\n", rc);
 		return false;
 	}
@@ -62,7 +66,7 @@ bool UVUdp::Open()
 void UVUdp::Close()
 {
 	uv_udp_recv_stop(&m_udp_handle);
-	uv_close((uv_handle_t*)&m_udp_handle, NULL);
+	uv_close((uv_handle_t*)&m_udp_handle, close_cb);
 }
 
 int UVUdp::OnData(void * buf, size_t len)
@@ -82,7 +86,7 @@ void UVUdp::UdpRecvCB(uv_udp_t * handle, ssize_t nread, const uv_buf_t * buf, co
 	if (nread < 0) {
 		fprintf(stderr, "recv_cb error: %s\n", uv_err_name(nread));
 		assert(nread == UV_ECONNRESET || nread == UV_EOF);
-		uv_close((uv_handle_t*)handle, NULL);
+		uv_close((uv_handle_t*)handle, close_cb);
 	}
 	else {
 		UVUdp* pThis = (UVUdp*)handle->data;

@@ -17,7 +17,7 @@ public:
 };
 
 StreamMgr::StreamMgr(uv_loop_t * uv_loop)
-	: m_UVLoop(uv_loop), m_ClientHost(NULL), m_pThread(NULL), m_pWorkerThread(NULL), m_bAbort(false)
+	: m_UVLoop(uv_loop), m_ClientHost(NULL), m_pThread(NULL), m_bAbort(false)
 {
 	memset(m_Peers, 0, sizeof(ENetPeer*) * RC_MAX_CONNECTION);
 }
@@ -277,6 +277,7 @@ int StreamMgr::Destroy(const StreamProcess& StreamServer, int channel)
 
 int StreamMgr::CloseStream(IStreamPort * port)
 {
+	AutoLock lock(m_Lock);
 	port->Close();
 	PeerChannel2PortMap::iterator ptr = m_PeerChannel2Port.begin();
 	for (; ptr != m_PeerChannel2Port.end(); ++ptr) {
@@ -298,12 +299,14 @@ int StreamMgr::CloseStream(IStreamPort * port)
 		m_PeerChannel2Port.erase(ptr);
 		m_PortInfo.erase(port);
 	}
-	delete port;
+	m_PendingDelete.push_back(port);
+	//delete port;
 	return 0;
 }
 
 int StreamMgr::ProcessPending()
 {
+	AutoLock lock(m_Lock);
 	std::list<int>::iterator ptr = m_PendingClose.begin();
 	for (; ptr != m_PendingClose.end(); ++ptr) {
 		int i = *ptr;
@@ -313,5 +316,11 @@ int StreamMgr::ProcessPending()
 		m_StreamServers[i] = NULL;
 		m_Peers[i] = NULL;
 	}
+	m_PendingClose.clear();
+	std::list<IStreamPort*>::iterator pp = m_PendingDelete.begin();
+	for (; pp != m_PendingDelete.end(); ++pp) {
+		delete *pp;
+	}
+	m_PendingDelete.clear();
 	return 0;
 }

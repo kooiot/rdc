@@ -9,6 +9,9 @@ static void echo_alloc(uv_handle_t* handle,
 	buf->len = suggested_size;
 }
 
+static void close_cb(uv_handle_t* handle) {
+}
+
 
 UVTcpServer::UVTcpServer(uv_loop_t* uv_loop,
 	RC_CHANNEL channel,
@@ -36,7 +39,7 @@ void UVTcpServer::_ConnectionCB(uv_stream_t* remote, int status)
 		return;
 	}
 	if (NULL != m_tcp_client) {
-		uv_close((uv_handle_t*)m_tcp_client, NULL);
+		uv_close((uv_handle_t*)m_tcp_client, close_cb);
 		delete m_tcp_client;
 	}
 
@@ -62,7 +65,7 @@ void UVTcpServer::ReadCB(uv_stream_t * stream, ssize_t nread, const uv_buf_t * b
 	if (nread < 0) {
 		fprintf(stderr, "read_cb error: %s\n", uv_err_name(nread));
 		assert(nread == UV_ECONNRESET || nread == UV_EOF);
-		uv_close((uv_handle_t*)stream, NULL);
+		uv_close((uv_handle_t*)stream, close_cb);
 	}
 	else {
 		UVTcpServer* pThis = (UVTcpServer*)stream->data;
@@ -115,12 +118,12 @@ bool UVTcpServer::Open()
 void UVTcpServer::Close()
 {
 	if (NULL != m_tcp_client) {
-		uv_close((uv_handle_t*)m_tcp_client, NULL);
+		uv_close((uv_handle_t*)m_tcp_client, close_cb);
 		delete m_tcp_client;
 	}
 
 	uv_read_stop((uv_stream_t*)&m_tcp_server);
-	uv_close((uv_handle_t*)&m_tcp_server, NULL);
+	uv_close((uv_handle_t*)&m_tcp_server, close_cb);
 }
 
 int UVTcpServer::OnData(void * buf, size_t len)

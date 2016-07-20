@@ -9,6 +9,9 @@ static void echo_alloc(uv_handle_t* handle,
 	buf->len = suggested_size;
 }
 
+static void close_cb(uv_handle_t* handle) {
+}
+
 TcpClientStream::TcpClientStream(uv_loop_t* uv_loop, StreamPortInfo& info)
 	: StreamPortBase(info)
 	, m_uv_loop(uv_loop)
@@ -33,11 +36,14 @@ void TcpClientStream::ConnectCB(uv_connect_t* req, int status) {
 void TcpClientStream::_ConnectCB(uv_connect_t * req, int status)
 {
 	if (0 != status) {
-		// Failed
+		FireEvent(SE_CHANNEL_OPEN_FAILED, "Connect to TCP server failed, status %d", status);
+		OnStreamClose();
 		return;
 	}
 	if (0 != uv_read_start(req->handle, echo_alloc, ReadCB)) {
-
+		FireEvent(SE_CHANNEL_OPEN_FAILED, "Connect Start Read on socket");
+		OnStreamClose();
+		return;
 	}
 	m_bConnected = true;
 
@@ -90,11 +96,13 @@ bool TcpClientStream::Open()
 		struct sockaddr_in bind_addr;
 		rc = uv_ip4_addr(m_Info.ConnInfo.TCPClient.bind.sip, m_Info.ConnInfo.TCPClient.bind.port, &bind_addr);
 		if (0 != rc) {
+			uv_close((uv_handle_t*)&m_tcp_handle, close_cb);
 			FireEvent(SE_CHANNEL_OPEN_FAILED, "Incorrect TCP bind address %d\n", rc);
 			return false;
 		}
 		rc = uv_tcp_bind(&m_tcp_handle, (const struct sockaddr*)&bind_addr, 0);
 		if (0 != rc) {
+			uv_close((uv_handle_t*)&m_tcp_handle, close_cb);
 			FireEvent(SE_CHANNEL_OPEN_FAILED, "Cannot Bind TCP to bind ip %d\n", rc);
 			return false;
 		}
@@ -102,9 +110,11 @@ bool TcpClientStream::Open()
 
 	rc = uv_tcp_connect(&m_connect_req, &m_tcp_handle, (const struct sockaddr*) &addr, ConnectCB);
 	if (0 != rc) {
+		uv_close((uv_handle_t*)&m_tcp_handle, close_cb);
 		FireEvent(SE_CHANNEL_OPEN_FAILED, "Cannot Connect TCP to server %d\n", rc);
 		return false;
 	}
+	uv_tcp_nodelay(&m_tcp_handle, 1);
 
 	return false;
 }
@@ -112,7 +122,7 @@ bool TcpClientStream::Open()
 void TcpClientStream::Close()
 {
 	uv_read_stop((uv_stream_t*)&m_tcp_handle);
-	uv_close((uv_handle_t*)&m_tcp_handle, NULL);
+	uv_close((uv_handle_t*)&m_tcp_handle, close_cb);
 	FireEvent(SE_CHANNEL_CLOSED);
 }
 

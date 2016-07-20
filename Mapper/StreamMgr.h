@@ -33,7 +33,6 @@ private:
 	uv_loop_t * m_UVLoop;
 	ENetHost* m_ClientHost;
 	std::thread* m_pThread;
-	std::thread* m_pWorkerThread;
 	bool m_bAbort;
 
 	std::mutex m_Lock;
@@ -46,5 +45,6 @@ private:
 
 	std::map<ENetPeer*, std::list<IStreamPort*> > m_PendingPorts;
 	std::list<int> m_PendingClose;
+	std::list<IStreamPort*> m_PendingDelete;
 };
 
