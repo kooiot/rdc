@@ -104,9 +104,9 @@ bool CServerCPDlg::OnData(int channel, void * data, size_t len)
 	return true;
 }
 
-bool CServerCPDlg::OnEvent(int channel, StreamEvent event)
+bool CServerCPDlg::OnEvent(int channel, StreamEvent event, const char* msg)
 {
-	this->PostMessage(WM_USER_DATA, NULL, (LPARAM)event);
+	this->SendMessage(WM_USER_DATA, (WPARAM)event, (LPARAM)msg);
 	return true;
 }
 
@@ -234,7 +234,8 @@ HCURSOR CServerCPDlg::OnQueryDragIcon()
 
 LRESULT CServerCPDlg::OnEventMsg(WPARAM wParam, LPARAM lParam)
 {
-	StreamEvent se = (StreamEvent)lParam;
+	StreamEvent se = (StreamEvent)wParam;
+	const char* msg = (char*)lParam;
 
 	return 0L;
 }

@@ -243,12 +243,12 @@ int main(int argc, char* argv[])
 				if (RC_MAX_CONNECTION == event.channelID) {
 					StreamEventPacket* sep = (StreamEventPacket*)event.packet->data;
 					if (nType == MAPPER_TYPE) {
-						if (sep->event == SE_CHANNEL_CONNECT || sep->event == SE_CHANNEL_DISCONNECT) {
+						if (sep->event == SE_CHANNEL_OPENED || sep->event == SE_CHANNEL_CLOSED) {
 							MapperData* pData = NULL;
 							std::vector<MapperData*>::iterator ptr = ClientMapperMap[nIndex].begin();
 							for (; ptr != ClientMapperMap[nIndex].end(); ++ptr) {
 								if (event.peer == (*ptr)->Peer) {
-									(*ptr)->Channels[sep->channel] = sep->event == SE_CHANNEL_CONNECT ? true : false;
+									(*ptr)->Channels[sep->channel] = sep->event == SE_CHANNEL_OPENED ? true : false;
 									pData = *ptr;
 									break;
 								}

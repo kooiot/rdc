@@ -1,5 +1,6 @@
 #include "StreamPort.h"
 #include <cstring>
+#include <cstdarg>
 
 StreamPortBase::StreamPortBase(ENetPeer* peer, const ConnectionInfo& info, int mask)
 	: m_Peer(peer), m_Mask(mask), m_Info(info)
@@ -37,26 +38,33 @@ int StreamPortBase::SendData(void * data, size_t len)
 	return 0;
 }
 
-int StreamPortBase::OnOpened()
+int StreamPortBase::FireEvent(StreamEvent se, const char* msgfmt, ...)
 {
+	va_list args;
+	va_start(args, msgfmt);
+	char* temp = new char[1024];
+	vsprintf(temp, msgfmt, args);
+
+	printf("%s\n", temp);
+	temp[127] = '\0';
+	va_end(args);
+
+	return _FireEvent(se, temp);
+}
+
+int StreamPortBase::_FireEvent(StreamEvent se, const char* msg)
+{
+	printf("Channel %d Send StreamEvent %d:%s\n", m_Info.Channel, se, msg);
+
 	StreamEventPacket sp;
-	sp.event = SE_CHANNEL_CONNECT;
+	sp.event = se;
 	sp.channel = m_Info.Channel;
+	sprintf(sp.msg, "%s", msg);
 	ENetPacket* packet = enet_packet_create(&sp, sizeof(StreamEventPacket), ENET_PACKET_FLAG_RELIABLE);
 	int rc = enet_peer_send(m_Peer, RC_MAX_CONNECTION, packet);
-	printf("Send SE_CHANNEL_CONNECT returns %d\n", rc);
+	printf("Send StreamEvent returns %d\n", rc);
+
 	return rc;
 }
 
-int StreamPortBase::OnClosed()
-{
-	StreamEventPacket sp;
-	sp.event = SE_CHANNEL_DISCONNECT;
-	sp.channel = m_Info.Channel;
-	ENetPacket* packet = enet_packet_create(&sp, sizeof(StreamEventPacket), ENET_PACKET_FLAG_RELIABLE);
-	int rc = enet_peer_send(m_Peer, RC_MAX_CONNECTION, packet);
-	printf("Send SE_CHANNEL_DISCONNECT returns %d\n", rc);
 
-	printf("StreamPort Closed Channel %d", m_Info.Channel);
-	return rc;
-}

@@ -7,7 +7,7 @@ class IStreamHandler
 public:
 	virtual bool OnData(int channel, void * data, size_t len) = 0;
 	// Channel is not -1 when channel event happens
-	virtual bool OnEvent(int channel, StreamEvent event) = 0;
+	virtual bool OnEvent(int channel, StreamEvent event, const char* msg) = 0;
 };
 
 #define MAPPER_TYPE 1

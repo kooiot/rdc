@@ -14,15 +14,10 @@ TestStream::~TestStream()
 bool TestStream::Open()
 {
 	if (m_Info.Type != CT_TEST) {
-		StreamEventPacket sp;
-		sp.event = SE_CHANNEL_NOT_SUPPORT;
-		sp.channel = m_Info.Channel;
-		ENetPacket* packet = enet_packet_create(&sp, sizeof(StreamEventPacket), ENET_PACKET_FLAG_RELIABLE);
-		int rc = enet_peer_send(m_Peer, RC_MAX_CONNECTION, packet);
-		printf("Send Not Support returns %d\n", rc);
+		int rc = FireEvent(SE_CHANNEL_NOT_SUPPORT);
 		return rc >= 0;
 	}
-	int rc = OnOpened();
+	int rc = FireEvent(SE_CHANNEL_OPENED);
 	if (rc >= 0) {
 		m_pThread = new std::thread([this]() {
 			while (!m_bAbort) {
@@ -41,7 +36,7 @@ void TestStream::Close()
 	delete m_pThread;
 	m_pThread = NULL;
 
-	OnClosed();
+	FireEvent(SE_CHANNEL_CLOSED);
 }
 
 void TestStream::Run()

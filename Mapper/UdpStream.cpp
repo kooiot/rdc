@@ -26,14 +26,15 @@ UdpStream::~UdpStream()
 
 void UdpStream::UdpRecvCB(uv_udp_t * handle, ssize_t nread, const uv_buf_t * buf, const sockaddr * addr, unsigned flags)
 {
+	UdpStream* pThis = (UdpStream*)handle->data;
 	if (nread < 0) {
 		fprintf(stderr, "read_cb error: %s\n", uv_err_name(nread));
 		assert(nread == UV_ECONNRESET || nread == UV_EOF);
 		uv_close((uv_handle_t*)handle, NULL);
+		pThis->FireEvent(SE_CHANNEL_CLOSED);
 		// TODO: Close?
 	}
 	else {
-		UdpStream* pThis = (UdpStream*)handle->data;
 		pThis->SendData((void*)buf, nread);
 	}
 }
@@ -56,13 +57,13 @@ bool UdpStream::Open()
 
 	int rc = uv_ip4_addr(m_Info.UDP.remote.sip, m_Info.UDP.remote.port, &m_peer_addr);
 	if (0 != rc) {
-		printf("Incorrect UDP server address %d\n", rc);
+		FireEvent(SE_CHANNEL_OPEN_FAILED,"Incorrect UDP server address %d\n", rc);
 		return false;
 	}
 
 	rc = uv_udp_init(m_uv_loop, &m_udp_handle);
 	if (0 != rc) {
-		printf("Cannot init UDP handle %d\n", rc);
+		FireEvent(SE_CHANNEL_OPEN_FAILED,"Cannot init UDP handle %d\n", rc);
 		return false;
 	}
 
@@ -72,14 +73,14 @@ bool UdpStream::Open()
 		rc = uv_ip4_addr(m_Info.UDP.bind.sip, m_Info.UDP.bind.port, &addr);
 		if (0 != rc) {
 			uv_close((uv_handle_t*)&m_udp_handle, NULL);
-			printf("Incorrect UDP bind address %d\n", rc);
+			FireEvent(SE_CHANNEL_OPEN_FAILED,"Incorrect UDP bind address %d\n", rc);
 			return false;
 		}
 
 		rc = uv_udp_bind(&m_udp_handle, (const struct sockaddr*)&addr, UV_UDP_REUSEADDR);
 		if (0 != rc) {
 			uv_close((uv_handle_t*)&m_udp_handle, NULL);
-			printf("Cannot bind UDP bind address %d\n", rc);
+			FireEvent(SE_CHANNEL_OPEN_FAILED,"Cannot bind UDP bind address %d\n", rc);
 			return false;
 		}
 	}
@@ -87,11 +88,11 @@ bool UdpStream::Open()
 	rc = uv_udp_recv_start(&m_udp_handle, echo_alloc, UdpRecvCB);
 	if (0 != rc) {
 		uv_close((uv_handle_t*)&m_udp_handle, NULL);
-		printf("Cannot start UDP recv callback %d\n", rc);
+		FireEvent(SE_CHANNEL_OPEN_FAILED,"Cannot start UDP recv callback %d\n", rc);
 		return false;
 	}
 
-	rc = OnOpened();
+	rc = FireEvent(SE_CHANNEL_OPENED);
 	printf("Fire Opened %d\n", rc);
 	return rc == 0;
 }
@@ -100,7 +101,7 @@ void UdpStream::Close()
 {
 	uv_udp_recv_stop(&m_udp_handle);
 	uv_close((uv_handle_t*)&m_udp_handle, NULL);
-	OnClosed();
+	FireEvent(SE_CHANNEL_CLOSED);
 }
 
 int UdpStream::OnWrite(void * data, size_t len)

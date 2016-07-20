@@ -53,7 +53,7 @@ bool SerialStream::Open()
 		m_Serial->open();
 	
 	if (m_Serial->isOpen()) {
-		int rc = OnOpened();
+		int rc = FireEvent(SE_CHANNEL_OPENED);
 
 		m_pThread = new std::thread([this]() {
 			while (!m_bAbort) {
@@ -76,7 +76,7 @@ void SerialStream::Close()
 
 	m_Serial->close();
 
-	OnClosed();
+	FireEvent(SE_CHANNEL_CLOSED);
 }
 
 void SerialStream::Run()

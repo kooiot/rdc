@@ -44,7 +44,7 @@ protected:
 	DeviceInfo* m_Devices;
 
 	virtual bool OnData(int channel, void * data, size_t len);
-	virtual bool OnEvent(int channel, StreamEvent event);
+	virtual bool OnEvent(int channel, StreamEvent event, const char* msg);
 
 	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();

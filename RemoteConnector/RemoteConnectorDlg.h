@@ -65,8 +65,8 @@ protected:
 
 	static void __stdcall StreamDataCallback(RC_CHANNEL channel, void * buf, size_t len, void* prv);
 	void __stdcall __StreamDataCallback(RC_CHANNEL channel, void * buf, size_t len);
-	static void __stdcall StreamEventCallback(RC_CHANNEL channel, StreamEvent evt, void* prv);
-	void __stdcall __StreamEventCallback(RC_CHANNEL channel, StreamEvent evt);
+	static void __stdcall StreamEventCallback(RC_CHANNEL channel, StreamEvent evt, const char* msg, void* prv);
+	void __stdcall __StreamEventCallback(RC_CHANNEL channel, StreamEvent evt, const char* msg);
 
 	virtual int OnLog(RC_CHANNEL channel, const char* type, const char* content);
 	virtual int Send(RC_CHANNEL channel, void* buf, size_t len);
