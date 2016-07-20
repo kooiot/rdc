@@ -14,11 +14,17 @@ public:
 
 	virtual int OnClientData(void* data, size_t len) = 0;
 };
-
+class StreamMgr;
+struct StreamPortInfo {
+	StreamMgr* Mgr;
+	ENetPeer* Peer;
+	ConnectionInfo ConnInfo;
+	int Mask;
+};
 class StreamPortBase : public IStreamPort
 {
 public:
-	StreamPortBase(ENetPeer* peer, const ConnectionInfo& info, int mask);
+	StreamPortBase(StreamPortInfo& info);
 	~StreamPortBase();
 
 	virtual bool Open() = 0;
@@ -27,12 +33,11 @@ public:
 
 	virtual int SendData(void* data, size_t len);
 	virtual int FireEvent(StreamEvent se, const char* msgfmt = "", ...);
+	virtual int OnStreamClose();
 private:
 	virtual int _FireEvent(StreamEvent se, const char* msg);
 	virtual int OnClientData(void* data, size_t len);
 
 protected:
-	ConnectionInfo m_Info;
-	ENetPeer* m_Peer;
-	int m_Mask;
+	StreamPortInfo& m_Info;
 };

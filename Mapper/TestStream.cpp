@@ -1,8 +1,8 @@
 #include "TestStream.h"
 #include <cstring>
 
-TestStream::TestStream(ENetPeer* peer, const ConnectionInfo& info, int mask)
-	: StreamPortBase(peer, info, mask), m_pThread(NULL), m_bAbort(false)
+TestStream::TestStream(StreamPortInfo& info)
+	: StreamPortBase(info), m_pThread(NULL), m_bAbort(false)
 {
 }
 
@@ -13,7 +13,7 @@ TestStream::~TestStream()
 
 bool TestStream::Open()
 {
-	if (m_Info.Type != CT_TEST) {
+	if (m_Info.ConnInfo.Type != CT_TEST) {
 		int rc = FireEvent(SE_CHANNEL_NOT_SUPPORT);
 		return rc >= 0;
 	}
@@ -46,7 +46,7 @@ void TestStream::Run()
 #else
 	Sleep(1000);
 #endif
-	if (m_Info.Type != CT_TEST)
+	if (m_Info.ConnInfo.Type != CT_TEST)
 		return;
 
 	time_t now = time(NULL);

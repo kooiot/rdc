@@ -3,16 +3,16 @@
 using namespace serial;
 
 
-SerialStream::SerialStream(ENetPeer* peer, const ConnectionInfo& info, int mask)
-	: StreamPortBase(peer, info, mask), m_Serial(NULL), m_pThread(NULL), m_bAbort(false)
+SerialStream::SerialStream(StreamPortInfo& info)
+	: StreamPortBase(info), m_Serial(NULL), m_pThread(NULL), m_bAbort(false)
 {
 	printf("Create Serial Stream  DEV:%s Baudrate:%d ByteSize:%d Stopbits:%d FlowControl %d, Parity:%d\n",
-		info.Serial.dev,
-		info.Serial.baudrate,
-		info.Serial.bytesize,
-		info.Serial.stopbits,
-		info.Serial.flowcontrol,
-		info.Serial.parity);
+		info.ConnInfo.Serial.dev,
+		info.ConnInfo.Serial.baudrate,
+		info.ConnInfo.Serial.bytesize,
+		info.ConnInfo.Serial.stopbits,
+		info.ConnInfo.Serial.flowcontrol,
+		info.ConnInfo.Serial.parity);
 }
 
 
@@ -23,15 +23,15 @@ SerialStream::~SerialStream()
 
 bool SerialStream::Open()
 {
-	printf("Open Serial On PORT %s", m_Info.Serial.dev);
+	printf("Open Serial On PORT %s", m_Info.ConnInfo.Serial.dev);
 	try {
-		m_Serial = new Serial(m_Info.Serial.dev,
-			m_Info.Serial.baudrate,
+		m_Serial = new Serial(m_Info.ConnInfo.Serial.dev,
+			m_Info.ConnInfo.Serial.baudrate,
 			Timeout::simpleTimeout(1000),
-			(bytesize_t)m_Info.Serial.bytesize,
-			(parity_t)m_Info.Serial.parity,
-			(stopbits_t)m_Info.Serial.stopbits,
-			(flowcontrol_t)m_Info.Serial.flowcontrol);
+			(bytesize_t)m_Info.ConnInfo.Serial.bytesize,
+			(parity_t)m_Info.ConnInfo.Serial.parity,
+			(stopbits_t)m_Info.ConnInfo.Serial.stopbits,
+			(flowcontrol_t)m_Info.ConnInfo.Serial.flowcontrol);
 	}
 	catch (const IOException& ex) {
 		printf("%s\n", ex.what());

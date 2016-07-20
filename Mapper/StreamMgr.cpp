@@ -67,6 +67,7 @@ bool StreamMgr::Init()
 					OnDisconnected(event.peer);
 				}
 			}
+			ProcessPending();
 		}
 		enet_host_destroy(m_ClientHost);
 	});
@@ -98,6 +99,7 @@ bool StreamMgr::OnConnected(ENetPeer * peer)
 	}
 
 	m_PendingPorts.erase(peer);
+	return true;
 }
 
 void StreamMgr::OnDisconnected(ENetPeer * peer)
@@ -207,21 +209,26 @@ int StreamMgr::Create(const StreamProcess& StreamServer, const ConnectionInfo & 
 	}
 
 	IStreamPort* pPort = NULL;
+	StreamPortInfo spi;
+	spi.Mgr = this;
+	spi.ConnInfo = info;
+	spi.Peer = peer;
+	spi.Mask = StreamServer.Mask;
 	switch (info.Type) {
 	case CT_SERIAL:
-		pPort = new SerialStream(peer, info, StreamServer.Mask);
+		pPort = new SerialStream(spi);
 		break;
 	case CT_TCPC:
-		pPort = new TcpClientStream(m_UVLoop, peer, info, StreamServer.Mask);
+		pPort = new TcpClientStream(m_UVLoop, spi);
 		break;
 	case CT_UDP:
-		pPort = new UdpStream(m_UVLoop, peer, info, StreamServer.Mask);
+		pPort = new UdpStream(m_UVLoop, spi);
 		break;
 	case CT_PLUGIN:
 		//pPort = PluginMgr.Create(info.Plugin.Name, info.Plugin.Data);
 		break;
 	default:
-		pPort = new TestStream(peer, info, StreamServer.Mask);
+		pPort = new TestStream(spi);
 		break;
 	}
 	if (!pPort) {
@@ -254,19 +261,57 @@ int StreamMgr::Destroy(const StreamProcess& StreamServer, int channel)
 				pPort->Close();
 				delete pPort;
 				m_PortInfo.erase(pPort);
+				m_PeerChannel2Port[std::make_pair(m_Peers[i], channel)] = NULL;
 			}
 
 			long& count = *(long*)&m_Peers[i]->data;
 			count--;
 			if (count <= 0) {
-				enet_peer_disconnect(m_Peers[i], 0);
-
-				delete m_StreamServers[i];
-				m_StreamServers[i] = NULL;
-				m_Peers[i] = NULL;
+				m_PendingClose.push_back(i);
 			}
 			return 0;
 		}
 	}
 	return -1;
+}
+
+int StreamMgr::CloseStream(IStreamPort * port)
+{
+	port->Close();
+	PeerChannel2PortMap::iterator ptr = m_PeerChannel2Port.begin();
+	for (; ptr != m_PeerChannel2Port.end(); ++ptr) {
+		if (ptr->second == port) {
+			break;
+		}
+	}
+	if (ptr != m_PeerChannel2Port.end()) {
+		int index = 0;
+		for (; index < RC_MAX_CONNECTION; ++index) {
+			if (m_Peers[index] == ptr->first.first) {
+				long& count = *(long*)&m_Peers[index]->data;
+				count--;
+				if (count <= 0) {
+					m_PendingClose.push_back(index);
+				}
+			}
+		}
+		m_PeerChannel2Port.erase(ptr);
+		m_PortInfo.erase(port);
+	}
+	delete port;
+	return 0;
+}
+
+int StreamMgr::ProcessPending()
+{
+	std::list<int>::iterator ptr = m_PendingClose.begin();
+	for (; ptr != m_PendingClose.end(); ++ptr) {
+		int i = *ptr;
+		enet_peer_disconnect(m_Peers[i], 0);
+
+		delete m_StreamServers[i];
+		m_StreamServers[i] = NULL;
+		m_Peers[i] = NULL;
+	}
+	return 0;
 }

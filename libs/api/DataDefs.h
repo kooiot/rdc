@@ -178,7 +178,7 @@ extern "C" {
 #define S_FAILED	"__FAILED__"
 
 	enum StreamEvent {
-		SE_CONNECT,
+		SE_CONNECT = 0,
 		SE_DISCONNECT,
 		SE_CHANNEL_OPENED,
 		SE_CHANNEL_CLOSED,

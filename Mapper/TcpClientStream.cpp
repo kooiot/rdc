@@ -9,15 +9,15 @@ static void echo_alloc(uv_handle_t* handle,
 	buf->len = suggested_size;
 }
 
-TcpClientStream::TcpClientStream(uv_loop_t* uv_loop, ENetPeer* peer, const ConnectionInfo& info, int mask)
-	: StreamPortBase(peer, info, mask)
+TcpClientStream::TcpClientStream(uv_loop_t* uv_loop, StreamPortInfo& info)
+	: StreamPortBase(info)
 	, m_uv_loop(uv_loop)
 {
 	printf("Create TCPClient Stream  C:%s:%d L:%s:%d\n", 
-		info.TCPClient.remote.sip,
-		info.TCPClient.remote.port,
-		info.TCPClient.bind.sip,
-		info.TCPClient.bind.port);
+		info.ConnInfo.TCPClient.remote.sip,
+		info.ConnInfo.TCPClient.remote.port,
+		info.ConnInfo.TCPClient.bind.sip,
+		info.ConnInfo.TCPClient.bind.port);
 }
 
 
@@ -47,14 +47,13 @@ void TcpClientStream::_ConnectCB(uv_connect_t * req, int status)
 
 void TcpClientStream::ReadCB(uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf)
 {
+	TcpClientStream* pThis = (TcpClientStream*)stream->data;
 	if (nread < 0) {
 		fprintf(stderr, "read_cb error: %s\n", uv_err_name(nread));
 		assert(nread == UV_ECONNRESET || nread == UV_EOF);
-		uv_close((uv_handle_t*)stream, NULL);
-		// TODO: Close?
+		pThis->OnStreamClose();
 	}
 	else {
-		TcpClientStream* pThis = (TcpClientStream*)stream->data;
 		pThis->SendData((void*)buf, nread);
 	}
 }
@@ -73,7 +72,7 @@ bool TcpClientStream::Open()
 	m_bConnected = false;
 	struct sockaddr_in addr;
 
-	int rc = uv_ip4_addr(m_Info.TCPClient.remote.sip, m_Info.TCPClient.remote.port, &addr);
+	int rc = uv_ip4_addr(m_Info.ConnInfo.TCPClient.remote.sip, m_Info.ConnInfo.TCPClient.remote.port, &addr);
 	if (0 != rc) {
 		FireEvent(SE_CHANNEL_OPEN_FAILED, "Incorrect TCP server address %d\n", rc);
 		return false;
@@ -87,9 +86,9 @@ bool TcpClientStream::Open()
 	m_tcp_handle.data = this;
 	m_connect_req.data = this;
 
-	if (m_Info.TCPClient.bind.port != 0) {
+	if (m_Info.ConnInfo.TCPClient.bind.port != 0) {
 		struct sockaddr_in bind_addr;
-		rc = uv_ip4_addr(m_Info.TCPClient.bind.sip, m_Info.TCPClient.bind.port, &bind_addr);
+		rc = uv_ip4_addr(m_Info.ConnInfo.TCPClient.bind.sip, m_Info.ConnInfo.TCPClient.bind.port, &bind_addr);
 		if (0 != rc) {
 			FireEvent(SE_CHANNEL_OPEN_FAILED, "Incorrect TCP bind address %d\n", rc);
 			return false;

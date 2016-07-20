@@ -8,15 +8,15 @@ static void echo_alloc(uv_handle_t* handle,
 	buf->len = suggested_size;
 }
 
-UdpStream::UdpStream(uv_loop_t* uv_loop, ENetPeer* peer, const ConnectionInfo& info, int mask)
-	: StreamPortBase(peer, info, mask)
+UdpStream::UdpStream(uv_loop_t* uv_loop, StreamPortInfo& info)
+	: StreamPortBase(info)
 	, m_uv_loop(uv_loop)
 {
 	printf("Create TCPClient Stream  C:%s:%d L:%s:%d\n",
-		info.TCPClient.remote.sip,
-		info.TCPClient.remote.port,
-		info.TCPClient.bind.sip,
-		info.TCPClient.bind.port);
+		info.ConnInfo.TCPClient.remote.sip,
+		info.ConnInfo.TCPClient.remote.port,
+		info.ConnInfo.TCPClient.bind.sip,
+		info.ConnInfo.TCPClient.bind.port);
 }
 
 
@@ -30,9 +30,7 @@ void UdpStream::UdpRecvCB(uv_udp_t * handle, ssize_t nread, const uv_buf_t * buf
 	if (nread < 0) {
 		fprintf(stderr, "read_cb error: %s\n", uv_err_name(nread));
 		assert(nread == UV_ECONNRESET || nread == UV_EOF);
-		uv_close((uv_handle_t*)handle, NULL);
-		pThis->FireEvent(SE_CHANNEL_CLOSED);
-		// TODO: Close?
+		pThis->OnStreamClose();
 	}
 	else {
 		pThis->SendData((void*)buf, nread);
@@ -55,7 +53,7 @@ bool UdpStream::Open()
 	m_bConnected = false;
 	struct sockaddr_in addr;
 
-	int rc = uv_ip4_addr(m_Info.UDP.remote.sip, m_Info.UDP.remote.port, &m_peer_addr);
+	int rc = uv_ip4_addr(m_Info.ConnInfo.UDP.remote.sip, m_Info.ConnInfo.UDP.remote.port, &m_peer_addr);
 	if (0 != rc) {
 		FireEvent(SE_CHANNEL_OPEN_FAILED,"Incorrect UDP server address %d\n", rc);
 		return false;
@@ -69,8 +67,8 @@ bool UdpStream::Open()
 
 	m_udp_handle.data = this;
 
-	if (m_Info.UDP.bind.port != 0) {
-		rc = uv_ip4_addr(m_Info.UDP.bind.sip, m_Info.UDP.bind.port, &addr);
+	if (m_Info.ConnInfo.UDP.bind.port != 0) {
+		rc = uv_ip4_addr(m_Info.ConnInfo.UDP.bind.sip, m_Info.ConnInfo.UDP.bind.port, &addr);
 		if (0 != rc) {
 			uv_close((uv_handle_t*)&m_udp_handle, NULL);
 			FireEvent(SE_CHANNEL_OPEN_FAILED,"Incorrect UDP bind address %d\n", rc);

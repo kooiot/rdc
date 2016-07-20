@@ -5,7 +5,7 @@
 class UdpStream : public StreamPortBase
 {
 public:
-	UdpStream(uv_loop_t* uv_loop, ENetPeer* peer, const ConnectionInfo& info, int mask);
+	UdpStream(uv_loop_t* uv_loop, StreamPortInfo& info);
 	~UdpStream();
 
 public:

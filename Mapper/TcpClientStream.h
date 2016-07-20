@@ -5,7 +5,7 @@
 class TcpClientStream : public StreamPortBase
 {
 public:
-	TcpClientStream(uv_loop_t* uv_loop, ENetPeer* peer, const ConnectionInfo& info, int mask);
+	TcpClientStream(uv_loop_t* uv_loop, StreamPortInfo& info);
 	~TcpClientStream();
 
 public:

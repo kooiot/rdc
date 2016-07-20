@@ -6,7 +6,7 @@
 class SerialStream  : public StreamPortBase
 {
 public:
-	SerialStream(ENetPeer* peer, const ConnectionInfo& info, int mask);
+	SerialStream(StreamPortInfo& info);
 	~SerialStream();
 
 	virtual bool Open();

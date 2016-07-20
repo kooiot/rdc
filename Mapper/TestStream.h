@@ -5,7 +5,7 @@
 class TestStream  : public StreamPortBase
 {
 public:
-	TestStream(ENetPeer* peer, const ConnectionInfo& info, int mask);
+	TestStream(StreamPortInfo& info);
 	~TestStream();
 
 	virtual bool Open();
