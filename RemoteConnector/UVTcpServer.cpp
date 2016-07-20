@@ -77,10 +77,6 @@ void UVTcpServer::WriteCB(uv_write_t * req, int status)
 {
 }
 
-void UVTcpServer::Start()
-{
-}
-
 bool UVTcpServer::Open()
 {
 	struct sockaddr_in addr;
@@ -112,7 +108,7 @@ bool UVTcpServer::Open()
 		return false;
 	}
 
-	return false;
+	return true;
 }
 
 void UVTcpServer::Close()

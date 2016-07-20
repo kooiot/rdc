@@ -24,10 +24,6 @@ UVUdp::~UVUdp()
 {
 }
 
-void UVUdp::Start()
-{
-}
-
 bool UVUdp::Open()
 {
 	struct sockaddr_in addr;

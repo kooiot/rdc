@@ -13,8 +13,6 @@ public:
 	~UVUdp();
 
 public:
-	virtual void Start();
-
 	virtual bool Open();
 	virtual void Close();
 

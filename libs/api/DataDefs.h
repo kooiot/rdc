@@ -46,6 +46,7 @@ extern "C" {
 	struct TCPServerInfo
 	{
 		IPInfo bind;
+		IPInfo remote;
 	};
 
 	struct UDPInfo

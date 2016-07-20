@@ -40,15 +40,11 @@ int VSPortMgr::Close()
 VSPort * VSPortMgr::CreatePort(RC_CHANNEL channel, IPortHandler & handler, const std::string & name)
 {
 	VSPort* port = new VSPort(channel, handler, name);
-	if (port->Create())
-		return port;
-	delete port;
-	return nullptr;
+	return port;
 }
 
 void VSPortMgr::FreePort(VSPort * port)
 {
-	port->Remove();
 	delete port;
 }
 

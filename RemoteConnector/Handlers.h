@@ -6,6 +6,9 @@ public:
 	virtual ~IStreamHandler() {}
 	virtual int OnData(void* buf, size_t len) = 0;
 	virtual int OnEvent(StreamEvent evt) = 0;
+
+	virtual bool Open() = 0;
+	virtual void Close() = 0;
 };
 
 class IPortHandler {

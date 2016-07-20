@@ -319,7 +319,7 @@ void CRemoteConnectorDlg::AddConnection(ConnectionInfo * info, ConnectionInfo * 
 	if (bind->Type == CT_TCPS) {
 		pHandler = new UVTcpServer(m_UVLoop, info->Channel, *this, bind->TCPServer);
 	}
-	if (!pHandler) {
+	if (!pHandler || !pHandler->Open()) {
 		delete info;
 		delete bind;
 		return;
@@ -344,8 +344,12 @@ void CRemoteConnectorDlg::RemoveConnection(RC_CHANNEL channel)
 	IStreamHandler* pHandler = m_StreamPorts[channel];
 	ConnectionInfo * info = m_ConnectionInfos[channel];
 	ConnectionInfo * local_info = m_LocalConnectionInfos[channel];
+	pHandler->Close();
 	if (local_info->Type == CT_SERIAL) {
 		m_VSPortMgr.FreePort((VSPort*)pHandler);
+	}
+	else {
+		delete pHandler;
 	}
 	delete local_info;
 	delete info;

@@ -23,6 +23,8 @@ protected:
 	RC_CHANNEL m_nChannel;
 	IPortHandler& m_Handler;
 
+	virtual bool Open() { return true; }
+	virtual void Close() {}
 	virtual int OnData(void* buf, size_t len);
 	virtual int OnEvent(StreamEvent evt);
 

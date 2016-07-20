@@ -15,11 +15,11 @@ UdpStream::UdpStream(uv_loop_t* uv_loop, StreamPortInfo& info)
 	: StreamPortBase(info)
 	, m_uv_loop(uv_loop)
 {
-	printf("Create TCPClient Stream  C:%s:%d L:%s:%d\n",
-		info.ConnInfo.TCPClient.remote.sip,
-		info.ConnInfo.TCPClient.remote.port,
-		info.ConnInfo.TCPClient.bind.sip,
-		info.ConnInfo.TCPClient.bind.port);
+	printf("Create UDP Stream  C:%s:%d L:%s:%d\n",
+		info.ConnInfo.UDP.remote.sip,
+		info.ConnInfo.UDP.remote.port,
+		info.ConnInfo.UDP.bind.sip,
+		info.ConnInfo.UDP.bind.port);
 }
 
 
@@ -29,6 +29,7 @@ UdpStream::~UdpStream()
 
 void UdpStream::UdpRecvCB(uv_udp_t * handle, ssize_t nread, const uv_buf_t * buf, const sockaddr * addr, unsigned flags)
 {
+	printf(__FUNCTION__" Got len %d", nread);
 	UdpStream* pThis = (UdpStream*)handle->data;
 	if (nread < 0) {
 		fprintf(stderr, "read_cb error: %s\n", uv_err_name(nread));
@@ -42,6 +43,7 @@ void UdpStream::UdpRecvCB(uv_udp_t * handle, ssize_t nread, const uv_buf_t * buf
 
 void UdpStream::SendCB(uv_udp_send_t * req, int status)
 {
+	printf(__FUNCTION__" Got status %d", status);
 	// FIXME:
 }
 
@@ -94,7 +96,7 @@ bool UdpStream::Open()
 	}
 
 	rc = FireEvent(SE_CHANNEL_OPENED);
-	printf("Fire Opened %d\n", rc);
+	printf(__FUNCTION__" Fire Opened %d\n", rc);
 	return rc == 0;
 }
 
@@ -107,6 +109,8 @@ void UdpStream::Close()
 
 int UdpStream::OnWrite(void * data, size_t len)
 {
+	printf(__FUNCTION__" Send len %d", len);
+
 	uv_buf_t buf = uv_buf_init((char*)data, len);
 	int rc = uv_udp_send(&m_udp_send_req, &m_udp_handle, &buf, len, (const struct sockaddr*)&m_peer_addr, SendCB);
 	return rc;

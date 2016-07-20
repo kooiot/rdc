@@ -11,8 +11,8 @@ protected:
 	VSPort(RC_CHANNEL channel, IPortHandler& Handler, const std::string& name);
 	~VSPort();
 
-	bool Create();
-	bool Remove();
+	virtual bool Open();
+	virtual void Close();
 
 	virtual int OnData(void* buf, size_t len);
 	virtual int OnEvent(StreamEvent evt);

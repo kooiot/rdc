@@ -12,7 +12,7 @@ VSPort::~VSPort()
 {
 }
 
-bool VSPort::Create()
+bool VSPort::Open()
 {
 
 	if (!FtVspcCreatePort(m_Name.c_str())) {
@@ -47,14 +47,13 @@ bool VSPort::Create()
 	return true;
 }
 
-bool VSPort::Remove()
+void VSPort::Close()
 {
 	if (m_hPort != NULL)
 	{
 		if (!FtVspcDetach(m_hPort))
 		{
 			ShowError();
-			return false;
 		}
 		m_hPort = NULL;
 
@@ -63,11 +62,9 @@ bool VSPort::Remove()
 			if (FtVspcGetLastError() != ftvspcErrorPortInUse)
 			{
 				ShowError();
-				return false;
 			}
 		}
 	}
-	return true;
 }
 
 int VSPort::OnData(void * buf, size_t len)
