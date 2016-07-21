@@ -1,7 +1,6 @@
 #include "TcpClientStream.h"
 #include <cassert>
 
-
 static void echo_alloc(uv_handle_t* handle,
 	size_t suggested_size,
 	uv_buf_t* buf) {
@@ -53,7 +52,7 @@ void TcpClientStream::_ConnectCB(uv_connect_t * req, int status)
 
 void TcpClientStream::ReadCB(uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf)
 {
-	printf(__FUNCTION__" Got len %d\n", nread);
+	printf("%s Got len %d\n", __FUNCTION__, nread);
 	TcpClientStream* pThis = (TcpClientStream*)stream->data;
 	if (nread < 0) {
 		fprintf(stderr, "read_cb error: %s\n", uv_err_name(nread));
@@ -67,7 +66,7 @@ void TcpClientStream::ReadCB(uv_stream_t * stream, ssize_t nread, const uv_buf_t
 
 void TcpClientStream::WriteCB(uv_write_t * req, int status)
 {
-	printf(__FUNCTION__" Got status %d\n", status);
+	printf("%s Got status %d\n", __FUNCTION__, status);
 }
 
 void TcpClientStream::Start()
@@ -130,7 +129,7 @@ void TcpClientStream::Close()
 
 int TcpClientStream::OnWrite(void * data, size_t len)
 {
-	printf(__FUNCTION__" Send len %d\n", len);
+	printf("%s Send len %d\n", __FUNCTION__, len);
 	uv_buf_t buf = uv_buf_init((char*)data, len);
 	int rc = uv_write(&m_write_req,
 		(uv_stream_t*)&m_tcp_handle,

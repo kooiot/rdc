@@ -29,7 +29,7 @@ UdpStream::~UdpStream()
 
 void UdpStream::UdpRecvCB(uv_udp_t * handle, ssize_t nread, const uv_buf_t * buf, const sockaddr * addr, unsigned flags)
 {
-	printf(__FUNCTION__" Got len %d", nread);
+	printf("%s Got len %d", __FUNCTION__, nread);
 	UdpStream* pThis = (UdpStream*)handle->data;
 	if (nread < 0) {
 		fprintf(stderr, "read_cb error: %s\n", uv_err_name(nread));
@@ -43,7 +43,7 @@ void UdpStream::UdpRecvCB(uv_udp_t * handle, ssize_t nread, const uv_buf_t * buf
 
 void UdpStream::SendCB(uv_udp_send_t * req, int status)
 {
-	printf(__FUNCTION__" Got status %d", status);
+	printf("%s Got status %d", __FUNCTION__, status);
 	// FIXME:
 }
 
@@ -96,7 +96,7 @@ bool UdpStream::Open()
 	}
 
 	rc = FireEvent(SE_CHANNEL_OPENED);
-	printf(__FUNCTION__" Fire Opened %d\n", rc);
+	printf("%s Fire Opened %d\n", __FUNCTION__, rc);
 	return rc == 0;
 }
 
@@ -109,7 +109,7 @@ void UdpStream::Close()
 
 int UdpStream::OnWrite(void * data, size_t len)
 {
-	printf(__FUNCTION__" Send len %d", len);
+	printf("%s Send len %d", __FUNCTION__, len);
 
 	uv_buf_t buf = uv_buf_init((char*)data, len);
 	int rc = uv_udp_send(&m_udp_send_req, &m_udp_handle, &buf, len, (const struct sockaddr*)&m_peer_addr, SendCB);
