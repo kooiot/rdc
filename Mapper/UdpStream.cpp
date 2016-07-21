@@ -29,7 +29,7 @@ UdpStream::~UdpStream()
 
 void UdpStream::UdpRecvCB(uv_udp_t * handle, ssize_t nread, const uv_buf_t * buf, const sockaddr * addr, unsigned flags)
 {
-	printf("%s Got len %d", __FUNCTION__, nread);
+	printf("%s Got len %d\n", __FUNCTION__, nread);
 	UdpStream* pThis = (UdpStream*)handle->data;
 	if (nread < 0) {
 		fprintf(stderr, "read_cb error: %s\n", uv_err_name(nread));
@@ -37,13 +37,14 @@ void UdpStream::UdpRecvCB(uv_udp_t * handle, ssize_t nread, const uv_buf_t * buf
 		pThis->OnStreamClose();
 	}
 	else {
-		pThis->SendData((void*)buf, nread);
+		pThis->SendData(buf->base, nread);
 	}
 }
 
 void UdpStream::SendCB(uv_udp_send_t * req, int status)
 {
 	printf("%s Got status %d", __FUNCTION__, status);
+	delete req;
 	// FIXME:
 }
 
@@ -55,7 +56,6 @@ void UdpStream::Start()
 bool UdpStream::Open()
 {
 	printf("Open TCP Stream...\n");
-	m_bConnected = false;
 	struct sockaddr_in addr;
 
 	int rc = uv_ip4_addr(m_Info.ConnInfo.UDP.remote.sip, m_Info.ConnInfo.UDP.remote.port, &m_peer_addr);
@@ -109,9 +109,10 @@ void UdpStream::Close()
 
 int UdpStream::OnWrite(void * data, size_t len)
 {
-	printf("%s Send len %d", __FUNCTION__, len);
+	printf("%s Send len %d\n", __FUNCTION__, len);
 
+	uv_udp_send_t* send_req = new uv_udp_send_t();
 	uv_buf_t buf = uv_buf_init((char*)data, len);
-	int rc = uv_udp_send(&m_udp_send_req, &m_udp_handle, &buf, len, (const struct sockaddr*)&m_peer_addr, SendCB);
+	int rc = uv_udp_send(send_req, &m_udp_handle, &buf, 1, (const struct sockaddr*)&m_peer_addr, SendCB);
 	return rc;
 }

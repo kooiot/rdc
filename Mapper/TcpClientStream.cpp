@@ -60,13 +60,14 @@ void TcpClientStream::ReadCB(uv_stream_t * stream, ssize_t nread, const uv_buf_t
 		pThis->OnStreamClose();
 	}
 	else {
-		pThis->SendData((void*)buf, nread);
+		pThis->SendData(buf->base, nread);
 	}
 }
 
 void TcpClientStream::WriteCB(uv_write_t * req, int status)
 {
 	printf("%s Got status %d\n", __FUNCTION__, status);
+	delete req;
 }
 
 void TcpClientStream::Start()
@@ -130,8 +131,9 @@ void TcpClientStream::Close()
 int TcpClientStream::OnWrite(void * data, size_t len)
 {
 	printf("%s Send len %d\n", __FUNCTION__, len);
+	uv_write_t* write_req = new uv_write_t();
 	uv_buf_t buf = uv_buf_init((char*)data, len);
-	int rc = uv_write(&m_write_req,
+	int rc = uv_write(write_req,
 		(uv_stream_t*)&m_tcp_handle,
 		&buf,
 		1,

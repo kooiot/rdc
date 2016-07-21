@@ -30,9 +30,7 @@ private:
 	TCPServerInfo m_Info;
 
 	uv_loop_t * m_uv_loop;
-	uv_tcp_t m_tcp_server;
+	uv_tcp_t* m_tcp_server;
 	uv_tcp_t* m_tcp_client;
-	uv_connect_t m_connect_req;
-	uv_write_t m_write_req;
 };
 

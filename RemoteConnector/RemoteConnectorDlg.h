@@ -84,7 +84,6 @@ protected:
 	afx_msg void OnBnClickedButtonDelete();
 	afx_msg void OnBnClickedButtonAdd();
 	afx_msg void OnBnClickedButtonAddSerial();
-public:
 	afx_msg void OnBnClickedButtonAddTcp();
 	afx_msg void OnBnClickedButtonAddUdp();
 };

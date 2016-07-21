@@ -30,14 +30,14 @@ int StreamPortBase::OnClientData(void * data, size_t len)
 {
 	int Mask = *(int*)data;
 	if (m_Info.Mask != Mask) {
-		printf("Incorrect packet mask %d - %d", Mask, m_Info.Mask);
+		printf("Incorrect packet mask %d - %d\n", Mask, m_Info.Mask);
 		return -1;
 	}
 	char* pbuf = (char*)data;
 	pbuf += sizeof(int);
 
 	int n = this->OnWrite((uint8_t*)pbuf, len - sizeof(int));
-	printf("Write To Port %d - %d", len - sizeof(int), n);
+	printf("Write To Port len: %d  returns: %d\n", len - sizeof(int), n);
 	return n;
 }
 

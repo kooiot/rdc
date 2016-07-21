@@ -27,6 +27,5 @@ private:
 	uv_loop_t * m_uv_loop;
 	uv_tcp_t m_tcp_handle;
 	uv_connect_t m_connect_req;
-	uv_write_t m_write_req;
 };
 

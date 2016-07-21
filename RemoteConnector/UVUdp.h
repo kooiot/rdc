@@ -38,8 +38,7 @@ private:
 	UDPInfo m_Info;
 
 	uv_loop_t * m_uv_loop;
-	uv_udp_t m_udp_handle;
-	uv_udp_send_t m_udp_send_req;
+	uv_udp_t* m_udp_handle;
 	struct sockaddr_in m_peer_addr;
 };
 

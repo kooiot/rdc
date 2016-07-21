@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "UVTcpServer.h"
 
-
 static void echo_alloc(uv_handle_t* handle,
 	size_t suggested_size,
 	uv_buf_t* buf) {
@@ -10,6 +9,7 @@ static void echo_alloc(uv_handle_t* handle,
 }
 
 static void close_cb(uv_handle_t* handle) {
+	delete (uv_tcp_t*)handle;
 }
 
 
@@ -20,6 +20,7 @@ UVTcpServer::UVTcpServer(uv_loop_t* uv_loop,
 	: m_uv_loop(uv_loop), m_nChannel(channel), m_Handler(Handler), m_Info(Info),
 	m_tcp_client(NULL)
 {
+	m_tcp_server = new uv_tcp_t();
 }
 
 
@@ -57,54 +58,57 @@ void UVTcpServer::_ConnectionCB(uv_stream_t* remote, int status)
 	if (rc != 0) {
 
 	}
+	client->data = this;
 	m_tcp_client = client;
 }
 
 void UVTcpServer::ReadCB(uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf)
 {
 	if (nread < 0) {
-		fprintf(stderr, "read_cb error: %s\n", uv_err_name(nread));
+		RLOG("read_cb error: %s\n", uv_err_name(nread));
 		assert(nread == UV_ECONNRESET || nread == UV_EOF);
 		uv_close((uv_handle_t*)stream, close_cb);
 	}
 	else {
 		UVTcpServer* pThis = (UVTcpServer*)stream->data;
-		pThis->m_Handler.Send(pThis->m_nChannel, buf->base, buf->len);
+		pThis->m_Handler.Send(pThis->m_nChannel, buf->base, nread);
 	}
 }
 
 void UVTcpServer::WriteCB(uv_write_t * req, int status)
 {
+	delete req;
 }
 
 bool UVTcpServer::Open()
 {
 	struct sockaddr_in addr;
 
+	RLOG("TCP Server bind on address %s:%d\n", m_Info.bind.sip, m_Info.bind.port);
+
 	int rc = uv_ip4_addr(m_Info.bind.sip, m_Info.bind.port, &addr);
 	if (0 != rc) {
-		printf("Incorrect TCP server address %d\n", rc);
+		RLOG("Incorrect TCP server address %d\n", rc);
 		return false;
 	}
 	
-	rc = uv_tcp_init(m_uv_loop, &m_tcp_server);
+	rc = uv_tcp_init(m_uv_loop, m_tcp_server);
 	if (0 != rc) {
-		printf("Cannot Init TCP handle %d\n", rc);
+		RLOG("Cannot Init TCP handle %d\n", rc);
 		return false;
 	}
-	m_tcp_server.data = this;
-	m_connect_req.data = this;
+	m_tcp_server->data = this;
 
-	rc = uv_tcp_bind(&m_tcp_server, (const struct sockaddr*)&addr, 0);
+	rc = uv_tcp_bind(m_tcp_server, (const struct sockaddr*)&addr, 0);
 	if (0 != rc) {
-		printf("Cannot Bind TCP to bind ip %d\n", rc);
+		RLOG("Cannot Bind TCP to bind ip %d\n", rc);
 		return false;
 	}
 
-	rc = uv_listen((uv_stream_t*)&m_tcp_server, 16, ConnectionCB);
+	rc = uv_listen((uv_stream_t*)m_tcp_server, 16, ConnectionCB);
 
 	if (0 != rc) {
-		printf("Cannot Connect TCP to server %d\n", rc);
+		RLOG("Cannot Connect TCP to server %d\n", rc);
 		return false;
 	}
 
@@ -113,23 +117,24 @@ bool UVTcpServer::Open()
 
 void UVTcpServer::Close()
 {
+	RLOG("Close called\n");
 	if (NULL != m_tcp_client) {
 		uv_close((uv_handle_t*)m_tcp_client, close_cb);
-		delete m_tcp_client;
 	}
 
-	uv_read_stop((uv_stream_t*)&m_tcp_server);
-	uv_close((uv_handle_t*)&m_tcp_server, close_cb);
+	uv_close((uv_handle_t*)m_tcp_server, close_cb);
 }
 
 int UVTcpServer::OnData(void * buf, size_t len)
 {
+	RLOG("OnData called len %d\n", len);
 	if (m_tcp_client == NULL) {
 		return -1;
 	}
 
+	uv_write_t* write_req = new uv_write_t();
 	uv_buf_t uvbuf = uv_buf_init((char*)buf, len);
-	int rc = uv_write(&m_write_req,
+	int rc = uv_write(write_req,
 		(uv_stream_t*)&m_tcp_client,
 		&uvbuf,
 		1,
@@ -139,5 +144,6 @@ int UVTcpServer::OnData(void * buf, size_t len)
 
 int UVTcpServer::OnEvent(StreamEvent evt)
 {
+	RLOG("OnEvent evt %d\n", evt);
 	return 0;
 }

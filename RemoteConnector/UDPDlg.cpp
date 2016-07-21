@@ -110,11 +110,11 @@ void CUDPDlg::OnOK()
 	CString str;
 	m_portDevR.GetWindowText(str);
 	sscanf(str, "%d", &m_Info.remote.port);
-	m_portDevL.SetWindowText(str);
+	m_portDevL.GetWindowText(str);
 	sscanf(str, "%d", &m_Info.bind.port);
-	m_portLocalR.SetWindowText(str);
+	m_portLocalR.GetWindowText(str);
 	sscanf(str, "%d", &m_LocalInfo.remote.port);
-	m_portLocalL.SetWindowText(str);
+	m_portLocalL.GetWindowText(str);
 	sscanf(str, "%d", &m_LocalInfo.bind.port);
 
 	if (BTNS_CHECK != m_checkDevBind.GetCheck()) {

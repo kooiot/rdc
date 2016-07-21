@@ -274,6 +274,15 @@ void CRemoteConnectorDlg::__StreamEventCallback(RC_CHANNEL channel, StreamEvent 
 {
 	TRACE("[STREAM_EVENT] %s[%d] %s\n", StreamEventNames[evt], evt, msg);
 	MessageBox(msg, StreamEventNames[evt]);
+	if (evt == SE_CHANNEL_CLOSED 
+		|| evt == SE_CHANNEL_NOT_SUPPORT
+		|| evt == SE_CHANNEL_OPEN_FAILED) {
+
+		int rc = RC_CloseChannel(m_hApi, channel);
+		if (rc == 0) {
+			RemoveConnection(channel);
+		}
+	}
 }
 
 int CRemoteConnectorDlg::OnLog(RC_CHANNEL channel, const char * type, const char * content)
@@ -508,7 +517,8 @@ void CRemoteConnectorDlg::OnBnClickedButtonDelete()
 	ConnectionInfo * local_info = m_LocalConnectionInfos[nChannel];
 	if (!pInfo || !pHandler)
 	{
-		MessageBox("BLALJAF", "提示", MB_OK | MB_ICONERROR);
+		MessageBox("Connection already close!!", "提示", MB_OK | MB_ICONERROR);
+		return;
 	}
 	assert(nChannel == pInfo->Channel);
 	int rc = RC_CloseChannel(m_hApi, nChannel);

@@ -53,3 +53,6 @@
 
 
 #include "../RemoteConnectorApi/RemoteConnectorApi.h"
+
+
+#define RLOG TRACE

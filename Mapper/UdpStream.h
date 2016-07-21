@@ -25,10 +25,8 @@ private:
 	static void SendCB(uv_udp_send_t* req, int status);
 
 private:
-	bool m_bConnected;
 	uv_loop_t * m_uv_loop;
 	uv_udp_t m_udp_handle;
-	uv_udp_send_t m_udp_send_req;
 	struct sockaddr_in m_peer_addr;
 };
 
