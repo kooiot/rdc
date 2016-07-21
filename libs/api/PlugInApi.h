@@ -1,27 +1,40 @@
 
 #pragma once
 
-#ifndef _PLUG_IN_API_H_
-#define _PLUG_IN_API_H_
+#ifndef _RDC_PLUGIN_API_H_
+#define _RDC_PLUGIN_API_H_
 
+#ifndef RDC_LINUX_SYS
+#include "Windows.h"
+#define RDC_DLL_HANDLE HMODULE
+#else
+#inclue <dlopen.h>
+#define RDC_DLL_HANDLE int
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#ifdef PLUG_IN_EXPORTS
-#define PLUG_IN_API __declspec(dllexport)
-#else
-#define PLUG_IN_API __declspec(dllimport)
-#endif
+	typedef const char* (__cdecl *FGetName)();
+	typedef long (__cdecl *FCreateHandle)(char *config);
+	typedef int (__cdecl *FDestory)(long Handle);
+	typedef int (__cdecl *FStart)(long Handle);
+	typedef int (__cdecl *FStop)(long Handle);
 
-typedef void* RDCP_HANDLE;
+	typedef struct _PluginApi {
+		RDC_DLL_HANDLE DllHandle;
+		FGetName GetName;
+		FCreateHandle CreateHandle;
+		FDestory Destory;
+		FStart Start;
+		FStop Stop;
+	} PluginApi;
 
-	PLUG_IN_API const char* GetName();
-	PLUG_IN_API RDCP_HANDLE CreateHandle(char *config);
-	PLUG_IN_API int Destory(RDCP_HANDLE Handle);
-	PLUG_IN_API int Start(RDCP_HANDLE Handle);
-	PLUG_IN_API int Stop(RDCP_HANDLE Handle);
+	// LoadLibrary()
+	int RDC_PluginLoad(const char* dll, PluginApi* api);
+	// FreeLibrary()
+	void RDC_PluginClose(PluginApi* api);
 
 #ifdef __cplusplus
 }

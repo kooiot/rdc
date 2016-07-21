@@ -24,6 +24,9 @@
     <ClCompile Include="StreamApi.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="PlugInApi.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AccApi.h">
@@ -33,6 +36,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="StreamApi.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PlugInApi.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PlugInDefs.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

@@ -154,11 +154,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AccApi.cpp" />
+    <ClCompile Include="PlugInApi.cpp" />
     <ClCompile Include="StreamApi.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AccApi.h" />
     <ClInclude Include="DataDefs.h" />
+    <ClInclude Include="PlugInApi.h" />
+    <ClInclude Include="PlugInDefs.h" />
     <ClInclude Include="StreamApi.h" />
   </ItemGroup>
   <ItemGroup>
