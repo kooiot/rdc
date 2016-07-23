@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "UVUdp.h"
+#include <cassert>
 
 static void echo_alloc(uv_handle_t* handle,
 	size_t suggested_size,

@@ -9,6 +9,7 @@
 #include <koo_process.h>
 #include <zmq.h>
 #include <cassert>
+#include <json.hpp>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -74,6 +75,7 @@ void CServerCPDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_LIST_ONLINE_DEVCIES, m_listDevices);
 	DDX_Control(pDX, IDC_LIST_ONLINE_USERS, m_listUsers);
 	DDX_Control(pDX, IDC_TAB1, m_TabCtrl);
+	DDX_Control(pDX, IDC_EDIT_INFO, m_editServerInfo);
 }
 
 BEGIN_MESSAGE_MAP(CServerCPDlg, CDialogEx)
@@ -168,6 +170,26 @@ BOOL CServerCPDlg::OnInitDialog()
 
 	m_CTX = zmq_ctx_new();
 
+#ifndef _DEBUG
+	m_ServerIP = "123.57.13.218";
+#else
+	m_ServerIP = "127.0.0.1";
+#endif
+	m_ServerRepPort = 6600;
+	m_ServerPubPort = 6601;
+	m_ServerStreamPort = 6602;
+	m_StreamServerPort = 6800;
+
+	CString info;
+	info.Format("IP:%s\r\nRep:%d\r\nPub:%d\r\nStream:%d\r\nSSID:%d\r\nSSPort:%d",
+		m_ServerIP.c_str(),
+		m_ServerRepPort,
+		m_ServerPubPort,
+		m_ServerStreamPort,
+		RC_STREAM_SERVER_ID_BASE,
+		m_StreamServerPort);
+	m_editServerInfo.SetWindowText(info);
+
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -245,8 +267,6 @@ LRESULT CServerCPDlg::OnDataMsg(WPARAM wParam, LPARAM lParam)
 	int channel = (int)wParam;
 	std::string* p = (std::string*)lParam;
 
-	
-
 	delete p;
 	return 0L;
 }
@@ -256,13 +276,19 @@ void CServerCPDlg::OnBnClickedButtonStart()
 	if (m_pProcess)
 		return;
 
-	m_pProcess = new koo_process("AccServer", "", "AccServer.exe", "", true);
+	std::stringstream acc;
+	acc << m_ServerIP << " " << m_ServerRepPort << " " << m_ServerPubPort << " " << m_ServerStreamPort;
+	m_pProcess = new koo_process("AccServer", "", "AccServer.exe", acc.str(), true);
 	m_pProcess->start();
 
-	m_pStreamProcess = new koo_process("StreamServer", "", "StreamServer.exe", "", true);
+	std::stringstream spp;
+	spp << RC_STREAM_SERVER_ID_BASE << " " << m_ServerIP << " " << m_ServerStreamPort << " " << m_ServerIP << " " << m_StreamServerPort;
+	m_pStreamProcess = new koo_process("StreamServer", "", "StreamServer.exe", spp.str(), true);
 	m_pStreamProcess->start();
 
-	m_pMapperProcess = new koo_process("Mapper", "", "Mapper.exe", "", true);
+	std::stringstream mpp;
+	mpp << "\"4C05D6F6-92EA-4a23-8EFF-179F91CBAA6A\"" << " " << m_ServerIP << " " << m_ServerRepPort << " " << m_ServerPubPort;
+	m_pMapperProcess = new koo_process("Mapper", "", "Mapper.exe", mpp.str(), true);
 	m_pMapperProcess->start();
 }
 
@@ -287,7 +313,7 @@ void CServerCPDlg::OnBnClickedButtonConnect()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	m_pAccApi = new CAccApi(m_CTX);
-	bool br = m_pAccApi->Connect("127.0.0.1", 6600, "admin", "admin");
+	bool br = m_pAccApi->Connect(m_ServerIP.c_str(), m_ServerRepPort, "admin", "admin");
 	if (br) {
 		MessageBox("Connected");
 		StreamProcess sp;

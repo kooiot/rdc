@@ -135,8 +135,11 @@ BOOL CRemoteConnectorDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
+#ifdef _DEBUG
 	m_editIP.SetWindowText("127.0.0.1");
-	//m_editIP.SetWindowText("123.57.13.218 ");
+#else
+	m_editIP.SetWindowText("123.57.13.218");
+#endif
 	m_editPort.SetWindowText("6600");
 	m_editUser.SetWindowText("test");
 	m_editPasswd.SetWindowText("test");
@@ -212,7 +215,6 @@ void CRemoteConnectorDlg::OnPaint()
 
 void CRemoteConnectorDlg::OnClose()
 {
-	uv_loop_close(m_UVLoop);
 	m_bStop = true;
 	if (m_pThread && m_pThread->joinable()) {
 		m_pThread->join();
@@ -320,7 +322,9 @@ void CRemoteConnectorDlg::AddConnection(ConnectionInfo * info, ConnectionInfo * 
 		pHandler = m_VSPortMgr.CreatePort(info->Channel, *this, bind->Serial.dev);
 	}
 	if (bind->Type == CT_TEST) {
-		pHandler = new CTestPortDlg(info->Channel, *this);
+		auto dlg = new CTestPortDlg(info->Channel, *this);
+		dlg->ShowWindow(SW_SHOW);
+		pHandler = dlg;
 	}
 	if (bind->Type == CT_UDP) {
 		pHandler = new UVUdp(m_UVLoop, info->Channel, *this, bind->UDP);

@@ -34,6 +34,12 @@ public:
 // й╣ож
 protected:
 	HICON m_hIcon;
+	std::string m_ServerIP;
+	int m_ServerRepPort;
+	int m_ServerPubPort;
+	int m_ServerStreamPort;
+	int m_StreamServerPort;
+
 	koo_process* m_pProcess;
 	koo_process* m_pStreamProcess;
 	koo_process* m_pMapperProcess;
@@ -70,4 +76,5 @@ private:
 public:
 	CTabCtrl m_TabCtrl;
 	afx_msg void OnTcnSelchangeTab1(NMHDR *pNMHDR, LRESULT *pResult);
+	CEdit m_editServerInfo;
 };
