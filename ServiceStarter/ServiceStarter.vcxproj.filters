@@ -27,9 +27,6 @@
     <ClInclude Include="ServiceMgr.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="json.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

@@ -31,8 +31,11 @@ void handle_sub_msg(zmq_msg_t& cmd, zmq_msg_t& data) {
 	
 	if (strncmp(pCmd, "ALL ", strlen("ALL ")) == 0)
 		return;
-
+	
+	// Remov the SN prefix
+	assert(strncmp(pCmd, g_sn, strlen(g_sn)) == 0);
 	pCmd = pCmd + strlen(g_sn) + 1;
+
 	if (0 == strncmp(pCmd, "CREATE", strlen("CREATE"))) {
 		if (zmq_msg_size(&data) >= sizeof(StreamProcess) + sizeof(ConnectionInfo)) {
 			StreamProcess sp;
