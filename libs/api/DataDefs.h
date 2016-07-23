@@ -17,6 +17,7 @@ extern "C" {
 #define RC_MAX_PHONE_LEN 128
 #define RC_MAX_SN_LEN 128
 #define RC_MAX_IP_LEN 128
+#define RC_MAX_PATH 512
 
 #define RC_MAX_ONLINE_DEVICE 2048
 #define RC_MAX_ONLINE_USER 512
@@ -193,6 +194,21 @@ extern "C" {
 		StreamEvent event;
 		int channel;
 		char msg[128];
+	};
+
+	/// ServiceStarter
+	enum ServiceMode {
+		SM_DISABLE = 0,
+		SM_ONCE = 1,
+		SM_AUTO = 2,
+	};
+	struct ServiceNode {
+		char Name[RC_MAX_NAME_LEN];
+		char Desc[RC_MAX_DESC_LEN];
+		char Exec[RC_MAX_PATH];
+		char WorkDir[RC_MAX_PATH];
+		char Args[RC_MAX_PATH];
+		ServiceMode Mode;
 	};
 #ifdef __cplusplus
 }

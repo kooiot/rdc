@@ -43,10 +43,10 @@ public:
 	void BindDevice(int nCur, bool bEdit);
 	void DumpDevice(int nCur);
 
-	afx_msg void OnNMDblclkListDevices(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedButtonAdd();
 	afx_msg void OnBnClickedButtonDel();
 	afx_msg void OnBnClickedButtonSave();
 	afx_msg void OnBnClickedCheckValid();
+	afx_msg void OnNMDblclkListDevices(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnLvnItemchangedListDevices(NMHDR *pNMHDR, LRESULT *pResult);
 };

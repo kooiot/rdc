@@ -1,21 +1,16 @@
 #pragma once
-#include <list>
+#include <map>
+#include <string>
+#include <DataDefs.h>
+class koo_process;
 
-enum ServiceMode {
-	SM_DISABLE = 0,
-	SM_ONCE = 1,
-	SM_AUTO = 2,
-};
-struct ServiceNode {
-	std::string Name;
-	std::string Desc;
-	std::string Exec;
-	std::string WorkDir;
-	std::string Args;
-	ServiceMode Mode;
+struct ServiceNodeEx : public ServiceNode
+{
+	ServiceNodeEx() : Process(NULL) {};
+	koo_process* Process;
 };
 
-typedef std::list<ServiceNode> ServiceNodeList;
+typedef std::map<std::string, ServiceNodeEx*> ServiceNodeMap;
 
 class ServiceMgr
 {
@@ -35,6 +30,6 @@ private:
 	int StopNode(const std::string& name);
 private:
 	std::string m_Config;
-	ServiceNodeList m_Nodes;
+	ServiceNodeMap m_Nodes;
 };
 

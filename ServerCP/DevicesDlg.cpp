@@ -149,14 +149,6 @@ void CDevicesDlg::DumpDevice(int nCur)
 }
 
 
-void CDevicesDlg::OnNMDblclkListDevices(NMHDR *pNMHDR, LRESULT *pResult)
-{
-	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
-	// TODO: 在此添加控件通知处理程序代码
-	BindDevice(pNMItemActivate->iItem, true);
-	*pResult = 0;
-}
-
 const char* newGUID()
 {
 	static char buf[64] = { 0 };
@@ -258,6 +250,13 @@ void CDevicesDlg::OnBnClickedCheckValid()
 }
 
 
+void CDevicesDlg::OnNMDblclkListDevices(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	// TODO: 在此添加控件通知处理程序代码
+	BindDevice(pNMItemActivate->iItem, true);
+	*pResult = 0;
+}
 
 void CDevicesDlg::OnLvnItemchangedListDevices(NMHDR *pNMHDR, LRESULT *pResult)
 {

@@ -241,15 +241,6 @@ void CUsersDlg::OnBnClickedButtonShowPass()
 }
 
 
-void CUsersDlg::OnNMDblclkListUsers(NMHDR *pNMHDR, LRESULT *pResult)
-{
-	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
-	// TODO: 在此添加控件通知处理程序代码
-	BindUser(pNMItemActivate->iItem, true);
-	*pResult = 0;
-}
-
-
 void CUsersDlg::OnBnClickedCheckValid()
 {
 	// TODO: 在此添加控件通知处理程序代码
@@ -289,6 +280,15 @@ void CUsersDlg::OnBnClickedButtonSave()
 			MessageBox("Modify User Done!");
 		}
 	}
+}
+
+
+void CUsersDlg::OnNMDblclkListUsers(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	// TODO: 在此添加控件通知处理程序代码
+	BindUser(pNMItemActivate->iItem, true);
+	*pResult = 0;
 }
 
 

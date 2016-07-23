@@ -39,6 +39,9 @@
     <ClInclude Include="DevicesDlg.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ServicesDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ServerCP.cpp">
@@ -54,6 +57,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="DevicesDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ServicesDlg.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

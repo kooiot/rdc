@@ -1,4 +1,3 @@
-#include "AccDatabase.h"
 #ifndef RDC_LINUX_SYS
 #include <Windows.h>
 #endif

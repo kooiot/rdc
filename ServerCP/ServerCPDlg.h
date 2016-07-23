@@ -63,9 +63,7 @@ public:
 	afx_msg LRESULT OnEventMsg(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnDataMsg(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnBnClickedButtonStart();
-	afx_msg void OnBnClickedButtonStop();
 	afx_msg void OnBnClickedButtonConnect();
-	afx_msg void OnBnClickedButtonDisconnect();
 	afx_msg void OnBnClickedButtonUsers();
 	afx_msg void OnBnClickedButtonDevs();
 	afx_msg void OnBnClickedButtonRd();

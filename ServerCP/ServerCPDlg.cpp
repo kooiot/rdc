@@ -86,9 +86,7 @@ BEGIN_MESSAGE_MAP(CServerCPDlg, CDialogEx)
 	ON_MESSAGE(WM_USER_EVENT, &CServerCPDlg::OnEventMsg)
 	ON_MESSAGE(WM_USER_DATA, &CServerCPDlg::OnDataMsg)
 	ON_BN_CLICKED(IDC_BUTTON_START, &CServerCPDlg::OnBnClickedButtonStart)
-	ON_BN_CLICKED(IDC_BUTTON_STOP, &CServerCPDlg::OnBnClickedButtonStop)
 	ON_BN_CLICKED(IDC_BUTTON_CONNECT, &CServerCPDlg::OnBnClickedButtonConnect)
-	ON_BN_CLICKED(IDC_BUTTON_DISCONNECT, &CServerCPDlg::OnBnClickedButtonDisconnect)
 	ON_BN_CLICKED(IDC_BUTTON_USERS, &CServerCPDlg::OnBnClickedButtonUsers)
 	ON_BN_CLICKED(IDC_BUTTON_DEVS, &CServerCPDlg::OnBnClickedButtonDevs)
 	ON_BN_CLICKED(IDC_BUTTON_RD, &CServerCPDlg::OnBnClickedButtonRd)
@@ -274,81 +272,82 @@ LRESULT CServerCPDlg::OnDataMsg(WPARAM wParam, LPARAM lParam)
 void CServerCPDlg::OnBnClickedButtonStart()
 {
 	if (m_pProcess)
-		return;
+	{
+		if (m_pMapperProcess)
+			m_pMapperProcess->stop();
+		if (m_pStreamProcess)
+			m_pStreamProcess->stop();
+		if (m_pProcess)
+			m_pProcess->stop();
+		//k_kill_process("StreamServer.exe");
+		delete m_pMapperProcess;
+		m_pMapperProcess = NULL;
+		delete m_pStreamProcess;
+		m_pStreamProcess = NULL;
+		delete m_pProcess;
+		m_pProcess = NULL;
+		GetDlgItem(IDC_BUTTON_START)->SetWindowText("Start");
+	}
+	else
+	{
+		std::stringstream acc;
+		acc << m_ServerIP << " " << m_ServerRepPort << " " << m_ServerPubPort << " " << m_ServerStreamPort;
+		m_pProcess = new koo_process("AccServer", "", "AccServer.exe", acc.str(), true);
+		m_pProcess->start();
 
-	std::stringstream acc;
-	acc << m_ServerIP << " " << m_ServerRepPort << " " << m_ServerPubPort << " " << m_ServerStreamPort;
-	m_pProcess = new koo_process("AccServer", "", "AccServer.exe", acc.str(), true);
-	m_pProcess->start();
+		std::stringstream spp;
+		spp << RC_STREAM_SERVER_ID_BASE << " " << m_ServerIP << " " << m_ServerStreamPort << " " << m_ServerIP << " " << m_StreamServerPort;
+		m_pStreamProcess = new koo_process("StreamServer", "", "StreamServer.exe", spp.str(), true);
+		m_pStreamProcess->start();
 
-	std::stringstream spp;
-	spp << RC_STREAM_SERVER_ID_BASE << " " << m_ServerIP << " " << m_ServerStreamPort << " " << m_ServerIP << " " << m_StreamServerPort;
-	m_pStreamProcess = new koo_process("StreamServer", "", "StreamServer.exe", spp.str(), true);
-	m_pStreamProcess->start();
-
-	std::stringstream mpp;
-	mpp << "\"4C05D6F6-92EA-4a23-8EFF-179F91CBAA6A\"" << " " << m_ServerIP << " " << m_ServerRepPort << " " << m_ServerPubPort;
-	m_pMapperProcess = new koo_process("Mapper", "", "Mapper.exe", mpp.str(), true);
-	m_pMapperProcess->start();
-}
-
-void CServerCPDlg::OnBnClickedButtonStop()
-{
-	if (m_pMapperProcess)
-		m_pMapperProcess->stop();
-	if (m_pStreamProcess)
-		m_pStreamProcess->stop();
-	if (m_pProcess)
-		m_pProcess->stop();
-	//k_kill_process("StreamServer.exe");
-	delete m_pMapperProcess;
-	m_pMapperProcess = NULL;
-	delete m_pStreamProcess;
-	m_pStreamProcess = NULL;
-	delete m_pProcess;
-	m_pProcess = NULL;
+		std::stringstream mpp;
+		mpp << "\"4C05D6F6-92EA-4a23-8EFF-179F91CBAA6A\"" << " " << m_ServerIP << " " << m_ServerRepPort << " " << m_ServerPubPort;
+		m_pMapperProcess = new koo_process("Mapper", "", "Mapper.exe", mpp.str(), true);
+		m_pMapperProcess->start();
+		GetDlgItem(IDC_BUTTON_START)->SetWindowText("Stop");
+	}
 }
 
 void CServerCPDlg::OnBnClickedButtonConnect()
 {
-	// TODO: 在此添加控件通知处理程序代码
-	m_pAccApi = new CAccApi(m_CTX);
-	bool br = m_pAccApi->Connect(m_ServerIP.c_str(), m_ServerRepPort, "admin", "admin");
-	if (br) {
-		MessageBox("Connected");
-		StreamProcess sp;
-		int rc = m_pAccApi->GetStreamServer(&sp);
-		if (rc == 0) {
-			m_pStreamApi = new CStreamApi(*this, CLIENT_TYPE, sp.Index, sp.Mask);
-			br = m_pStreamApi->Connect(sp.StreamIP, sp.Port);
-			if (br) {
-				MessageBox("Stream Connected");
-				rc = m_pStreamApi->SendData(0, (unsigned char *)"Hello World", strlen("Hello World"));
-				assert(rc >= 0);
-			}
-			else {
-				MessageBox("Stream Faied");
-			}
-		}
+	if (m_pAccApi) {
+		if (m_pStreamApi)
+			m_pStreamApi->Disconnect();
+		delete m_pStreamApi;
+		m_pStreamApi = NULL;
+		if (m_pAccApi)
+			m_pAccApi->Disconnect();
+		delete m_pAccApi;
+		m_pAccApi = NULL;
+		GetDlgItem(IDC_BUTTON_CONNECT)->SetWindowText("Connect");
 	}
 	else {
-		MessageBox("Faied");
+		// TODO: 在此添加控件通知处理程序代码
+		m_pAccApi = new CAccApi(m_CTX);
+		bool br = m_pAccApi->Connect(m_ServerIP.c_str(), m_ServerRepPort, "admin", "admin");
+		if (br) {
+			MessageBox("Connected");
+			StreamProcess sp;
+			int rc = m_pAccApi->GetStreamServer(&sp);
+			if (rc == 0) {
+				m_pStreamApi = new CStreamApi(*this, CLIENT_TYPE, sp.Index, sp.Mask);
+				br = m_pStreamApi->Connect(sp.StreamIP, sp.Port);
+				if (br) {
+					MessageBox("Stream Connected");
+					rc = m_pStreamApi->SendData(0, (unsigned char *)"Hello World", strlen("Hello World"));
+					assert(rc >= 0);
+				}
+				else {
+					MessageBox("Stream Faied");
+				}
+			}
+		}
+		else {
+			MessageBox("Faied");
+		}
+		GetDlgItem(IDC_BUTTON_CONNECT)->SetWindowText("Disconnect");
 	}
 }
-
-
-void CServerCPDlg::OnBnClickedButtonDisconnect()
-{
-	if (m_pStreamApi)
-		m_pStreamApi->Disconnect();
-	delete m_pStreamApi;
-	m_pStreamApi = NULL;
-	if (m_pAccApi)
-		m_pAccApi->Disconnect();
-	delete m_pAccApi;
-	m_pAccApi = NULL;
-}
-
 
 void CServerCPDlg::OnBnClickedButtonUsers()
 {
