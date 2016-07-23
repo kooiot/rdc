@@ -23,10 +23,16 @@ public:
 	ServiceMgr();
 	~ServiceMgr();
 
-	void Load(const char* conf);
-	void Save(const char* conf);
+	void Load(const std::string& conf);
+	void Save();
 
 	void Run();
+private:
+	int AddNode(const ServiceNode& node);
+	int UpdateNode(const ServiceNode& node);
+	int DeleteNode(const std::string& name);
+	int StartNode(const std::string& name);
+	int StopNode(const std::string& name);
 private:
 	std::string m_Config;
 	ServiceNodeList m_Nodes;

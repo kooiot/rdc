@@ -99,7 +99,7 @@
     <ClCompile Include="src\uuid_util.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="koo_zmq_helpers.cpp">
+    <ClCompile Include="src\koo_zmq_helpers.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
