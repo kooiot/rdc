@@ -10,8 +10,10 @@
 #include <uv.h>
 #include <enet/enet.h>
 
+#include <DataDefs.h>
+#include <PluginLoader.h>
+
 #include "StreamMgr.h"
-#include "../api/DataDefs.h"
 
 const char* g_sn = "4C05D6F6-92EA-4a23-8EFF-179F91CBAA6A";
 const char* g_sip = "127.0.0.1";
@@ -21,6 +23,7 @@ int g_port_sub = 6601;
 void* g_req_socket;
 void* g_sub_socket;
 StreamMgr* g_StreamMgr = NULL;
+CPluginLoader g_PluginLoader;
 
 #define COMPARE_MSG_STR(msg, str) \
 	strncmp((char*)zmq_msg_data(&msg), str, strlen(str)) == 0
@@ -240,6 +243,49 @@ void Heartbeat_Timer(uv_timer_t* handle){
 		exit(EXIT_FAILURE);
 	}
 }
+
+
+#ifdef RDC_LINUX_SYS
+#define MAX_PATH 512
+int GetModuleFileName(char* sModuleName, char* sFileName, int nSize)
+{
+	int ret = 0;
+	char* p = getenv("_");
+	if (p != NULL)
+	{
+		if (sModuleName != NULL)
+			strstr(p, sModuleName);
+		if (p != NULL)
+			strcpy(sFileName, p);
+		ret = strlen(sFileName);
+	}
+	return ret;
+}
+#endif
+
+std::string GetModuleFilePath()
+{
+	char szFile[MAX_PATH] = { 0 };
+	int dwRet = ::GetModuleFileName(NULL, szFile, 255);
+	if (dwRet != 0)
+	{
+		printf("Module File Name: %s \n", szFile);
+		std::string str = szFile;
+#ifndef RDC_LINUX_SYS
+		size_t nPos = str.rfind('\\');
+#else
+		size_t nPos = str.rfind('/');
+#endif
+		if (nPos != std::string::npos)
+		{
+			str = str.substr(0, nPos);
+		}
+		return str;
+	}
+	return "";
+}
+
+
 int main(int argc, char* argv[])
 {
 	if (argc >= 2)
@@ -259,6 +305,13 @@ int main(int argc, char* argv[])
 	enet_initialize();
 	
 	uv_loop_t *loop = uv_default_loop();
+
+#ifndef RDC_LINUX_SYS
+	std::string plugin_folder = GetModuleFilePath() + "\\plugins";
+#else
+	std::string plugin_folder = GetModuleFilePath() + "/plugins";
+#endif
+	g_PluginLoader.Load(plugin_folder.c_str());
 
 	g_StreamMgr = new StreamMgr(loop);
 	g_StreamMgr->Init();
@@ -309,6 +362,7 @@ int main(int argc, char* argv[])
 	
 	g_StreamMgr->Close();
 	delete g_StreamMgr;
+	g_PluginLoader.UnLoad();
 	enet_deinitialize();
 #ifdef _DEBUG
 	system("pause");

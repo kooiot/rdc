@@ -24,25 +24,7 @@
     <ClInclude Include="targetver.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="SerialStream.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="StreamMgr.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="StreamPort.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="TestStream.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="TcpClientStream.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="UdpStream.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="PluginStream.h">
+    <ClInclude Include="Port.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -50,28 +32,13 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Mapper.cpp">
+    <ClCompile Include="Example.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="SerialStream.cpp">
+    <ClCompile Include="dllmain.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="StreamMgr.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="TestStream.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="StreamPort.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="TcpClientStream.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="UdpStream.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="PluginStream.cpp">
+    <ClCompile Include="Port.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

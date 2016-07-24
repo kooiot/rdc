@@ -63,6 +63,14 @@ void CPluginLoader::UnLoad()
 	m_Plugins.clear();
 }
 
+PluginApi * CPluginLoader::Find(const char * name)
+{
+	auto ptr = m_Plugins.find(name);
+	if (ptr != m_Plugins.end())
+		return ptr->second;
+	return nullptr;
+}
+
 void CPluginLoader::LoadPlugin(const char * dll)
 {
 	PluginApi* api = new PluginApi();

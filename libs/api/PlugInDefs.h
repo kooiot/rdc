@@ -13,11 +13,15 @@ extern "C" {
 #else
 #define RDC_PLUGIN_API __declspec(dllimport)
 #endif
+
+#define RDC_MAX_PLUGIN_CONFIG 512
+
 	// 插件类型
 	enum RDC_PLUGIN_TYPE {
 		RPT_MAPPER = 0,
 		RPT_CLIENT = 1,
 	};
+
 	// 插件向外发送数据的接口
 	typedef int(__stdcall *PluginSendCB)(const char* buf, size_t len, void* ptr);
 	// 插件触发关闭
