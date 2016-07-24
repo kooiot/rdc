@@ -56,6 +56,7 @@ BOOL CDevicesDlg::OnInitDialog()
 	m_listDevs.InsertColumn(0, "Name", LVCFMT_LEFT, 120);
 	m_listDevs.InsertColumn(1, "SN", LVCFMT_LEFT, 240);
 	m_listDevs.InsertColumn(2, "Desc", LVCFMT_LEFT, 240);
+	m_listDevs.SetExtendedStyle(m_listDevs.GetExtendedStyle() | LVS_EX_FULLROWSELECT);
 
 	// TODO:  在此添加额外的初始化
 	memset(m_Devs, 0, sizeof(DeviceInfo) * 2048);
@@ -66,7 +67,6 @@ BOOL CDevicesDlg::OnInitDialog()
 		m_listDevs.SetItemText(n, 1, m_Devs[i].SN);
 		m_listDevs.SetItemText(n, 2, m_Devs[i].Desc);
 	}
-	m_listDevs.SetExtendedStyle(m_listDevs.GetExtendedStyle() | LVS_EX_FULLROWSELECT);
 
 	m_CurSel = -2;
 	BindDevice(-1, false);

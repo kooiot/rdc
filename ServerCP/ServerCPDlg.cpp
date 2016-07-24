@@ -11,6 +11,10 @@
 #include <cassert>
 #include <json.hpp>
 
+#include "UsersDlg.h"
+#include "DevicesDlg.h"
+#include "ServicesDlg.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -92,6 +96,7 @@ BEGIN_MESSAGE_MAP(CServerCPDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_RD, &CServerCPDlg::OnBnClickedButtonRd)
 	ON_BN_CLICKED(IDC_BUTTON_RUSERS, &CServerCPDlg::OnBnClickedButtonRusers)
 	ON_NOTIFY(TCN_SELCHANGE, IDC_TAB1, &CServerCPDlg::OnTcnSelchangeTab1)
+	ON_BN_CLICKED(IDC_BUTTON_SM, &CServerCPDlg::OnBnClickedButtonSm)
 END_MESSAGE_MAP()
 
 
@@ -407,4 +412,11 @@ void CServerCPDlg::OnTcnSelchangeTab1(NMHDR *pNMHDR, LRESULT *pResult)
 		m_listUsers.ShowWindow(SW_SHOW);
 	}
 	*pResult = 0;
+}
+
+
+void CServerCPDlg::OnBnClickedButtonSm()
+{
+	CServicesDlg dlg(m_CTX);
+	dlg.DoModal();
 }

@@ -3,9 +3,6 @@
 //
 
 #pragma once
-
-#include "UsersDlg.h"
-#include "DevicesDlg.h"
 #include "afxwin.h"
 #include "afxcmn.h"
 
@@ -75,4 +72,5 @@ public:
 	CTabCtrl m_TabCtrl;
 	afx_msg void OnTcnSelchangeTab1(NMHDR *pNMHDR, LRESULT *pResult);
 	CEdit m_editServerInfo;
+	afx_msg void OnBnClickedButtonSm();
 };

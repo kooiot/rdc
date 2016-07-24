@@ -5,6 +5,7 @@
 #include <fstream>
 #include <json.hpp>
 #include <koo_process.h>
+#include <koo_zmq_helpers.h>
 
 #include "ServiceMgr.h"
 
@@ -18,7 +19,7 @@ ServiceMgr::~ServiceMgr()
 }
 
 #define GET_NODE_STRING(NODE, NAME, BUF, BUF_LEN) \
-	strncpy(BUF, NODE[#NAME].get<std::string>().c_str(), BUF_LEN)
+	strncpy(BUF, NODE[NAME].get<std::string>().c_str(), BUF_LEN)
 
 void ServiceMgr::Load(const std::string& conf)
 {
@@ -87,8 +88,6 @@ void ServiceMgr::Save()
 
 	}
 }
-#define COMPARE_MSG_STR(msg, str) \
-	strncmp((char*)zmq_msg_data(&msg), str, strlen(str)) == 0
 
 void ServiceMgr::Run()
 {
@@ -106,27 +105,12 @@ void ServiceMgr::Run()
 		return;
 	}
 	while (true) {
-		zmq_msg_t cmd;
-		int rc = zmq_msg_init(&cmd);
-
-		rc = zmq_msg_recv(&cmd, rep, 0);
-		if (rc == -1)
-			continue;
-
-
-		if (!zmq_msg_more(&cmd)) {
-			zmq_msg_close(&cmd);
-			continue;
-		}
-
-		zmq_msg_t data;
-		rc = zmq_msg_init(&data);
-
-		rc = zmq_msg_recv(&cmd, rep, 0);
-		if (rc == -1)
+		KZPacket packet;
+		rc = koo_zmq_recv_cmd(rep, packet);
+		if (rc != 0 || packet.id != "KOOIOT")
 			continue;
 		
-		if (COMPARE_MSG_STR(cmd, "LIST")) {
+		if (packet.cmd == "LIST") {
 			nlohmann::json doc;
 			int i = 0;
 			ServiceNodeMap::iterator ptr = m_Nodes.begin();
@@ -140,14 +124,16 @@ void ServiceMgr::Run()
 				doc[i]["Mode"] = (int)pNode->Mode;
 				doc[i]["Status"] = pNode->Process == NULL ? "STOPED" : "RUNNING";
 			}
-
-			// 
+			std::stringstream jstr;
+			doc >> jstr;
+			koo_zmq_send_reply(rep, packet, jstr.str());
 			continue;
 		}
-		else if (COMPARE_MSG_STR(cmd, "ADD")) {
-			std::string str((char*)zmq_msg_data(&data), zmq_msg_size(&data));
-			nlohmann::json doc(str);
+		else if (packet.cmd == "ADD") {
+			std::string str((char*)zmq_msg_data(&packet.data), zmq_msg_size(&packet.data));
+			nlohmann::json doc = nlohmann::json::parse(str);
 			ServiceNode node;
+			std::string name = doc["Name"];
 			GET_NODE_STRING(doc, "Name", node.Name, RC_MAX_NAME_LEN);
 			GET_NODE_STRING(doc, "Desc", node.Desc, RC_MAX_DESC_LEN);
 			GET_NODE_STRING(doc, "Exec", node.Exec, RC_MAX_PATH);
@@ -156,13 +142,13 @@ void ServiceMgr::Run()
 			node.Mode = (ServiceMode)(int)doc["Mode"];
 			rc = AddNode(node);
 		}
-		else if (COMPARE_MSG_STR(cmd, "DELETE")) {
-			std::string name((char*)zmq_msg_data(&data), zmq_msg_size(&data));
+		else if (packet.cmd == "DELETE") {
+			std::string name((char*)zmq_msg_data(&packet.data), zmq_msg_size(&packet.data));
 			rc = DeleteNode(name);
 		}
-		else if (COMPARE_MSG_STR(cmd, "UPDATE")) {
-			std::string str((char*)zmq_msg_data(&data), zmq_msg_size(&data));
-			nlohmann::json doc(str);
+		else if (packet.cmd == "UPDATE") {
+			std::string str((char*)zmq_msg_data(&packet.data), zmq_msg_size(&packet.data));
+			nlohmann::json doc = nlohmann::json::parse(str);
 			ServiceNode node;
 			GET_NODE_STRING(doc, "Name", node.Name, RC_MAX_NAME_LEN);
 			GET_NODE_STRING(doc, "Desc", node.Desc, RC_MAX_DESC_LEN);
@@ -172,15 +158,15 @@ void ServiceMgr::Run()
 			node.Mode = (ServiceMode)(int)doc["Mode"];
 			rc = UpdateNode(node);
 		}
-		else if (COMPARE_MSG_STR(cmd, "START")) {
-			std::string name((char*)zmq_msg_data(&data), zmq_msg_size(&data));
+		else if (packet.cmd == "START") {
+			std::string name((char*)zmq_msg_data(&packet.data), zmq_msg_size(&packet.data));
 			rc = StartNode(name);
 		}
-		else if (COMPARE_MSG_STR(cmd, "STOP")) {
-			std::string name((char*)zmq_msg_data(&data), zmq_msg_size(&data));
+		else if (packet.cmd == "STOP") {
+			std::string name((char*)zmq_msg_data(&packet.data), zmq_msg_size(&packet.data));
 			rc = StopNode(name);
 		}
-		// TODO: Fire result
+		koo_zmq_send_reply(rep, packet, &rc, sizeof(int));
 	}
 }
 
@@ -196,7 +182,14 @@ int ServiceMgr::AddNode(const ServiceNode & node)
 	m_Nodes[node.Name] = pNode;
 
 	if (pNode->Mode != SM_DISABLE) {
+#ifdef _DEBUG
+		pNode->Process = new koo_process(node.Name, node.WorkDir, node.Exec, node.Args, true);
+#else
 		pNode->Process = new koo_process(node.Name, node.WorkDir, node.Exec, node.Args, false);
+#endif
+	}
+	else {
+		pNode->Process = NULL;
 	}
 	
 	if (pNode->Mode == SM_ONCE)
@@ -204,13 +197,14 @@ int ServiceMgr::AddNode(const ServiceNode & node)
 	if (pNode->Mode == SM_AUTO)
 		pNode->Process->start();
 
+	Save();
 	return 0;
 }
 
 int ServiceMgr::UpdateNode(const ServiceNode & node)
 {
 	ServiceNodeMap::iterator ptr = m_Nodes.find(node.Name);
-	if (ptr != m_Nodes.end()) {
+	if (ptr == m_Nodes.end()) {
 		return -1;
 	}
 	ServiceNodeEx* pNode = ptr->second;
@@ -225,7 +219,11 @@ int ServiceMgr::UpdateNode(const ServiceNode & node)
 	}
 	else {
 		if (pNode->Process == NULL) {
+#ifdef _DEBUG
+			pNode->Process = new koo_process(pNode->Name, pNode->WorkDir, pNode->Exec, pNode->Args, true);
+#else
 			pNode->Process = new koo_process(pNode->Name, pNode->WorkDir, pNode->Exec, pNode->Args, false);
+#endif
 		}
 
 		if (pNode->Mode == SM_ONCE)
@@ -233,13 +231,14 @@ int ServiceMgr::UpdateNode(const ServiceNode & node)
 		if (pNode->Mode == SM_AUTO)
 			pNode->Process->start();
 	}
+	Save();
 	return 0;
 }
 
 int ServiceMgr::DeleteNode(const std::string & name)
 {
 	ServiceNodeMap::iterator ptr = m_Nodes.find(name);
-	if (ptr != m_Nodes.end()) {
+	if (ptr == m_Nodes.end()) {
 		return -1;
 	}
 	ServiceNodeEx* pNode = ptr->second;
@@ -250,12 +249,14 @@ int ServiceMgr::DeleteNode(const std::string & name)
 		pNode->Process = NULL;
 	}
 	m_Nodes.erase(ptr);
+	Save();
+	return 0;
 }
 
 int ServiceMgr::StartNode(const std::string & name)
 {
 	ServiceNodeMap::iterator ptr = m_Nodes.find(name);
-	if (ptr != m_Nodes.end()) {
+	if (ptr == m_Nodes.end()) {
 		return -1;
 	}
 	ServiceNodeEx* pNode = ptr->second;
@@ -278,7 +279,7 @@ int ServiceMgr::StartNode(const std::string & name)
 int ServiceMgr::StopNode(const std::string & name)
 {
 	ServiceNodeMap::iterator ptr = m_Nodes.find(name);
-	if (ptr != m_Nodes.end()) {
+	if (ptr == m_Nodes.end()) {
 		return -1;
 	}
 	ServiceNodeEx* pNode = ptr->second;

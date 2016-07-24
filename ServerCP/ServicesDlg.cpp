@@ -5,16 +5,17 @@
 #include "ServerCP.h"
 #include "ServicesDlg.h"
 #include "afxdialogex.h"
-
+#include <ServicesApi.h>
 
 // CServicesDlg 对话框
 
 IMPLEMENT_DYNAMIC(CServicesDlg, CDialogEx)
 
-CServicesDlg::CServicesDlg(CWnd* pParent /*=NULL*/)
+CServicesDlg::CServicesDlg(void* pContext, CWnd* pParent /*=NULL*/)
 	: CDialogEx(IDD_SERVICES_DIALOG, pParent)
+	, m_CurSel(-1)
 {
-
+	m_pApi = new CServicesApi(pContext);
 }
 
 CServicesDlg::~CServicesDlg()
@@ -50,7 +51,28 @@ BOOL CServicesDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
-	m_CurSel = -1;
+	m_cbMode.AddString("Disable");
+	m_cbMode.AddString("Once");
+	m_cbMode.AddString("Auto");
+
+	m_listServices.InsertColumn(0, "Name", LVCFMT_LEFT, 120);
+	m_listServices.InsertColumn(1, "Desc", LVCFMT_LEFT, 240);
+	m_listServices.SetExtendedStyle(m_listServices.GetExtendedStyle() | LVS_EX_FULLROWSELECT);
+
+	if (!m_pApi->Connect())
+		MessageBox("Failed to connect to ServiceStater");
+
+	ServiceNode Nodes[64];
+	int rc = m_pApi->List(Nodes, 64);
+	for (int i = 0; i < rc; ++i) {
+		memcpy(&m_Nodes[i], &Nodes[i], sizeof(ServiceNode));
+		m_Nodes[i].New = false;
+		int n = m_listServices.InsertItem(i, m_Nodes[i].Name);
+		m_listServices.SetItemText(n, 1, m_Nodes[i].Desc);
+	}
+	
+	m_CurSel = -2;
+	BindService(-1, false);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // 异常: OCX 属性页应返回 FALSE
@@ -81,69 +103,106 @@ void CServicesDlg::BindService(int nCur, bool bEdit)
 		m_editWorkDir.EnableWindow(TRUE);
 		m_editArgs.EnableWindow(TRUE);
 	}
-	if (nCur < 0)
+	if (nCur < 0 || nCur > 64)
 		return;
-/*
-	DeviceInfo& info = m_Devs[nCur];
+
+	ServiceNodeEx& info = m_Nodes[nCur];
 	m_editName.SetWindowText(info.Name);
 	m_editDesc.SetWindowText(info.Desc);
-	m_editCreateTime.SetWindowText(time2str_utc(&info.CreateTime).c_str());
-
-	if (info.ValidTime != -1) {
-		char buffer[80];
-		struct tm * timeinfo = gmtime(&info.ValidTime);
-		strftime(buffer, 80, "%Y/%m/%d", timeinfo);
-		m_dtValid.EnableWindow(bEdit ? TRUE : FALSE);
-		m_dtValid.SetWindowText(buffer);
-		m_chkValid.SetCheck(1);
-	}
-	else {
-		m_dtValid.EnableWindow(FALSE);
-		m_chkValid.SetCheck(0);
-	}*/
+	m_editExec.SetWindowText(info.Exec);
+	m_editWorkDir.SetWindowText(info.WorkDir);
+	m_editArgs.SetWindowText(info.Args);
+	m_cbMode.SetCurSel(info.Mode);
 }
 
 void CServicesDlg::DumpService(int nCur)
 {
-	/*DeviceInfo& info = m_Devs[nCur];
+	ServiceNodeEx& info = m_Nodes[nCur];
 
-	m_editSN.GetWindowText(info.SN, RC_MAX_SN_LEN);
 	m_editName.GetWindowText(info.Name, RC_MAX_NAME_LEN);
 	m_editDesc.GetWindowText(info.Desc, RC_MAX_DESC_LEN);
+	m_editExec.GetWindowText(info.Exec, RC_MAX_PATH);
+	m_editWorkDir.GetWindowText(info.WorkDir, RC_MAX_PATH);
+	m_editArgs.GetWindowText(info.Args, RC_MAX_PATH);
 
-	if (info.Index == -1)
-		info.CreateTime = time(NULL);
-
-	if (m_chkValid.GetCheck()) {
-		CTime valid;
-		m_dtValid.GetTime(valid);
-		struct tm t;
-		info.ValidTime = mktime(valid.GetGmtTm(&t));
-	}
-	else {
-		info.ValidTime = -1;
-	}
-
-	m_listDevs.SetItemText(nCur, 0, info.SN);
-	m_listDevs.SetItemText(nCur, 1, info.Name);
-	m_listDevs.SetItemText(nCur, 2, info.Desc);*/
+	info.Mode = (ServiceMode)m_cbMode.GetCurSel();
 }
 
 void CServicesDlg::OnBnClickedButtonAdd()
 {
-	// TODO: 在此添加控件通知处理程序代码
+	int nCur = m_listServices.GetItemCount();
+	char name[RC_MAX_NAME_LEN];
+	sprintf(name, "Services %d", nCur);
+	int n = m_listServices.InsertItem(nCur, name);
+	strcpy(m_Nodes[n].Name, name);
+	strcpy(m_Nodes[n].Desc, "");
+	strcpy(m_Nodes[n].Exec, "");
+	strcpy(m_Nodes[n].WorkDir, "");
+	strcpy(m_Nodes[n].Args, "");
+	m_Nodes[n].New = true;
+	m_listServices.SetItemState(nCur, LVNI_FOCUSED | LVIS_SELECTED, LVNI_FOCUSED | LVIS_SELECTED);
+	BindService(nCur, true);
 }
 
 
 void CServicesDlg::OnBnClickedButtonDel()
 {
-	// TODO: 在此添加控件通知处理程序代码
+	if (m_CurSel == -1) {
+		return;
+	}
+
+	if (LVIS_SELECTED != m_listServices.GetItemState(m_CurSel, LVIS_SELECTED)) {
+		MessageBox("EEEEE");
+		return;
+	}
+
+	ServiceNode& info = m_Nodes[m_CurSel];
+	if (strlen(info.Name) > 0) {
+		int rc = m_pApi->Delete(info.Name);
+		if (rc != 0) {
+			MessageBox("Delete Service Failed");
+			return;
+		}
+	}
+	m_listServices.DeleteItem(m_CurSel);
+	for (int i = m_CurSel + 1; i < 64; ++i) {
+		m_Nodes[i - 1] = m_Nodes[i];
+	}
 }
 
 
 void CServicesDlg::OnBnClickedButtonSave()
 {
-	// TODO: 在此添加控件通知处理程序代码
+	if (m_CurSel == -1) {
+		return;
+	}
+
+	if (LVIS_SELECTED != m_listServices.GetItemState(m_CurSel, LVIS_SELECTED)) {
+		MessageBox("EEEEE");
+		return;
+	}
+	DumpService(m_CurSel);
+
+	ServiceNode& info = m_Nodes[m_CurSel];
+	if (m_Nodes[m_CurSel].New) {
+		int rc = m_pApi->Add(&info);
+		if (rc < 0) {
+			MessageBox("Add Device Failed");
+		}
+		else {
+			MessageBox("Add Device Done!");
+			m_Nodes[m_CurSel].New = false;
+		}
+	}
+	else {
+		int rc = m_pApi->Modify(&info);
+		if (rc != 0) {
+			MessageBox("Modify Device Failed");
+		}
+		else {
+			MessageBox("Modify Device Done!");
+		}
+	}
 }
 
 

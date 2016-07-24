@@ -2,7 +2,7 @@
 #include "afxcmn.h"
 #include "afxwin.h"
 
-
+class CServicesApi;
 // CServicesDlg 对话框
 
 class CServicesDlg : public CDialogEx
@@ -10,7 +10,7 @@ class CServicesDlg : public CDialogEx
 	DECLARE_DYNAMIC(CServicesDlg)
 
 public:
-	CServicesDlg(CWnd* pParent = NULL);   // 标准构造函数
+	CServicesDlg(void* pContext, CWnd* pParent = NULL);   // 标准构造函数
 	virtual ~CServicesDlg();
 
 // 对话框数据
@@ -35,7 +35,11 @@ protected:
 	CEdit m_editArgs;
 
 	int m_CurSel;
-
+	CServicesApi * m_pApi;
+	struct ServiceNodeEx : public ServiceNode {
+		bool New;
+	};
+	ServiceNodeEx m_Nodes[64];
 protected:
 	void BindService(int nCur, bool bEdit);
 	void DumpService(int nCur);
