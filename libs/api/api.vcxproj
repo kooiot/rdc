@@ -155,6 +155,7 @@
   <ItemGroup>
     <ClCompile Include="AccApi.cpp" />
     <ClCompile Include="PlugInApi.cpp" />
+    <ClCompile Include="PluginLoader.cpp" />
     <ClCompile Include="ServicesApi.cpp" />
     <ClCompile Include="StreamApi.cpp" />
   </ItemGroup>
@@ -163,6 +164,7 @@
     <ClInclude Include="DataDefs.h" />
     <ClInclude Include="PlugInApi.h" />
     <ClInclude Include="PlugInDefs.h" />
+    <ClInclude Include="PluginLoader.h" />
     <ClInclude Include="ServicesApi.h" />
     <ClInclude Include="StreamApi.h" />
   </ItemGroup>

@@ -12,6 +12,10 @@
 
 ServiceMgr g_ServiceMgr;
 
+#ifndef RDC_LINUX_SYS
+
+#define RDC_RUN_SERVICES 1
+
 #ifdef RDC_RUN_SERVICES
 #define stricmp _stricmp
 
@@ -77,12 +81,12 @@ void Init()
 	status.dwWaitHint = 0;
 }
 
-std::string GetAppIni(HMODULE hModule = NULL)
+std::string GetAppConf(HMODULE hModule = NULL)
 {
 	char szExeFileName[MAX_PATH];
 	::GetModuleFileName(hModule, szExeFileName, MAX_PATH);
 	std::string Path(szExeFileName);
-	return Path.substr(0, szExeFileName.length() - 4) + ".conf";
+	return Path.substr(0, Path.length() - 4) + ".conf";
 }
 
 void WINAPI ServiceMain()
@@ -100,7 +104,7 @@ void WINAPI ServiceMain()
 	}
 	SetServiceStatus(hServiceStatus, &status);
 
-	g_ServiceMgr.Load(GetAppIni().c_str());
+	g_ServiceMgr.Load(GetAppConf().c_str());
 
 	status.dwWin32ExitCode = S_OK;
 	status.dwCheckPoint = 0;
@@ -108,7 +112,9 @@ void WINAPI ServiceMain()
 	status.dwCurrentState = SERVICE_RUNNING;
 	SetServiceStatus(hServiceStatus, &status);
 
+	LogEvent(_T("Service Started"));
 	g_ServiceMgr.Run();
+	LogEvent(_T("Service run closed"));
 
 	status.dwCurrentState = SERVICE_STOPPED;
 	SetServiceStatus(hServiceStatus, &status);
@@ -120,9 +126,11 @@ void WINAPI ServiceStrl(DWORD dwOpcode)
 	switch (dwOpcode)
 	{
 	case SERVICE_CONTROL_STOP:
+		LogEvent(_T("Trigger Service stopped"));
+		g_ServiceMgr.Stop();
 		status.dwCurrentState = SERVICE_STOP_PENDING;
 		SetServiceStatus(hServiceStatus, &status);
-		PostThreadMessage(dwThreadID, WM_CLOSE, 0, 0);
+		// PostThreadMessage(dwThreadID, WM_CLOSE, 0, 0);
 		break;
 	case SERVICE_CONTROL_PAUSE:
 		break;
@@ -255,14 +263,6 @@ void LogEvent(LPCTSTR pFormat, ...)
 	}
 }
 #else
-#ifdef RDC_LINUX_SYS
-int main(int argc, char* argv[]) {
-	std::string conf = std::string(argv[0]) + ".conf";
-	g_ServiceMgr.Load(conf.c_str());
-	g_ServiceMgr.Run();
-	return 0;
-}
-#else
 int APIENTRY WinMain(HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,
 	LPSTR     lpCmdLine,
@@ -277,5 +277,12 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	g_ServiceMgr.Load(conf.c_str());
 	g_ServiceMgr.Run();
 }
-#endif
-#endif
+#endif // RDC_RUN_SERVICES
+
+int main(int argc, char* argv[]) {
+	std::string conf = std::string(argv[0]) + ".conf";
+	g_ServiceMgr.Load(conf.c_str());
+	g_ServiceMgr.Run();
+	return 0;
+}
+#endif // RDC_LINUX_SYS

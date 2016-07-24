@@ -9,7 +9,9 @@
 
 #include "ServiceMgr.h"
 
-ServiceMgr::ServiceMgr()
+bool g_bServerConsole = false;
+
+ServiceMgr::ServiceMgr() : m_bAbort(false)
 {
 }
 
@@ -91,6 +93,8 @@ void ServiceMgr::Save()
 
 void ServiceMgr::Run()
 {
+	m_bAbort = false;
+
 	void* ctx = zmq_ctx_new();
 	void* rep = zmq_socket(ctx, ZMQ_REP);
 
@@ -104,70 +108,101 @@ void ServiceMgr::Run()
 #endif
 		return;
 	}
-	while (true) {
-		KZPacket packet;
-		rc = koo_zmq_recv_cmd(rep, packet);
-		if (rc != 0 || packet.id != "KOOIOT")
-			continue;
-		
-		if (packet.cmd == "LIST") {
-			nlohmann::json doc;
-			int i = 0;
-			ServiceNodeMap::iterator ptr = m_Nodes.begin();
-			for (; ptr != m_Nodes.end(); ++ptr, ++i) {
-				ServiceNodeEx* pNode = ptr->second;
-				doc[i]["Name"] = pNode->Name;
-				doc[i]["Desc"] = pNode->Desc;
-				doc[i]["Exec"] = pNode->Exec;
-				doc[i]["WorkDir"] = pNode->WorkDir;
-				doc[i]["Args"] = pNode->Args;
-				doc[i]["Mode"] = (int)pNode->Mode;
-				doc[i]["Status"] = pNode->Process == NULL ? "STOPED" : "RUNNING";
-			}
-			std::stringstream jstr;
-			doc >> jstr;
-			koo_zmq_send_reply(rep, packet, jstr.str());
-			continue;
+
+	while (!m_bAbort) {
+		zmq_pollitem_t items[] = {
+			{ rep,   0, ZMQ_POLLIN, 0 },
+		};
+		zmq_poll(items, 1, 1000);
+		if (items[0].revents & ZMQ_POLLIN) {
+			ProcessReq(rep);
 		}
-		else if (packet.cmd == "ADD") {
-			std::string str((char*)zmq_msg_data(&packet.data), zmq_msg_size(&packet.data));
-			nlohmann::json doc = nlohmann::json::parse(str);
-			ServiceNode node;
-			std::string name = doc["Name"];
-			GET_NODE_STRING(doc, "Name", node.Name, RC_MAX_NAME_LEN);
-			GET_NODE_STRING(doc, "Desc", node.Desc, RC_MAX_DESC_LEN);
-			GET_NODE_STRING(doc, "Exec", node.Exec, RC_MAX_PATH);
-			GET_NODE_STRING(doc, "WorkDir", node.WorkDir, RC_MAX_PATH);
-			GET_NODE_STRING(doc, "Args", node.Args, RC_MAX_PATH);
-			node.Mode = (ServiceMode)(int)doc["Mode"];
-			rc = AddNode(node);
-		}
-		else if (packet.cmd == "DELETE") {
-			std::string name((char*)zmq_msg_data(&packet.data), zmq_msg_size(&packet.data));
-			rc = DeleteNode(name);
-		}
-		else if (packet.cmd == "UPDATE") {
-			std::string str((char*)zmq_msg_data(&packet.data), zmq_msg_size(&packet.data));
-			nlohmann::json doc = nlohmann::json::parse(str);
-			ServiceNode node;
-			GET_NODE_STRING(doc, "Name", node.Name, RC_MAX_NAME_LEN);
-			GET_NODE_STRING(doc, "Desc", node.Desc, RC_MAX_DESC_LEN);
-			GET_NODE_STRING(doc, "Exec", node.Exec, RC_MAX_PATH);
-			GET_NODE_STRING(doc, "WorkDir", node.WorkDir, RC_MAX_PATH);
-			GET_NODE_STRING(doc, "Args", node.Args, RC_MAX_PATH);
-			node.Mode = (ServiceMode)(int)doc["Mode"];
-			rc = UpdateNode(node);
-		}
-		else if (packet.cmd == "START") {
-			std::string name((char*)zmq_msg_data(&packet.data), zmq_msg_size(&packet.data));
-			rc = StartNode(name);
-		}
-		else if (packet.cmd == "STOP") {
-			std::string name((char*)zmq_msg_data(&packet.data), zmq_msg_size(&packet.data));
-			rc = StopNode(name);
-		}
-		koo_zmq_send_reply(rep, packet, &rc, sizeof(int));
 	}
+	zmq_close(rep);
+	zmq_ctx_term(ctx);
+
+	// Close all services
+	//ServiceNodeMap::iterator ptr = m_Nodes.begin();
+	for (auto& node : m_Nodes) {
+		if (node.second->Process) {
+			node.second->Process->stop();
+			delete node.second->Process;
+			node.second->Process = NULL;
+		}
+	}
+
+}
+
+void ServiceMgr::Stop()
+{
+	m_bAbort = true;
+}
+
+void ServiceMgr::ProcessReq(void* socket)
+{
+
+	KZPacket packet;
+	int rc = koo_zmq_recv_cmd(socket, packet);
+	if (rc != 0 || packet.id != "KOOIOT")
+		return;
+
+	if (packet.cmd == "LIST") {
+		nlohmann::json doc;
+		int i = 0;
+		ServiceNodeMap::iterator ptr = m_Nodes.begin();
+		for (; ptr != m_Nodes.end(); ++ptr, ++i) {
+			ServiceNodeEx* pNode = ptr->second;
+			doc[i]["Name"] = pNode->Name;
+			doc[i]["Desc"] = pNode->Desc;
+			doc[i]["Exec"] = pNode->Exec;
+			doc[i]["WorkDir"] = pNode->WorkDir;
+			doc[i]["Args"] = pNode->Args;
+			doc[i]["Mode"] = (int)pNode->Mode;
+			doc[i]["Status"] = pNode->Process == NULL ? "STOPED" : "RUNNING";
+		}
+		std::stringstream jstr;
+		doc >> jstr;
+		koo_zmq_send_reply(socket, packet, jstr.str());
+		return;
+	}
+	else if (packet.cmd == "ADD") {
+		std::string str((char*)zmq_msg_data(&packet.data), zmq_msg_size(&packet.data));
+		nlohmann::json doc = nlohmann::json::parse(str);
+		ServiceNode node;
+		std::string name = doc["Name"];
+		GET_NODE_STRING(doc, "Name", node.Name, RC_MAX_NAME_LEN);
+		GET_NODE_STRING(doc, "Desc", node.Desc, RC_MAX_DESC_LEN);
+		GET_NODE_STRING(doc, "Exec", node.Exec, RC_MAX_PATH);
+		GET_NODE_STRING(doc, "WorkDir", node.WorkDir, RC_MAX_PATH);
+		GET_NODE_STRING(doc, "Args", node.Args, RC_MAX_PATH);
+		node.Mode = (ServiceMode)(int)doc["Mode"];
+		rc = AddNode(node);
+	}
+	else if (packet.cmd == "DELETE") {
+		std::string name((char*)zmq_msg_data(&packet.data), zmq_msg_size(&packet.data));
+		rc = DeleteNode(name);
+	}
+	else if (packet.cmd == "UPDATE") {
+		std::string str((char*)zmq_msg_data(&packet.data), zmq_msg_size(&packet.data));
+		nlohmann::json doc = nlohmann::json::parse(str);
+		ServiceNode node;
+		GET_NODE_STRING(doc, "Name", node.Name, RC_MAX_NAME_LEN);
+		GET_NODE_STRING(doc, "Desc", node.Desc, RC_MAX_DESC_LEN);
+		GET_NODE_STRING(doc, "Exec", node.Exec, RC_MAX_PATH);
+		GET_NODE_STRING(doc, "WorkDir", node.WorkDir, RC_MAX_PATH);
+		GET_NODE_STRING(doc, "Args", node.Args, RC_MAX_PATH);
+		node.Mode = (ServiceMode)(int)doc["Mode"];
+		rc = UpdateNode(node);
+	}
+	else if (packet.cmd == "START") {
+		std::string name((char*)zmq_msg_data(&packet.data), zmq_msg_size(&packet.data));
+		rc = StartNode(name);
+	}
+	else if (packet.cmd == "STOP") {
+		std::string name((char*)zmq_msg_data(&packet.data), zmq_msg_size(&packet.data));
+		rc = StopNode(name);
+	}
+	koo_zmq_send_reply(socket, packet, &rc, sizeof(int));
 }
 
 int ServiceMgr::AddNode(const ServiceNode & node)
@@ -182,11 +217,7 @@ int ServiceMgr::AddNode(const ServiceNode & node)
 	m_Nodes[node.Name] = pNode;
 
 	if (pNode->Mode != SM_DISABLE) {
-#ifdef _DEBUG
-		pNode->Process = new koo_process(node.Name, node.WorkDir, node.Exec, node.Args, true);
-#else
-		pNode->Process = new koo_process(node.Name, node.WorkDir, node.Exec, node.Args, false);
-#endif
+		pNode->Process = new koo_process(node.Name, node.WorkDir, node.Exec, node.Args, g_bServerConsole);
 	}
 	else {
 		pNode->Process = NULL;
@@ -219,11 +250,7 @@ int ServiceMgr::UpdateNode(const ServiceNode & node)
 	}
 	else {
 		if (pNode->Process == NULL) {
-#ifdef _DEBUG
-			pNode->Process = new koo_process(pNode->Name, pNode->WorkDir, pNode->Exec, pNode->Args, true);
-#else
-			pNode->Process = new koo_process(pNode->Name, pNode->WorkDir, pNode->Exec, pNode->Args, false);
-#endif
+			pNode->Process = new koo_process(pNode->Name, pNode->WorkDir, pNode->Exec, pNode->Args, g_bServerConsole);
 		}
 
 		if (pNode->Mode == SM_ONCE)

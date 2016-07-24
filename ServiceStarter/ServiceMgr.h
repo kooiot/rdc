@@ -22,13 +22,16 @@ public:
 	void Save();
 
 	void Run();
+	void Stop();
 private:
+	void ProcessReq(void* socket);
 	int AddNode(const ServiceNode& node);
 	int UpdateNode(const ServiceNode& node);
 	int DeleteNode(const std::string& name);
 	int StartNode(const std::string& name);
 	int StopNode(const std::string& name);
 private:
+	bool m_bAbort;
 	std::string m_Config;
 	ServiceNodeMap m_Nodes;
 };

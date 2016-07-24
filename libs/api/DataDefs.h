@@ -107,7 +107,7 @@ extern "C" {
 	};
 	struct PluginInfo
 	{
-		char Name[16];
+		char Name[32];
 		char Data[512];
 	};
 	enum ConnectionType {
