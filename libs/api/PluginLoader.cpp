@@ -32,8 +32,12 @@ void CPluginLoader::Load(const char * folder)
 		return;
 	}
 
-	while (_findnext(Handle, &FileInfo) == 0) {
-		LoadPlugin(FileInfo.name);
+	while(true) {
+		sprintf(temp, "%s\\%s", folder, FileInfo.name);
+		LoadPlugin(temp);
+
+		if (_findnext(Handle, &FileInfo) != 0)
+			break;
 	}
 
 	_findclose(Handle);
@@ -41,14 +45,16 @@ void CPluginLoader::Load(const char * folder)
 #else
 	dirent *filedata = NULL;
 	DIR *curdir = opendir(folder);// opendir takes the dir path "." is current
-	if (NULL == fonts)
+	char temp[512];
+	if (NULL == curdir)
 	{
 		fprintf(stderr, "directory not found\n");
 		return; // Handle appropiatelly?
 	}
-	while (NULL != (filedata = readdir(fonts)))
+	while (NULL != (filedata = readdir(curdir)))
 	{
-		LoadPlugin(filedata->d_name);
+		sprintf(temp, "%s/%s", folder, filedata->d_name);
+		LoadPlugin(temp);
 	}
 	closedir(curdir);
 #endif
