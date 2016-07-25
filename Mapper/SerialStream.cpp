@@ -35,14 +35,17 @@ bool SerialStream::Open()
 	}
 	catch (const IOException& ex) {
 		printf("%s\n", ex.what());
+		FireEvent(SE_CHANNEL_OPEN_FAILED, "Exception %s", ex.what());
 		return false;
 	}
 	catch (const std::exception ex) {
 		printf("%s\n", ex.what());
+		FireEvent(SE_CHANNEL_OPEN_FAILED, "Exception %s", ex.what());
 		return false;
 	}
 	catch (...) {
 		// 
+		FireEvent(SE_CHANNEL_OPEN_FAILED, "Unknown Exception");
 		m_Serial = NULL;
 		return false;
 	}
@@ -63,6 +66,7 @@ bool SerialStream::Open()
 
 		return true;
 	}
+	FireEvent(SE_CHANNEL_OPEN_FAILED, "Failed to open serial port %s", m_Info.ConnInfo.Serial.dev);
 	return false;
 }
 
