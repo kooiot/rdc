@@ -11,7 +11,25 @@ project "serial"
 	includedirs {"./libs/serial/include"}
 
 	files {"./libs/serial/include/**.h", "./libs/serial/src/**.cc" }
-	links { "rt", "pthread"}
+
+	filter "configurations:Debug"
+		defines { "DEBUG" }
+		flags { "Symbols" }
+
+	filter "configurations:Release"
+		defines { "NDEBUG" }
+		optimize "On"
+
+project "api"
+	kind "StaticLib"
+	language "C++"
+	flags {"C++11"}
+	defines {"RDC_LINUX_SYS"}
+	location "build"
+	targetdir "bin/%{cfg.buildcfg}"
+	includedirs {"./libs/api"}
+
+	files {"./libs/api/**.h", "./libs/api/**.cc" }
 
 	filter "configurations:Debug"
 		defines { "DEBUG" }
