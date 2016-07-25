@@ -13,6 +13,7 @@
 #include "UVUdp.h"
 #include <cassert>
 #include "PluginPort.h"
+#include "PluginDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -103,7 +104,6 @@ void CRemoteConnectorDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON_CONNECT, m_btnConnect);
 	DDX_Control(pDX, IDC_BUTTON_DISCONNECT, m_btnDisconnect);
 	DDX_Control(pDX, IDC_BUTTON_LISTDEV, m_btnListDevs);
-	DDX_Control(pDX, IDC_COMBO_PLUGINS, m_cbPlugins);
 }
 
 BEGIN_MESSAGE_MAP(CRemoteConnectorDlg, CDialogEx)
@@ -181,11 +181,6 @@ BOOL CRemoteConnectorDlg::OnInitDialog()
 
 	std::string plugin_folder = GetModuleFilePath() + "\\plugins";
 	m_PluginLoader.Load(plugin_folder.c_str());
-	std::list<std::string> list;
-	m_PluginLoader.List(list);
-	for (auto & ptr : list) {
-		m_cbPlugins.AddString(ptr.c_str());
-	}
 
 	m_VSPortMgr.Init();
 	RC_Init();
@@ -704,12 +699,16 @@ void CRemoteConnectorDlg::OnBnClickedButtonAddPlugin()
 		MessageBox("请选择要连接的设备", "错误", MB_OK | MB_ICONERROR);
 		return;
 	}
+	CPluginDlg dlg;
+	m_PluginLoader.List(dlg.m_List);
+	if (IDOK != dlg.DoModal()) {
+		return;
+	}
 
-	PluginInfo pinfo;
-	m_cbPlugins.GetWindowText(pinfo.Name, RC_MAX_NAME_LEN);
+	PluginInfo& pinfo = dlg.m_Info;
 	RC_CHANNEL channel = RC_ConnectPlugin(m_hApi, info->SN, &pinfo);
 	if (channel < 0) {
-		MessageBox("创建UDP连接失败", "错误", MB_OK | MB_ICONERROR);
+		MessageBox("创建Plugin连接失败", "错误", MB_OK | MB_ICONERROR);
 		return;
 	}
 	assert(m_ConnectionInfos[channel] == NULL);

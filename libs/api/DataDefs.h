@@ -18,6 +18,8 @@ extern "C" {
 #define RC_MAX_SN_LEN 128
 #define RC_MAX_IP_LEN 128
 #define RC_MAX_PATH 512
+#define RC_MAX_PLUGIN_NAME_LEN 32
+#define RC_MAX_PLUGIN_DATA_LEN 512
 
 #define RC_MAX_ONLINE_DEVICE 2048
 #define RC_MAX_ONLINE_USER 512
@@ -107,8 +109,8 @@ extern "C" {
 	};
 	struct PluginInfo
 	{
-		char Name[32];
-		char Data[512];
+		char Name[RC_MAX_PLUGIN_NAME_LEN];
+		char Data[RC_MAX_PLUGIN_DATA_LEN];
 	};
 	enum ConnectionType {
 		CT_TEST = 0,

@@ -88,7 +88,5 @@ protected:
 	afx_msg void OnBnClickedButtonAddSerial();
 	afx_msg void OnBnClickedButtonAddTcp();
 	afx_msg void OnBnClickedButtonAddUdp();
-public:
-	CComboBox m_cbPlugins;
 	afx_msg void OnBnClickedButtonAddPlugin();
 };

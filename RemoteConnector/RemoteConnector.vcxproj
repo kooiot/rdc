@@ -198,6 +198,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Handlers.h" />
+    <ClInclude Include="PluginDlg.h" />
     <ClInclude Include="PluginPort.h" />
     <ClInclude Include="RemoteConnector.h" />
     <ClInclude Include="RemoteConnectorDlg.h" />
@@ -218,6 +219,7 @@
     <ClInclude Include="VSPortMgr.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="PluginDlg.cpp" />
     <ClCompile Include="PluginPort.cpp" />
     <ClCompile Include="RemoteConnector.cpp" />
     <ClCompile Include="RemoteConnectorDlg.cpp" />
