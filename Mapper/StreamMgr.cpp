@@ -4,6 +4,9 @@
 #include "TestStream.h"
 #include "TcpClientStream.h"
 #include "UdpStream.h"
+#include "PluginStream.h"
+
+extern CPluginLoader g_PluginLoader;
 
 class AutoLock {
 public:
@@ -223,7 +226,7 @@ int StreamMgr::Create(const StreamProcess& StreamServer, const ConnectionInfo & 
 		pPort = new UdpStream(m_UVLoop, spi);
 		break;
 	case CT_PLUGIN:
-		//pPort = PluginMgr.Create(info.Plugin.Name, info.Plugin.Data);
+		pPort = new PluginStream(g_PluginLoader, spi);
 		break;
 	default:
 		pPort = new TestStream(spi);
@@ -272,10 +275,15 @@ int StreamMgr::Destroy(const StreamProcess& StreamServer, int channel)
 	}
 	return -1;
 }
-
 int StreamMgr::CloseStream(IStreamPort * port)
 {
 	AutoLock lock(m_Lock);
+	m_PendingClosePorts.push_back(port);
+	return 0;
+}
+
+int StreamMgr::_CloseStream(IStreamPort * port)
+{
 	port->Close();
 	PeerChannel2PortMap::iterator ptr = m_PeerChannel2Port.begin();
 	for (; ptr != m_PeerChannel2Port.end(); ++ptr) {
@@ -298,7 +306,6 @@ int StreamMgr::CloseStream(IStreamPort * port)
 		m_PortInfo.erase(port);
 	}
 	m_PendingDelete.push_back(port);
-	//delete port;
 	return 0;
 }
 
@@ -320,5 +327,9 @@ int StreamMgr::ProcessPending()
 		delete *pp;
 	}
 	m_PendingDelete.clear();
+	for (auto & pPort : m_PendingClosePorts) {
+		_CloseStream(pPort);
+	}
+	m_PendingClosePorts.clear();
 	return 0;
 }

@@ -38,6 +38,7 @@ extern "C" {
 	REMOTECONNECTORAPI_API RC_CHANNEL RC_ConnectSerial(RC_HANDLE api, const char*  sn, const SerialInfo* info);
 	REMOTECONNECTORAPI_API RC_CHANNEL RC_ConnectTCPC(RC_HANDLE api, const char*  sn, const TCPClientInfo* info);
 	REMOTECONNECTORAPI_API RC_CHANNEL RC_ConnectUDP(RC_HANDLE api, const char*  sn, const UDPInfo* info);
+	REMOTECONNECTORAPI_API RC_CHANNEL RC_ConnectPlugin(RC_HANDLE api, const char*  sn, const PluginInfo* info);
 	REMOTECONNECTORAPI_API int RC_CloseChannel(RC_HANDLE api, RC_CHANNEL channel);
 
 #ifdef __cplusplus

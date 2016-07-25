@@ -227,6 +227,24 @@ RC_CHANNEL RC_ConnectUDP(RC_HANDLE api, const char * sn, const UDPInfo* info)
 	return -1;
 }
 
+REMOTECONNECTORAPI_API RC_CHANNEL RC_ConnectPlugin(RC_HANDLE api, const char * sn, const PluginInfo * info)
+{
+	ApiHandle* pHandle = (ApiHandle*)api;
+	if (!pHandle)
+		return -1;
+
+	CAccApi* pApi = pHandle->Acc;
+	if (pApi) {
+		ConnectionInfo ci;
+		ci.Type = CT_PLUGIN;
+		memcpy(&ci.Plugin, info, sizeof(PluginInfo));
+		memcpy(ci.DevSN, sn, RC_MAX_SN_LEN);
+
+		return pApi->CreateConnection(&ci);
+	}
+	return -1;
+}
+
 extern "C"
 int RC_CloseChannel(RC_HANDLE api, RC_CHANNEL channel)
 {

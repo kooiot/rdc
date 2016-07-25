@@ -18,8 +18,8 @@ extern "C" {
 
 	// 插件类型
 	enum RDC_PLUGIN_TYPE {
-		RPT_MAPPER = 0,
-		RPT_CLIENT = 1,
+		RPT_MAPPER = 0x01,
+		RPT_CLIENT = 0x02,
 	};
 
 	// 插件向外发送数据的接口

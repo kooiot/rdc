@@ -28,7 +28,10 @@ bool CPort::Open()
 
 	m_pThread = new std::thread([this]() {
 		int i = 0;
-		while (!m_bAbort && 100 < i++) {
+		while (!m_bAbort) {
+			if (i++ > 100)
+				break;
+
 			Sleep(1000);
 			m_Send("Hello World", strlen("Hello World"), m_ptr);
 		}

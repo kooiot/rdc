@@ -16,8 +16,8 @@
 extern "C" {
 #endif
 	enum RDC_PLUGIN_TYPE {
-		RPT_MAPPER = 0,
-		RPT_CLIENT = 1,
+		RPT_MAPPER = 0x01,
+		RPT_CLIENT = 0x02,
 	};
 
 	typedef int(__stdcall *PluginSendCB)(const char* buf, size_t len, void* ptr);

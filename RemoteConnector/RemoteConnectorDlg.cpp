@@ -75,7 +75,7 @@ END_MESSAGE_MAP()
 
 
 CRemoteConnectorDlg::CRemoteConnectorDlg(CWnd* pParent /*=NULL*/)
-	: CDialogEx(IDD_REMOTECONNECTOR_DIALOG, pParent)
+	: CDialogEx(IDD_REMOTECONNECTOR_DIALOG, pParent), m_PluginLoader(RPT_CLIENT)
 {
 	m_Devices = new DeviceInfo[RC_MAX_ONLINE_DEVICE];
 	memset(m_Devices, 0, sizeof(DeviceInfo) * RC_MAX_ONLINE_DEVICE);
@@ -103,6 +103,7 @@ void CRemoteConnectorDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON_CONNECT, m_btnConnect);
 	DDX_Control(pDX, IDC_BUTTON_DISCONNECT, m_btnDisconnect);
 	DDX_Control(pDX, IDC_BUTTON_LISTDEV, m_btnListDevs);
+	DDX_Control(pDX, IDC_COMBO_PLUGINS, m_cbPlugins);
 }
 
 BEGIN_MESSAGE_MAP(CRemoteConnectorDlg, CDialogEx)
@@ -119,6 +120,7 @@ BEGIN_MESSAGE_MAP(CRemoteConnectorDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_ADD_SERIAL, &CRemoteConnectorDlg::OnBnClickedButtonAddSerial)
 	ON_BN_CLICKED(IDC_BUTTON_ADD_TCP, &CRemoteConnectorDlg::OnBnClickedButtonAddTcp)
 	ON_BN_CLICKED(IDC_BUTTON_ADD_UDP, &CRemoteConnectorDlg::OnBnClickedButtonAddUdp)
+	ON_BN_CLICKED(IDC_BUTTON_ADD_PLUGIN, &CRemoteConnectorDlg::OnBnClickedButtonAddPlugin)
 END_MESSAGE_MAP()
 
 
@@ -179,6 +181,11 @@ BOOL CRemoteConnectorDlg::OnInitDialog()
 
 	std::string plugin_folder = GetModuleFilePath() + "\\plugins";
 	m_PluginLoader.Load(plugin_folder.c_str());
+	std::list<std::string> list;
+	m_PluginLoader.List(list);
+	for (auto & ptr : list) {
+		m_cbPlugins.AddString(ptr.c_str());
+	}
 
 	m_VSPortMgr.Init();
 	RC_Init();
@@ -687,4 +694,34 @@ void CRemoteConnectorDlg::OnBnClickedButtonAddUdp()
 		lci->UDP = dlg.m_LocalInfo;
 		AddConnection(ci, lci);
 	}
+}
+
+
+void CRemoteConnectorDlg::OnBnClickedButtonAddPlugin()
+{
+	DeviceInfo *info = GetSelDeviceInfo();
+	if (!info) {
+		MessageBox("请选择要连接的设备", "错误", MB_OK | MB_ICONERROR);
+		return;
+	}
+
+	PluginInfo pinfo;
+	m_cbPlugins.GetWindowText(pinfo.Name, RC_MAX_NAME_LEN);
+	RC_CHANNEL channel = RC_ConnectPlugin(m_hApi, info->SN, &pinfo);
+	if (channel < 0) {
+		MessageBox("创建UDP连接失败", "错误", MB_OK | MB_ICONERROR);
+		return;
+	}
+	assert(m_ConnectionInfos[channel] == NULL);
+	ConnectionInfo* ci = new ConnectionInfo();
+	ConnectionInfo* lci = new ConnectionInfo();
+	ci->Type = CT_PLUGIN;
+	memcpy(ci->DevSN, info->SN, RC_MAX_SN_LEN);
+	ci->Plugin = pinfo;
+	ci->Channel = channel;
+
+	lci->Type = CT_PLUGIN;
+	memcpy(lci->DevSN, info->SN, RC_MAX_SN_LEN);
+	lci->Plugin = pinfo;
+	AddConnection(ci, lci);
 }

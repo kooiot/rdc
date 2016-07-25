@@ -9,7 +9,7 @@
 #include<dirent.h>
 #endif
 
-CPluginLoader::CPluginLoader()
+CPluginLoader::CPluginLoader(RDC_PLUGIN_TYPE type) : m_Type(type)
 {
 }
 
@@ -77,6 +77,14 @@ PluginApi * CPluginLoader::Find(const char * name)
 	return nullptr;
 }
 
+void CPluginLoader::List(std::list<std::string>& list)
+{
+	list.clear();
+	for (auto & ptr : m_Plugins) {
+		list.push_back(ptr.first);
+	}
+}
+
 void CPluginLoader::LoadPlugin(const char * dll)
 {
 	PluginApi* api = new PluginApi();
@@ -86,6 +94,13 @@ void CPluginLoader::LoadPlugin(const char * dll)
 		delete api;
 		return;
 	}
+	int nType = api->GetType();
+	if (!(nType | m_Type)) {
+		printf("Incorrect plugin type loaded %s\n", dll);
+		delete api;
+		return;
+	}
+
 	printf("Load %s ok!\n", dll);
 	const char* name = api->GetName();
 	if (m_Plugins[name] != NULL) {

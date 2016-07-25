@@ -23,7 +23,7 @@ int g_port_sub = 6601;
 void* g_req_socket;
 void* g_sub_socket;
 StreamMgr* g_StreamMgr = NULL;
-CPluginLoader g_PluginLoader;
+CPluginLoader g_PluginLoader(RPT_MAPPER);
 
 #define COMPARE_MSG_STR(msg, str) \
 	strncmp((char*)zmq_msg_data(&msg), str, strlen(str)) == 0

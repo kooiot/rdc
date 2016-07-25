@@ -28,6 +28,7 @@ public:
 	int CloseStream(IStreamPort* port);
 
 private:
+	int _CloseStream(IStreamPort* port);
 	int ProcessPending();
 private:
 	uv_loop_t * m_UVLoop;
@@ -45,6 +46,7 @@ private:
 
 	std::map<ENetPeer*, std::list<IStreamPort*> > m_PendingPorts;
 	std::list<int> m_PendingClose;
+	std::list<IStreamPort*> m_PendingClosePorts;
 	std::list<IStreamPort*> m_PendingDelete;
 };
 
