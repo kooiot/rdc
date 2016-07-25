@@ -11,6 +11,7 @@
 #include <thread>
 #include <map>
 #include <uv.h>
+#include <PluginLoader.h>
 
 class IStreamHandler;
 // CRemoteConnectorDlg ¶Ô»°¿ò
@@ -43,6 +44,7 @@ protected:
 	uv_loop_t * m_UVLoop;
 	std::thread * m_pThread;
 	bool m_bStop;
+	CPluginLoader m_PluginLoader;
 
 	CEdit m_editIP;
 	CEdit m_editPort;

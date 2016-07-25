@@ -12,11 +12,30 @@
 #include "UVTcpServer.h"
 #include "UVUdp.h"
 #include <cassert>
+#include "PluginPort.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
+
+std::string GetModuleFilePath()
+{
+	char szFile[MAX_PATH] = { 0 };
+	int dwRet = ::GetModuleFileName(NULL, szFile, 255);
+	if (dwRet != 0)
+	{
+		printf("Module File Name: %s \n", szFile);
+		std::string str = szFile;
+		size_t nPos = str.rfind('\\');
+		if (nPos != std::string::npos)
+		{
+			str = str.substr(0, nPos);
+		}
+		return str;
+	}
+	return "";
+}
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -157,6 +176,9 @@ BOOL CRemoteConnectorDlg::OnInitDialog()
 	m_btnConnect.EnableWindow(TRUE);
 	m_btnDisconnect.EnableWindow(FALSE);
 	m_btnListDevs.EnableWindow(FALSE);
+
+	std::string plugin_folder = GetModuleFilePath() + "\\plugins";
+	m_PluginLoader.Load(plugin_folder.c_str());
 
 	m_VSPortMgr.Init();
 	RC_Init();
@@ -331,6 +353,11 @@ void CRemoteConnectorDlg::AddConnection(ConnectionInfo * info, ConnectionInfo * 
 	}
 	if (bind->Type == CT_TCPS) {
 		pHandler = new UVTcpServer(m_UVLoop, info->Channel, *this, bind->TCPServer);
+	}
+	if (bind->Type == CT_PLUGIN) {
+		auto api = m_PluginLoader.Find(bind->Plugin.Name);
+		if (api)
+			pHandler = new PluginPort(info->Channel, *this, bind->Plugin, api);
 	}
 	if (!pHandler || !pHandler->Open()) {
 		delete info;
