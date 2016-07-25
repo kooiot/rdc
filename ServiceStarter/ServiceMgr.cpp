@@ -49,16 +49,6 @@ void ServiceMgr::Load(const std::string& conf)
 	}
 	catch (const std::exception& ex)
 	{
-#ifdef _DEBUG
-		ServiceNode Node;
-		strcpy(Node.Name, "Test");
-		strcpy(Node.Desc, "This is one test server");
-		strcpy(Node.Exec, "test.ext");
-		strcpy(Node.WorkDir, "C:\\What a folder\\aaa");
-		strcpy(Node.Args, "--conf=test --port=12313 --pxss=ture");
-		Node.Mode = SM_DISABLE;
-		AddNode(Node);
-#endif
 		std::cerr << "Failed loading ini file " << ex.what() <<  std::endl;
 	}
 	catch (...)
