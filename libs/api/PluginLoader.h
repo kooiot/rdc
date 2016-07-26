@@ -1,6 +1,6 @@
 #pragma once
 
-#include "PlugInApi.h"
+#include "PluginApi.h"
 #include "DataDefs.h"
 #include <map>
 #include <list>
