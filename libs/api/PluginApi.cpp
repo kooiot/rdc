@@ -7,7 +7,7 @@
 #define LOAD_DLL_FUNC(HANDLE, FUNC, TYPE, NAME) \
 	do { \
 		FUNC = (TYPE)dlsym(HANDLE, #NAME);\
-		err = dlerror(); \
+		char* err = dlerror(); \
 		if (FUNC == NULL || err != NULL) { \
 			dlclose(HANDLE); \
 			fprintf(stderr, "%s\n", err);\
@@ -30,9 +30,9 @@ int RDC_PluginLoad(const char * dll, PluginApi * api)
 	assert(NULL != dll);
 	assert(NULL != api);
 
-	DWORD dwErr = 0;
 
 #ifndef RDC_LINUX_SYS
+	DWORD dwErr = 0;
 	HMODULE hApiHandle = LoadLibrary(dll);
 #else
 	void*	hApiHandle = dlopen(dll, RTLD_LAZY);
@@ -76,7 +76,7 @@ int RDC_PluginLoad(const char * dll, PluginApi * api)
 
 void RDC_PluginClose(PluginApi* api)
 {
-#ifndef RDC_LINXU_SYS
+#ifndef RDC_LINUX_SYS
 	if (NULL != api->DllHandle)
 		FreeLibrary(api->DllHandle);
 #else

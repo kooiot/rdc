@@ -3,6 +3,7 @@
 #define koo_string_util_h__
 #include <vector>
 #include <string>
+#include <algorithm>
 #ifdef _DEBUG
 #include <iostream>
 #endif

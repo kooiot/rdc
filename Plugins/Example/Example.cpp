@@ -2,7 +2,7 @@
 //
 
 #include "stdafx.h"
-#include <PlugInDefs.h>
+#include <PluginDefs.h>
 #include "Port.h"
 
 extern "C" 

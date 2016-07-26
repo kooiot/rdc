@@ -1,7 +1,8 @@
 #include "StreamApi.h"
 #include <thread>
 #include <cassert>
-#include <enet\enet.h>
+#include <cstring>
+#include <enet/enet.h>
 #include "DataDefs.h"
 
 CStreamApi::CStreamApi(IStreamHandler & Handler, int nType, int nIndex, int nStreamMask)
@@ -54,7 +55,7 @@ bool CStreamApi::Connect(const char * ip, int port)
 						event.peer->address.host,
 						event.peer->address.port);
 					/* Store any relevant client information here. */
-					event.peer->data = "Client information";
+					//event.peer->data = "Client information";
 					m_Handler.OnEvent(-1, SE_CONNECT, "");
 					break;
 				case ENET_EVENT_TYPE_RECEIVE:
@@ -71,7 +72,7 @@ bool CStreamApi::Connect(const char * ip, int port)
 				case ENET_EVENT_TYPE_DISCONNECT:
 					printf("%s disconnected.\n", (char*)event.peer->data);
 					/* Reset the peer's client information. */
-					event.peer->data = NULL;
+					//event.peer->data = NULL;
 					m_Handler.OnEvent(-1, SE_DISCONNECT, "");
 				}
 			}

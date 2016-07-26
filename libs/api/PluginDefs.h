@@ -4,14 +4,21 @@
 #ifndef _RDC_PLUGIN_DEFS_H_
 #define _RDC_PLUGIN_DEFS_H_
 
+#include <stdlib.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#ifndef RDC_LINUX_SYS
 #ifdef RDC_PLUGIN_EXPORTS
 #define RDC_PLUGIN_API __declspec(dllexport)
 #else
 #define RDC_PLUGIN_API __declspec(dllimport)
+#endif
+#else
+#define RDC_PLUGIN_API
+#define __stdcall
 #endif
 
 #define RDC_MAX_PLUGIN_CONFIG 512

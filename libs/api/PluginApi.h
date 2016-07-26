@@ -8,8 +8,9 @@
 #include "Windows.h"
 #define RDC_DLL_HANDLE HMODULE
 #else
-#inclue <dlopen.h>
+#include <dlfcn.h>
 #define RDC_DLL_HANDLE int
+#define __stdcall
 #endif
 
 #ifdef __cplusplus
@@ -20,19 +21,19 @@ extern "C" {
 		RPT_CLIENT = 0x02,
 	};
 
-	typedef int(__stdcall *PluginSendCB)(const char* buf, size_t len, void* ptr);
-	typedef int(__stdcall *PluginCloseCB)(void* ptr);
+	typedef int (__stdcall * PluginSendCB)(const char* buf, size_t len, void* ptr);
+	typedef int (__stdcall * PluginCloseCB)(void* ptr);
 
-	typedef RDC_PLUGIN_TYPE(__cdecl *FGetType)();
-	typedef const char* (__cdecl *FGetName)();
-	typedef long (__cdecl *FCreateHandle)(char *config,
+	typedef RDC_PLUGIN_TYPE(__stdcall * FGetType)();
+	typedef const char* (__stdcall * FGetName)();
+	typedef long (__stdcall * FCreateHandle)(char *config,
 		PluginSendCB send,
 		PluginCloseCB close,
 		void* ptr);
-	typedef int (__cdecl *FDestory)(long Handle);
-	typedef int (__cdecl *FOpen)(long Handle);
-	typedef int (__cdecl *FClose)(long Handle);
-	typedef int (__cdecl *FWrite)(long Handle, const char* buf, size_t len);
+	typedef int (__stdcall * FDestory)(long Handle);
+	typedef int (__stdcall * FOpen)(long Handle);
+	typedef int (__stdcall * FClose)(long Handle);
+	typedef int (__stdcall * FWrite)(long Handle, const char* buf, size_t len);
 
 	typedef struct _PluginApi {
 #ifndef RDC_LINUX_SYS

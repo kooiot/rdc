@@ -3,21 +3,42 @@
 
 #include "stdafx.h"
 #include "stdio.h"
-#include "tchar.h"
-#include <windows.h>
 #include <iostream>
 #include <cstring>
-
 #include "ServiceMgr.h"
 
+#ifdef RDC_LINUX_SYS
+ServiceMgr g_ServiceMgr;
+int main(int argc, char* argv[]) {
+	std::string conf = std::string(argv[0]) + ".conf";
+	g_ServiceMgr.Load(conf.c_str());
+	g_ServiceMgr.Run();
+	return 0;
+}
+#else // RDC_LINUX_SYS
+
+#include <Windows.h>
+#define stricmp _stricmp
 ServiceMgr g_ServiceMgr;
 
-#ifndef RDC_LINUX_SYS
-
 #define RDC_RUN_SERVICES 1
+#ifndef RDC_RUN_SERVICES
+int APIENTRY WinMain(HINSTANCE hInstance,
+	HINSTANCE hPrevInstance,
+	LPSTR     lpCmdLine,
+	int       nCmdShow)
+{
+	char szExeFileName[MAX_PATH];
+	::GetModuleFileName(hInstance, szExeFileName, MAX_PATH);
 
-#ifdef RDC_RUN_SERVICES
-#define stricmp _stricmp
+	std::string conf = std::string(szExeFileName);
+	conf = conf.substr(0, conf.length() - 4) + ".conf";
+
+	g_ServiceMgr.Load(conf.c_str());
+	g_ServiceMgr.Run();
+}
+
+#else // RDC_RUN_SERVICES
 
 //定义全局函数变量  
 void Init();
@@ -262,27 +283,5 @@ void LogEvent(LPCTSTR pFormat, ...)
 		DeregisterEventSource(hEventSource);
 	}
 }
-#else
-int APIENTRY WinMain(HINSTANCE hInstance,
-	HINSTANCE hPrevInstance,
-	LPSTR     lpCmdLine,
-	int       nCmdShow)
-{
-	char szExeFileName[MAX_PATH];
-	::GetModuleFileName(hInstance, szExeFileName, MAX_PATH);
-
-	std::string conf = std::string(szExeFileName);
-	conf = conf.substr(0, conf.length() - 4) + ".conf";
-
-	g_ServiceMgr.Load(conf.c_str());
-	g_ServiceMgr.Run();
-}
 #endif // RDC_RUN_SERVICES
-
-int main(int argc, char* argv[]) {
-	std::string conf = std::string(argv[0]) + ".conf";
-	g_ServiceMgr.Load(conf.c_str());
-	g_ServiceMgr.Run();
-	return 0;
-}
 #endif // RDC_LINUX_SYS

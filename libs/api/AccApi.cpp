@@ -5,6 +5,9 @@
 #include <koo_zmq_helpers.h>
 #include <koo_string_util.h>
 
+#ifdef RDC_LINUX_SYS
+#define Sleep(x) usleep(x * 1000)
+#endif
 
 #define RETURN_MSG_DATA_RC(data) \
 	if (!isdigit(*(char*)zmq_msg_data((zmq_msg_t*)&data.data)) \

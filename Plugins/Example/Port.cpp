@@ -1,7 +1,12 @@
 #include "Port.h"
 #include <cstring>
 
+#ifndef RDC_LINUX_SYS
 #include <Windows.h>
+#else
+#include <unistd.h>
+#define Sleep(x) usleep(x * 1000)
+#endif
 
 CPort::CPort(char *config,
 	PluginSendCB send,

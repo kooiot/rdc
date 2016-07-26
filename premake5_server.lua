@@ -8,10 +8,28 @@ project "common"
 	flags {"C++11"}
 	location "build"
 	targetdir "bin/%{cfg.buildcfg}"
-	includedirs {"./libs/common/include"}
+	includedirs {"libs/common/include"}
 
-	files {"./libs/common/include/**.h", "./libs/common/src/**.cpp" }
-	links { "rt", "pthread"}
+	files {"libs/common/include/**.h", "libs/common/src/**.cpp" }
+
+	filter "configurations:Debug"
+		defines { "DEBUG" }
+		flags { "Symbols" }
+
+	filter "configurations:Release"
+		defines { "NDEBUG" }
+		optimize "On"
+
+project "api"
+	kind "StaticLib"
+	language "C++"
+	flags {"C++11"}
+	defines {"RDC_LINUX_SYS"}
+	location "build"
+	targetdir "bin/%{cfg.buildcfg}"
+	includedirs {"libs/api", "libs/common/include", "libs/enet/include", "libs/zeromq/include" }
+
+	files {"libs/api/**.h", "libs/api/**.cpp" }
 
 	filter "configurations:Debug"
 		defines { "DEBUG" }
@@ -29,9 +47,9 @@ project "acc_srv"
 	location "build"
 	targetdir "bin/%{cfg.buildcfg}"
 
-	files {"./AccServer/**.h", "./AccServer/**.cpp", "libs/sqlite3/sqlite3.c" }
+	files {"AccServer/**.h", "AccServer/**.cpp", "libs/sqlite3/sqlite3.c" }
 	links { "pthread", "rt", "zmq", "common", "dl"}
-	includedirs { ".", "libs/api", "libs/common/include", "libs/zeromq/include", "libs/sqlite3" }
+	includedirs { "libs/api", "libs/common/include", "libs/zeromq/include", "libs/sqlite3" }
 	libdirs {"libs/.libs"}
 
 	filter "configurations:Debug"
@@ -50,9 +68,30 @@ project "stream_srv"
 	location "build"
 	targetdir "bin/%{cfg.buildcfg}"
 
-	files {"./StreamServer/**.h", "./StreamServer/**.cpp"}
+	files {"StreamServer/**.h", "StreamServer/**.cpp"}
 	links { "pthread", "rt", "zmq", "enet", "common"}
-	includedirs { ".", "libs/enet/include", "libs/zeromq/include", "libs/common/include", "libs/api" }
+	includedirs { "libs/enet/include", "libs/zeromq/include", "libs/common/include", "libs/api" }
+	libdirs {"libs/.libs"}
+
+	filter "configurations:Debug"
+		defines { "DEBUG" }
+		flags { "Symbols" }
+
+	filter "configurations:Release"
+		defines { "NDEBUG" }
+		optimize "On"
+
+project "starter"
+	kind "ConsoleApp"
+	language "C++"
+	flags {"C++11"}
+	defines {"RDC_LINUX_SYS"}
+	location "build"
+	targetdir "bin/%{cfg.buildcfg}"
+
+	files {"ServiceStarter/**.h", "ServiceStarter/**.cpp" }
+	links { "pthread", "rt", "zmq", "api", "common", "boost_system", "boost_filesystem"}
+	includedirs { "libs/api", "libs/zeromq/include", "libs/common/include"}
 	libdirs {"libs/.libs"}
 
 	filter "configurations:Debug"

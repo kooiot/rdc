@@ -5,9 +5,13 @@
 
 #pragma once
 
+#ifdef RDC_LINUX_SYS
+#include <stdio.h>
+#include <cstring>
+#else
 #include "targetver.h"
 
 #include <stdio.h>
 #include <tchar.h>
-
+#endif
 // TODO:  在此处引用程序需要的其他头文件

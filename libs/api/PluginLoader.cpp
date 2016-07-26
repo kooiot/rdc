@@ -53,6 +53,8 @@ void CPluginLoader::Load(const char * folder)
 	}
 	while (NULL != (filedata = readdir(curdir)))
 	{
+		if (filedata->d_name[0] == '.')
+			continue;
 		sprintf(temp, "%s/%s", folder, filedata->d_name);
 		LoadPlugin(temp);
 	}
