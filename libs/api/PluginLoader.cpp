@@ -1,9 +1,10 @@
 #include "PluginLoader.h"
 
-#ifndef RDC_LINUX_SYS
-#include<io.h>
 #include <cstdio>
 #include <cstdlib>
+
+#ifndef RDC_LINUX_SYS
+#include <io.h>
 #else
 #include<sys/types.h>
 #include<dirent.h>
