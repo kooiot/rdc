@@ -7,6 +7,9 @@
 *.db
 *.opendb
 *.exe
+*.cmake
+CMakeFiles
+CMakeCache.txt
 Makefile
 
 # User-specific files

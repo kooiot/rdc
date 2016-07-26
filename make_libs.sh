@@ -22,4 +22,15 @@ cp .libs/*.a ../.libs/
 make distclean
 cd ../../
 
-
+mkdir -p libs/soci/
+cd libs/soci-3.2.3/src
+cmake .
+make
+cp lib/*.a ../../.libs/
+cp core/*.h ../../soci/
+cp backends/sqlite3/soci-sqlite3.h ../../soci/
+cp backends/mysql/soci-mysql.h ../../soci/
+rm lib -rf
+rm bin -rf
+rm -f core/soci_backends_config.h
+cd ../../../
