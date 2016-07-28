@@ -39,7 +39,7 @@ project "api"
 		defines { "NDEBUG" }
 		optimize "On"
 
-project "acc_srv"
+project "acc"
 	kind "ConsoleApp"
 	language "C++"
 	flags {"C++11"}
@@ -48,7 +48,7 @@ project "acc_srv"
 	targetdir "bin/%{cfg.buildcfg}"
 
 	files {"AccServer/**.h", "AccServer/**.cpp", "libs/sqlite3/sqlite3.c" }
-	links { "pthread", "rt", "zmq", "common", "dl"}
+	links { "pthread", "rt", "zmq", "common", "dl", "api"}
 	includedirs { "libs/api", "libs/common/include", "libs/zeromq/include", "libs/sqlite3" }
 	libdirs {"libs/.libs"}
 
@@ -60,7 +60,7 @@ project "acc_srv"
 		defines { "NDEBUG" }
 		optimize "On"
 
-project "stream_srv"
+project "stream"
 	kind "ConsoleApp"
 	language "C++"
 	flags {"C++11"}
@@ -69,7 +69,7 @@ project "stream_srv"
 	targetdir "bin/%{cfg.buildcfg}"
 
 	files {"StreamServer/**.h", "StreamServer/**.cpp"}
-	links { "pthread", "rt", "zmq", "enet", "common"}
+	links { "pthread", "rt", "zmq", "enet", "common", "api"}
 	includedirs { "libs/enet/include", "libs/zeromq/include", "libs/common/include", "libs/api" }
 	libdirs {"libs/.libs"}
 

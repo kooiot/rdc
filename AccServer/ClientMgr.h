@@ -41,7 +41,7 @@ public:
 
 private:
 	void HandleKZPacket(const KZPacket& cmd);
-	int SendToMapper(const std::string& id, const std::string& cmd, void* data, size_t len);
+	int SendToMapper(const std::string& id, const std::string& cmd, const json& val);
 
 private:
 	int AddMapper(const std::string& id);

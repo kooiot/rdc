@@ -130,13 +130,12 @@ void ServiceMgr::Stop()
 
 void ServiceMgr::ProcessReq(void* socket)
 {
-
 	KZPacket packet;
-	int rc = koo_zmq_recv_cmd(socket, packet);
-	if (rc != 0 || packet.id != "KOOIOT")
+	int rc = koo_zmq_recv(socket, packet);
+	if (rc != 0 || packet.id() != "KOOIOT")
 		return;
 
-	if (packet.cmd == "LIST") {
+	if (packet.cmd() == "LIST") {
 		nlohmann::json doc;
 		int i = 0;
 		ServiceNodeMap::iterator ptr = m_Nodes.begin();
@@ -150,14 +149,11 @@ void ServiceMgr::ProcessReq(void* socket)
 			doc[i]["Mode"] = (int)pNode->Mode;
 			doc[i]["Status"] = pNode->Process == NULL ? "STOPED" : "RUNNING";
 		}
-		std::stringstream jstr;
-		doc >> jstr;
-		koo_zmq_send_reply(socket, packet, jstr.str());
+		koo_zmq_send_result(socket, packet, doc);
 		return;
 	}
-	else if (packet.cmd == "ADD") {
-		std::string str((char*)zmq_msg_data(&packet.data), zmq_msg_size(&packet.data));
-		nlohmann::json doc = nlohmann::json::parse(str);
+	else if (packet.cmd() == "ADD") {
+		nlohmann::json doc = packet.get("result");
 		ServiceNode node;
 		std::string name = doc["Name"];
 		GET_NODE_STRING(doc, "Name", node.Name, RC_MAX_NAME_LEN);
@@ -168,13 +164,12 @@ void ServiceMgr::ProcessReq(void* socket)
 		node.Mode = (ServiceMode)(int)doc["Mode"];
 		rc = AddNode(node);
 	}
-	else if (packet.cmd == "DELETE") {
-		std::string name((char*)zmq_msg_data(&packet.data), zmq_msg_size(&packet.data));
+	else if (packet.cmd() == "DELETE") {
+		std::string name = packet.get("name");
 		rc = DeleteNode(name);
 	}
-	else if (packet.cmd == "UPDATE") {
-		std::string str((char*)zmq_msg_data(&packet.data), zmq_msg_size(&packet.data));
-		nlohmann::json doc = nlohmann::json::parse(str);
+	else if (packet.cmd() == "UPDATE") {
+		nlohmann::json doc = packet.get("result");
 		ServiceNode node;
 		GET_NODE_STRING(doc, "Name", node.Name, RC_MAX_NAME_LEN);
 		GET_NODE_STRING(doc, "Desc", node.Desc, RC_MAX_DESC_LEN);
@@ -184,15 +179,15 @@ void ServiceMgr::ProcessReq(void* socket)
 		node.Mode = (ServiceMode)(int)doc["Mode"];
 		rc = UpdateNode(node);
 	}
-	else if (packet.cmd == "START") {
-		std::string name((char*)zmq_msg_data(&packet.data), zmq_msg_size(&packet.data));
+	else if (packet.cmd() == "START") {
+		std::string name = packet.get("name");
 		rc = StartNode(name);
 	}
-	else if (packet.cmd == "STOP") {
-		std::string name((char*)zmq_msg_data(&packet.data), zmq_msg_size(&packet.data));
+	else if (packet.cmd() == "STOP") {
+		std::string name = packet.get("name");
 		rc = StopNode(name);
 	}
-	koo_zmq_send_reply(socket, packet, &rc, sizeof(int));
+	koo_zmq_send_result(socket, packet, rc);
 }
 
 int ServiceMgr::AddNode(const ServiceNode & node)

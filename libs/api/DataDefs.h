@@ -178,9 +178,6 @@ extern "C" {
 		void* __inner;
 	};
 
-#define S_SUCCESS	"__SUCCESS__"
-#define S_FAILED	"__FAILED__"
-
 	enum StreamEvent {
 		SE_CONNECT = 0,
 		SE_DISCONNECT,

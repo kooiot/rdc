@@ -4,7 +4,7 @@
 #include <sstream>
 #include <cstring>
 #include <DataDefs.h>
-
+#include <DataJson.h>
 
 CStreamServerMgr::CStreamServerMgr()
 {
@@ -49,25 +49,27 @@ void CStreamServerMgr::Close()
 void CStreamServerMgr::HandleKZPacket(const KZPacket& cmd, void* rep)
 {
 	bool bSuccess = false;
-	if (cmd.cmd == "ADD") {
-		printf("Add event %s\n", cmd.id.c_str());
-		IPInfo* info = (IPInfo*)cmd.GetData();
-		AddStream(atoi(cmd.id.c_str()), info);
+	if (cmd.cmd() == "ADD") {
+		int id = cmd.get("id");
+		printf("Add event %d\n", id);
+		JSON_FROM_PACKET(cmd, IPInfo, info);
+		AddStream(id, &info);
 		bSuccess = true;
 	}
-	else if (cmd.cmd == "REMOVE") {
-		printf("Remove event %s\n", cmd.id.c_str());
+	else if (cmd.cmd() == "REMOVE") {
+		int id = cmd.get("id");
+		printf("Remove event %d\n", id);
 		bSuccess = true;
-		RemoveStream(atoi(cmd.id.c_str()));
+		RemoveStream(id);
 	}
 	
-	koo_zmq_send_reply(rep, cmd, bSuccess ? S_SUCCESS : S_FAILED);
+	koo_zmq_send_result(rep, cmd, bSuccess);
 }
 
 void CStreamServerMgr::OnRecv()
 {
 	KZPacket cmd;
-	int rc = koo_zmq_recv_cmd(m_pSocket, cmd);
+	int rc = koo_zmq_recv(m_pSocket, cmd);
 	if (rc == 0) {
 		HandleKZPacket(cmd, m_pSocket);
 	}

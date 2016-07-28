@@ -13,7 +13,7 @@
 #include <zmq.h>
 #include <koo_zmq_helpers.h>
 #include <DataDefs.h>
-
+#include <DataJson.h>
 
 //ENetPeer* MapperPeers[RC_MAX_CONNECTION_PER_SERVER];
 
@@ -31,38 +31,33 @@ std::map<int, std::vector<MapperData*> > ClientMapperMap;
 ENetPeer* ClientPeers[RC_MAX_CONNECTION_PER_SERVER];
 
 bool send_add_stream(int id, void* socket, const IPInfo& info) {
-	KZPacket add;
 	std::stringstream ss;
 	ss << id;
-	add.id = ss.str();
-	add.cmd = "ADD";
-	add.SetData((void*)&info, sizeof(IPInfo));
-	int rc = koo_zmq_send_cmd(socket, add);
+	KZPacket add(ss.str(), "ADD");
+	add.set("info", KOO_GEN_JSON(info));
+	int rc = koo_zmq_send(socket, add);
 	if (rc != 0)
 		return false;
 	KZPacket result;
-	rc = koo_zmq_recv_cmd(socket, result);
+	rc = koo_zmq_recv(socket, result);
 	if (rc != 0)
 		return false;
 
-	return result.GetStr() == S_SUCCESS;
+	return result.get("result");
 }
 bool send_remove_stream(int id, void* socket) {
-	KZPacket add;
 	std::stringstream ss;
 	ss << id;
-	add.id = ss.str();
-	add.cmd = "REMOVE";
-	add.SetStr("");
-	int rc = koo_zmq_send_cmd(socket, add);
+	KZPacket add(ss.str(), "REMOVE");
+	int rc = koo_zmq_send(socket, add);
 	if (rc != 0)
 		return false;
 	KZPacket result;
-	rc = koo_zmq_recv_cmd(socket, result);
+	rc = koo_zmq_recv(socket, result);
 	if (rc != 0)
 		return false;
 
-	return result.GetStr() == S_SUCCESS;
+	return result.get("result");
 }
 int main(int argc, char* argv[])
 {
