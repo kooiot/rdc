@@ -33,7 +33,7 @@ extern "C" {
 	typedef int(__stdcall *PluginSendCB)(const char* buf, size_t len, void* ptr);
 	// 插件触发关闭
 	typedef int(__stdcall *PluginCloseCB)(void* ptr);
-
+	
 	// 获取当前插件类型（为了防止放置错误类型的插件）
 	RDC_PLUGIN_API RDC_PLUGIN_TYPE GetType();
 	// 获取插件名称（必须保证唯一性）限制长度32
@@ -52,7 +52,8 @@ extern "C" {
 	RDC_PLUGIN_API int Close(long Handle);
 	// 往插件写入数据
 	RDC_PLUGIN_API int Write(long Handle, const char* buf, size_t len);
-
+	// 获取插件详细信息JSON(V2)
+	RDC_PLUGIN_API const char* GetInfo();
 #ifdef __cplusplus
 }
 #endif

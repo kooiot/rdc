@@ -34,6 +34,7 @@ extern "C" {
 	typedef int (* FOpen)(long Handle);
 	typedef int (* FClose)(long Handle);
 	typedef int (* FWrite)(long Handle, const char* buf, size_t len);
+	typedef const char*(*FGetInfo)();
 
 	typedef struct _PluginApi {
 #ifndef RDC_LINUX_SYS
@@ -48,6 +49,7 @@ extern "C" {
 		FOpen Open;
 		FClose Close;
 		FWrite Write;
+		FGetInfo GetInfo;
 	} PluginApi;
 
 	// LoadLibrary()

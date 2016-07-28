@@ -5,26 +5,45 @@
 
 #ifdef RDC_LINUX_SYS
 #define LOAD_DLL_FUNC(HANDLE, FUNC, TYPE, NAME) \
-	do { \
+	{ \
 		FUNC = (TYPE)dlsym(HANDLE, #NAME);\
 		char* err = dlerror(); \
 		if (FUNC == NULL || err != NULL) { \
 			dlclose(HANDLE); \
 			fprintf(stderr, "%s\n", err);\
-			return -1; \
+			break; \
 		}\
-	} while (0)
+	}
 #else
 #define LOAD_DLL_FUNC(HANDLE, FUNC, TYPE, NAME) \
-	do { \
+	{ \
 		FUNC = (TYPE)GetProcAddress(hApiHandle, #NAME); \
 		if (FUNC == NULL) { \
 			fprintf(stderr, "Failed Load %s\n", #NAME);\
 			break; \
 		}\
+	}
+#endif
+
+#ifdef RDC_LINUX_SYS
+#define LOAD_DLL_FUNC_OPT(HANDLE, FUNC, TYPE, NAME, DEFAULT) \
+	do { \
+		FUNC = (TYPE)dlsym(HANDLE, #NAME);\
+		if (!FUNC) \
+			FUNC = DEFAULT; \
+	} while (0)
+#else
+#define LOAD_DLL_FUNC_OPT(HANDLE, FUNC, TYPE, NAME, DEFAULT) \
+	do { \
+		FUNC = (TYPE)GetProcAddress(hApiHandle, #NAME); \
+		if (!FUNC) \
+			FUNC = DEFAULT; \
 	} while (0)
 #endif
 
+const char* NO_GetInfo() {
+	return "";
+}
 int RDC_PluginLoad(const char * dll, PluginApi * api)
 {
 	assert(NULL != dll);
@@ -54,7 +73,7 @@ int RDC_PluginLoad(const char * dll, PluginApi * api)
 		LOAD_DLL_FUNC(hApiHandle, api->Open, FOpen, Open);
 		LOAD_DLL_FUNC(hApiHandle, api->Close, FClose, Close);
 		LOAD_DLL_FUNC(hApiHandle, api->Write, FWrite, Write);
-
+		LOAD_DLL_FUNC_OPT(hApiHandle, api->GetInfo, FGetInfo, GetInfo, NO_GetInfo);
 		return 0;
 
 	} while (0);
