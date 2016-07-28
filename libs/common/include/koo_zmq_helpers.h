@@ -36,6 +36,7 @@ struct KZPacket {
 	template<class TYPE>
 	const json& set(const std::string& name, const TYPE& v) {
 		_json[name] = v;
+		return _json[name];
 	}
 
 	json _json;
@@ -47,7 +48,7 @@ inline int koo_zmq_recv(void* skt, KZPacket& packet) {
 	if (rc == -1)
 		return -1;
 
-	char* str = (char*)zmq_msg_data(&packet._msg);
+	std::string str((char*)zmq_msg_data(&packet._msg), zmq_msg_size(&packet._msg));
 	try {
 		packet._json = json::parse(str);
 	}

@@ -179,7 +179,7 @@ int GetReturnRC(zmq_msg_t* data) {
 int SendCmd(const KZPacket& packet) {
 	void* sock = g_req_socket;
 	int rc = koo_zmq_send(sock, packet);
-	if (rc == 0) {
+	if (rc >= 0) {
 		KZPacket data;
 		rc = koo_zmq_recv(sock, data);
 		if (rc == 0) {

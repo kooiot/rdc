@@ -36,7 +36,7 @@ bool send_add_stream(int id, void* socket, const IPInfo& info) {
 	KZPacket add(ss.str(), "ADD");
 	add.set("info", KOO_GEN_JSON(info));
 	int rc = koo_zmq_send(socket, add);
-	if (rc != 0)
+	if (rc < 0)
 		return false;
 	KZPacket result;
 	rc = koo_zmq_recv(socket, result);
@@ -50,7 +50,7 @@ bool send_remove_stream(int id, void* socket) {
 	ss << id;
 	KZPacket add(ss.str(), "REMOVE");
 	int rc = koo_zmq_send(socket, add);
-	if (rc != 0)
+	if (rc < 0)
 		return false;
 	KZPacket result;
 	rc = koo_zmq_recv(socket, result);

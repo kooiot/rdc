@@ -45,7 +45,7 @@ int CServicesApi::SendRequest(KZPacket& packet, std::function< int(KZPacket&)> c
 	int rc = 0;
 	{
 		rc = koo_zmq_send(m_Socket, packet);
-		if (rc == 0) {
+		if (rc >= 0) {
 			KZPacket data;
 			rc = koo_zmq_recv(m_Socket, data);
 			if (rc == 0) {

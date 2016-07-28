@@ -102,8 +102,5 @@
     <ClCompile Include="src\uuid_util.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\koo_zmq_helpers.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>

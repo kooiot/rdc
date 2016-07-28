@@ -50,17 +50,15 @@ void CStreamServerMgr::HandleKZPacket(const KZPacket& cmd, void* rep)
 {
 	bool bSuccess = false;
 	if (cmd.cmd() == "ADD") {
-		int id = cmd.get("id");
-		printf("Add event %d\n", id);
+		printf("Add event %s\n", cmd.id().c_str());
 		JSON_FROM_PACKET(cmd, IPInfo, info);
-		AddStream(id, &info);
+		AddStream(atoi(cmd.id().c_str()), &info);
 		bSuccess = true;
 	}
 	else if (cmd.cmd() == "REMOVE") {
-		int id = cmd.get("id");
-		printf("Remove event %d\n", id);
+		printf("Remove event %s\n", cmd.id().c_str());
 		bSuccess = true;
-		RemoveStream(id);
+		RemoveStream(atoi(cmd.id().c_str()));
 	}
 	
 	koo_zmq_send_result(rep, cmd, bSuccess);

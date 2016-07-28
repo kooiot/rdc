@@ -114,7 +114,7 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 			memcpy(&info, pData->StreamServer, sizeof(StreamProcess));
 		}
 		int rc = koo_zmq_send_result(m_pReply, cmd, KOO_GEN_JSON(info));
-		assert(rc == 0);
+		assert(rc >= 0);
 		return;
 	}
 	else if (cmd.cmd() == "CREATE") {
@@ -134,7 +134,7 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 			}
 		}
 		int rc = koo_zmq_send_result(m_pReply, cmd, channel);
-		assert(rc == 0);
+		assert(rc >= 0);
 		return;
 	}
 	else if (cmd.cmd() == "DESTROY") {
@@ -186,7 +186,7 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 			data += *ptr;
 		}
 		int rc = koo_zmq_send_result(m_pReply, cmd, data);
-		assert(rc == 0);
+		assert(rc >= 0);
 		return;
 	}
 	else if (cmd.cmd() == "DEV_INFO") {
@@ -239,7 +239,7 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 			data += *ptr;
 		}
 		int rc = koo_zmq_send_result(m_pReply, cmd, data);
-		assert(rc == 0);
+		assert(rc >= 0);
 		return;
 	}
 	else if (cmd.cmd() == "CLIENT_INFO") {
