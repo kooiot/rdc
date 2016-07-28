@@ -6,9 +6,6 @@
 #include <koo_string_util.h>
 #include <json.hpp>
 
-#define RETURN_MSG_DATA_RC(data) \
-	return *(int*)zmq_msg_data((zmq_msg_t*)&data.data);
-
 #define GET_NODE_STRING(NODE, NAME, BUF, BUF_LEN) \
 	strncpy(BUF, NODE[NAME].get<std::string>().c_str(), BUF_LEN)
 
@@ -47,14 +44,17 @@ int CServicesApi::SendRequest(KZPacket& packet, std::function< int(KZPacket&)> c
 {
 	int rc = 0;
 	{
-		rc = koo_zmq_send_cmd(m_Socket, packet);
-		if (rc == 0) {
+		rc = koo_zmq_send(m_Socket, packet);
+		if (rc >= 0) {
 			KZPacket data;
-			rc = koo_zmq_recv_cmd(m_Socket, data);
+			rc = koo_zmq_recv(m_Socket, data);
 			if (rc == 0) {
-				if (packet.cmd == data.cmd)
-					return cb != nullptr ? cb(data) : rc;
-				else if (data.cmd == "TIMEOUT")
+				if (packet.cmd() == data.cmd())
+					if (cb != nullptr)
+					       return cb(data);
+					else
+					       return data.get("result");
+				else if (data.cmd() == "TIMEOUT")
 					return -10000;
 				else
 					return -20000;
@@ -63,7 +63,7 @@ int CServicesApi::SendRequest(KZPacket& packet, std::function< int(KZPacket&)> c
 	}
 	if (rc != 0) {
 		int err = errno;
-		if (EAGAIN == errno && packet.cmd != "LOGIN") {
+		if (EAGAIN == errno && packet.cmd() != "LOGIN") {
 			// Recreate the socket.
 			bool br = _Connect();
 			assert(br);
@@ -89,16 +89,10 @@ int CServicesApi::Add(const ServiceNode * node)
 	doc["Args"] = node->Args;
 	doc["Mode"] = (int)node->Mode;
 
-	KZPacket packet;
-	packet.id = "KOOIOT";
-	packet.cmd = "ADD";
-	std::stringstream jstr;
-	doc >> jstr;
-	packet.SetStr(jstr.str().c_str());
+	KZPacket packet("KOOIOT", "ADD");
+	packet.set("node", doc);
 
-	int rc = SendRequest(packet, [](KZPacket& data) {
-		RETURN_MSG_DATA_RC(data)
-	});
+	int rc = SendRequest(packet);
 
 	return rc;
 }
@@ -113,45 +107,31 @@ int CServicesApi::Modify(const ServiceNode * node)
 	doc["Args"] = node->Args;
 	doc["Mode"] = (int)node->Mode;
 
-	KZPacket packet;
-	packet.id = "KOOIOT";
-	packet.cmd = "UPDATE";
-	std::stringstream jstr;
-	doc >> jstr;
-	packet.SetStr(jstr.str().c_str());
+	KZPacket packet("KOOIOT", "UPDATE");
+	packet.set("node", doc);
 
-	int rc = SendRequest(packet, [](KZPacket& data) {
-		RETURN_MSG_DATA_RC(data)
-	});
+	int rc = SendRequest(packet);
 
 	return rc;
 }
 
 int CServicesApi::Delete(const char* name)
 {
-	KZPacket packet;
-	packet.id = "KOOIOT";
-	packet.cmd = "DELETE";
-	packet.SetStr(name);
+	KZPacket packet("KOOIOT", "DELETE");
+	packet.set("name", name);
 
-	int rc = SendRequest(packet, [](KZPacket& data) {
-		RETURN_MSG_DATA_RC(data)
-	});
+	int rc = SendRequest(packet);
 
 	return rc;
 }
 
 int CServicesApi::List(ServiceNode* list, int list_len, bool only_online)
 {
-	KZPacket packet;
-	packet.id = "KOOIOT";
-	packet.cmd = "LIST";
-	packet.SetStr(only_online ? "ONLINE" : "ALL");
+	KZPacket packet("KOOIOT", "LIST");
+	packet.set("type", only_online ? "ONLINE" : "ALL");
 	int rc = SendRequest(packet, [list](KZPacket& data) {
 		int i = 0;
-		std::string str = data.GetStr();
-
-		nlohmann::json doc = nlohmann::json::parse(str);
+		const json& doc = data.get("result");
 
 		for (auto &node : doc) {
 			ServiceNode* pNode = list + i;
@@ -173,28 +153,20 @@ int CServicesApi::List(ServiceNode* list, int list_len, bool only_online)
 
 int CServicesApi::Start(const char * name)
 {
-	KZPacket packet;
-	packet.id = "KOOIOT";
-	packet.cmd = "START";
-	packet.SetStr(name);
+	KZPacket packet("KOOIOT", "START");
+	packet.set("name", name);
 
-	int rc = SendRequest(packet, [](KZPacket& data) {
-		RETURN_MSG_DATA_RC(data)
-	});
+	int rc = SendRequest(packet);
 
 	return rc;
 }
 
 int CServicesApi::Stop(const char * name)
 {
-	KZPacket packet;
-	packet.id = "KOOIOT";
-	packet.cmd = "STOP";
-	packet.SetStr(name);
+	KZPacket packet("KOOIOT", "STOP");
+	packet.set("name", name);
 
-	int rc = SendRequest(packet, [](KZPacket& data) {
-		RETURN_MSG_DATA_RC(data)
-	});
+	int rc = SendRequest(packet);
 
 	return rc;
 }

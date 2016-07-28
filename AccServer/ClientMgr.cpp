@@ -1,5 +1,6 @@
 #include "ClientMgr.h"
 #include <DataDefs.h>
+#include <DataJson.h>
 #include <zmq.h>
 
 #include <list>
@@ -64,114 +65,106 @@ void CClientMgr::Close()
 
 void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 {
-	std::cout << __FUNCTION__ << ": " << cmd.id << "\t" << cmd.cmd << std::endl;
-	if (cmd.cmd != "LOGIN" && cmd.id != "@DEVICE@") {
-		if (m_Clients.find(cmd.id) == m_Clients.end()) {
-			std::cerr << "User does not login or heartbeat timeout" << cmd.id << std::endl;
-			std::stringstream ss;
-			ss << -10000;
-			KZPacket* p = (KZPacket*)&cmd;
-			p->cmd = "TIMEOUT";
-			koo_zmq_send_reply(m_pReply, cmd, ss.str());
+	std::cout << __FUNCTION__ << ": " << cmd.id() << "\t" << cmd.cmd() << std::endl;
+	if (cmd.cmd() != "LOGIN" && cmd.id() != "@DEVICE@") {
+		if (m_Clients.find(cmd.id()) == m_Clients.end()) {
+			std::cerr << "User does not login or heartbeat timeout" << cmd.id() << std::endl;
+			koo_zmq_send_result(m_pReply, cmd, -10000);
 			return;
 		}
 	}
 
 	int nReturn = -1;
-	if (cmd.cmd == "LOGIN") {
-		std::cout << "LOGIN: " << cmd.id << "\t" << cmd.GetStr() << std::endl;
-		if (cmd.id == "@DEVICE@") {
-			std::string dev_sn = cmd.GetStr();
+	if (cmd.cmd() == "LOGIN") {
+		if (cmd.id() == "@DEVICE@") {
+			std::string dev_sn = cmd.get("sn");
+			std::cout << "Device LOGIN: " << dev_sn << std::endl;
 			// Check for valid device sn
 			if (m_Database.IsValidDevice(dev_sn) == 0) {
 				AddMapper(dev_sn);
 				nReturn = 0;
 			}
 		}
-		else if (m_Database.Login(cmd.id, cmd.GetStr()) == 0) {
-			nReturn = AddClient(cmd.id);
+		else {
+			std::cout << "Client LOGIN: " << cmd.id() << "\t" << cmd.get("pass") << std::endl;
+		       	if (m_Database.Login(cmd.id(), cmd.get("pass")) == 0) {
+				nReturn = AddClient(cmd.id());
+			}
 		}
 	}
-	else if (cmd.cmd == "HEARTBEAT") {
+	else if (cmd.cmd() == "HEARTBEAT") {
 		nReturn = 0;
-		if (cmd.id == "@DEVICE@")
-			UpdateMapperHearbeat(cmd.GetStr());
+		if (cmd.id() == "@DEVICE@")
+			UpdateMapperHearbeat(cmd.get("sn"));
 		else
-			UpdateClientHearbeat(cmd.id);
-		/*if (cmd.id == "@DEVICE@")
-			SendToMapper(cmd.GetStr(), "XXXXX", "XXXX", strlen("XXXX"));*/
+			UpdateClientHearbeat(cmd.id());
 	}
-	else if (cmd.cmd == "LOGOUT") {
+	else if (cmd.cmd() == "LOGOUT") {
 		nReturn = 0;
-		if (cmd.id == "@DEVICE@")
-			RemoveMapper(cmd.GetStr());
+		if (cmd.id() == "@DEVICE@")
+			RemoveMapper(cmd.get("sn"));
 		else
-			RemoveClient(cmd.id);
+			RemoveClient(cmd.id());
 	}
-	else if (cmd.cmd == "STREAM") {
+	else if (cmd.cmd() == "STREAM") {
 		StreamProcess info;
 		memset(&info, 0, sizeof(StreamProcess));
-		ClientData* pData = m_Clients[cmd.id];
+		ClientData* pData = m_Clients[cmd.id()];
 		if (pData && pData->StreamServer) {
 			memcpy(&info, pData->StreamServer, sizeof(StreamProcess));
 		}
-		int rc = koo_zmq_send_reply(m_pReply, cmd, &info, sizeof(StreamProcess));
-		assert(rc == 0);
+		int rc = koo_zmq_send_result(m_pReply, cmd, KOO_GEN_JSON(info));
+		assert(rc >= 0);
 		return;
 	}
-	else if (cmd.cmd == "CREATE") {
-		ConnectionInfo info;
+	else if (cmd.cmd() == "CREATE") {
+		JSON_FROM_PACKET(cmd, ConnectionInfo, info);
 		int channel = -99;
-		memcpy(&info, cmd.GetData(), sizeof(ConnectionInfo));
-		if (FindMapper(info.DevSN) && 0 == m_Database.Access(cmd.id, info.DevSN)) {
-			ClientData* pClient = FindClient(cmd.id);
+		if (FindMapper(info.DevSN) && 0 == m_Database.Access(cmd.id(), info.DevSN)) {
+			ClientData* pClient = FindClient(cmd.id());
 			assert(pClient);
-			channel = AllocStream(cmd.id, info.DevSN);
+			channel = AllocStream(cmd.id(), info.DevSN);
 			if (channel >= 0) {
 				info.Channel = channel;
 				std::cout << "Create Stream Channel " << channel << std::endl;
-				int len = sizeof(StreamProcess) + sizeof(ConnectionInfo);
-				char* buf = new char[len];
-				memcpy(buf, pClient->StreamServer, sizeof(StreamProcess)); // TODO: Stream Failure
-				memcpy(buf + sizeof(StreamProcess), &info, sizeof(ConnectionInfo));
-				SendToMapper(info.DevSN, "CREATE", buf, len);
-				delete[] buf;
+				json val;
+				val["sp"] = KOO_GEN_JSON(*pClient->StreamServer);
+				val["info"] = KOO_GEN_JSON(info);
+				SendToMapper(info.DevSN, "CREATE", val);
 			}
 		}
-		std::stringstream ss;
-		ss << channel;
-		int rc = koo_zmq_send_reply(m_pReply, cmd, ss.str());
-		assert(rc == 0);
+		int rc = koo_zmq_send_result(m_pReply, cmd, channel);
+		assert(rc >= 0);
 		return;
 	}
-	else if (cmd.cmd == "DESTROY") {
-		int channel = atoi(cmd.GetStr().c_str());
+	else if (cmd.cmd() == "DESTROY") {
+		int channel = cmd.get("channel");
 		if (channel >= 0 && channel < RC_MAX_CONNECTION) {
-			nReturn = FreeStream(cmd.id, channel);
+			nReturn = FreeStream(cmd.id(), channel);
 		}
 	}
-	else if (cmd.cmd == "ADD_DEV") {
-		DeviceInfo* pInfo = (DeviceInfo*)cmd.GetData();
+	else if (cmd.cmd() == "ADD_DEV") {
+		JSON_FROM_PACKET(cmd, DeviceInfo, info);
 		DbDeviceInfo dbInfo;
-		dbInfo.FromDeviceInfo(*pInfo);
+		dbInfo.FromDeviceInfo(info);
 		nReturn = m_Database.AddDevice(dbInfo);
 	}
-	else if (cmd.cmd == "MOD_DEV") {
-		DeviceInfo* pInfo = (DeviceInfo*)cmd.GetData();
+	else if (cmd.cmd() == "MOD_DEV") {
+		JSON_FROM_PACKET(cmd, DeviceInfo, info);
 		DbDeviceInfo dbInfo;
-		dbInfo.FromDeviceInfo(*pInfo);
+		dbInfo.FromDeviceInfo(info);
 		nReturn = m_Database.UpdateDevice(dbInfo);
 	}
-	else if (cmd.cmd == "DEL_DEV") {
-		nReturn = m_Database.DeleteDevice(cmd.GetStr());
+	else if (cmd.cmd() == "DEL_DEV") {
+		nReturn = m_Database.DeleteDevice(cmd.get("sn"));
 	}
-	else if (cmd.cmd == "LIST_DEV") {
-		std::string type = cmd.GetStr();
+	else if (cmd.cmd() == "LIST_DEV") {
+		std::string type = cmd.get("type");
 		std::list<std::string> list;
 		if (type != "ALL") {
 			MapperMap::iterator ptr = m_Mappers.begin();
 			for (; ptr != m_Mappers.end(); ++ptr) {
-				if (0 == m_Database.Access(cmd.id, ptr->first)) {
+				if (0 == m_Database.Access(cmd.id(), ptr->first)) {
 					list.push_back(ptr->first);
 				}
 			}
@@ -181,7 +174,7 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 			m_Database.ListDevices(all);
 			for (std::list<std::string>::iterator ptr = all.begin();
 				ptr != all.end(); ++ptr) {
-				if (0 == m_Database.Access(cmd.id, *ptr)) {
+				if (0 == m_Database.Access(cmd.id(), *ptr)) {
 					list.push_back(*ptr);
 				}
 			}
@@ -192,12 +185,12 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 		for (; ptr != list.end(); ++ptr, data += "|") {
 			data += *ptr;
 		}
-		int rc = koo_zmq_send_reply(m_pReply, cmd, data);
-		assert(rc == 0);
+		int rc = koo_zmq_send_result(m_pReply, cmd, data);
+		assert(rc >= 0);
 		return;
 	}
-	else if (cmd.cmd == "DEV_INFO") {
-		std::string sn = cmd.GetStr();
+	else if (cmd.cmd() == "DEV_INFO") {
+		std::string sn = cmd.get("sn");
 		DbDeviceInfo dbInfo;
 		int rc = m_Database.GetDevice(sn, dbInfo);
 		if (rc != 0) {
@@ -206,29 +199,29 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 		}
 		DeviceInfo info;
 		memset(&info, 0, sizeof(DeviceInfo));
-		if (0 == m_Database.Access(cmd.id, dbInfo.SN)) {
+		if (0 == m_Database.Access(cmd.id(), dbInfo.SN)) {
 			dbInfo.ToDeviceInfo(info);
 		}
-		koo_zmq_send_reply(m_pReply, cmd, &info, sizeof(DeviceInfo));
+		koo_zmq_send_result(m_pReply, cmd, KOO_GEN_JSON(info));
 		return;
 	}
-	else if (cmd.cmd == "ADD_CLIENT") {
-		UserInfo* pInfo = (UserInfo*)cmd.GetData();
+	else if (cmd.cmd() == "ADD_CLIENT") {
+		JSON_FROM_PACKET(cmd, UserInfo, info);
 		DbUserInfo dbInfo;
-		dbInfo.FromUserInfo(*pInfo);
-		nReturn = m_Database.AddUser(dbInfo, pInfo->Passwd);
+		dbInfo.FromUserInfo(info);
+		nReturn = m_Database.AddUser(dbInfo, info.Passwd);
 	}
-	else if (cmd.cmd == "MOD_CLIENT") {
-		UserInfo* pInfo = (UserInfo*)cmd.GetData();
+	else if (cmd.cmd() == "MOD_CLIENT") {
+		JSON_FROM_PACKET(cmd, UserInfo, info);
 		DbUserInfo dbInfo;
-		dbInfo.FromUserInfo(*pInfo);
-		nReturn = m_Database.UpdateUser(dbInfo, pInfo->Passwd);
+		dbInfo.FromUserInfo(info);
+		nReturn = m_Database.UpdateUser(dbInfo, info.Passwd);
 	}
-	else if (cmd.cmd == "DEL_CLIENT") {
-		nReturn = m_Database.DeleteUser(cmd.GetStr());
+	else if (cmd.cmd() == "DEL_CLIENT") {
+		nReturn = m_Database.DeleteUser(cmd.get("client"));
 	}
-	else if (cmd.cmd == "LIST_CLIENT") {
-		std::string type = cmd.GetStr();
+	else if (cmd.cmd() == "LIST_CLIENT") {
+		std::string type = cmd.get("type");
 		std::list<std::string> list;
 		if (type != "ALL") {
 			ClientMap::iterator ptr = m_Clients.begin();
@@ -245,12 +238,12 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 		for (; ptr != list.end(); ++ptr, data += "|") {
 			data += *ptr;
 		}
-		int rc = koo_zmq_send_reply(m_pReply, cmd, data);
-		assert(rc == 0);
+		int rc = koo_zmq_send_result(m_pReply, cmd, data);
+		assert(rc >= 0);
 		return;
 	}
-	else if (cmd.cmd == "CLIENT_INFO") {
-		std::string id = cmd.GetStr();
+	else if (cmd.cmd() == "CLIENT_INFO") {
+		std::string id = cmd.get("client");
 		DbUserInfo dbInfo;
 		int rc = m_Database.GetUser(id, dbInfo);
 		if (rc != 0) {
@@ -259,29 +252,29 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 		UserInfo info;
 		memset(&info, 0, sizeof(UserInfo));
 		dbInfo.ToUserInfo(info);
-		koo_zmq_send_reply(m_pReply, cmd, &info, sizeof(UserInfo));
+		koo_zmq_send_result(m_pReply, cmd, KOO_GEN_JSON(info));
 		return;
 	}
 	else {
 		std::cerr << "Unknown CMD... " << std::endl;
 	}
 
-	std::cout << "SEND REPLY: " << cmd.id << "\t" << cmd.cmd << "\t" << nReturn << std::endl;
-	std::stringstream ss;
-	ss << nReturn;
-	koo_zmq_send_reply(m_pReply, cmd, ss.str());
+	std::cout << "SEND REPLY: " << cmd.id() << "\t" << cmd.cmd() << "\t" << nReturn << std::endl;
+	koo_zmq_send_result(m_pReply, cmd, nReturn);
 }
 
-int CClientMgr::SendToMapper(const std::string & id, const std::string & cmd, void * data, size_t len)
+int CClientMgr::SendToMapper(const std::string & id, const std::string & cmd, const json& val)
 {
 	std::string filter = id + " " + cmd;
-	std::cout << "Publish to Mapper " << filter << "\t" << filter.length() << "-" << filter.size() << std::endl;
+	std::cout << "Publish to Mapper " << filter << std::endl;
 	int rc = zmq_send(m_pPublish, filter.c_str(), filter.length(), ZMQ_SNDMORE);
 	if (rc == -1) {
 		std::cerr << "PUBLISH Failed filter: " << filter << std::endl;
 		return rc;
 	}
-	rc = zmq_send(m_pPublish, data, len, 0);
+	std::stringstream ss;
+	val >> ss;
+	rc = zmq_send(m_pPublish, ss.str().c_str(), ss.str().length(), 0);
 	if (rc == -1) {
 		std::cerr << "PUBLISH Failed Data: " << std::endl;
 	}
@@ -291,7 +284,7 @@ int CClientMgr::SendToMapper(const std::string & id, const std::string & cmd, vo
 void CClientMgr::OnRecv()
 {
 	KZPacket cmd;
-	int rc = koo_zmq_recv_cmd(m_pReply, cmd);
+	int rc = koo_zmq_recv(m_pReply, cmd);
 	if (rc == 0) {
 		HandleKZPacket(cmd);
 	}
@@ -466,12 +459,10 @@ int CClientMgr::FreeStream(const std::string& id, int channel)
 		ConnectionData * pData = pClient->Connections[channel];
 
 		std::cout << "Client " << id << " Destroy Stream Channel " << channel << std::endl;
-		int len = sizeof(StreamProcess) + sizeof(int);
-		char* buf = new char[len];
-		memcpy(buf, pClient->StreamServer, sizeof(StreamProcess));
-		memcpy(buf + sizeof(StreamProcess), &channel, sizeof(int));
-		SendToMapper(pData->Mapper->ID, "DESTROY", buf, len);
-		delete[] buf;
+		json val;
+		val["sp"] = KOO_GEN_JSON(*pClient->StreamServer);
+		val["channel"] = channel;
+		SendToMapper(pData->Mapper->ID, "DESTROY", val);
 
 		delete pData;
 		pClient->Connections[channel] = NULL;

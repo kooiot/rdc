@@ -33,6 +33,9 @@
     <ClCompile Include="PluginLoader.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="DataJson.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AccApi.h">
@@ -54,6 +57,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="PluginLoader.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DataJson.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

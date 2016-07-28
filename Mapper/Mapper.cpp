@@ -9,8 +9,9 @@
 #include <zmq.h>
 #include <uv.h>
 #include <enet/enet.h>
-
+#include <koo_zmq_helpers.h>
 #include <DataDefs.h>
+#include <DataJson.h>
 #include <PluginLoader.h>
 
 #include "StreamMgr.h"
@@ -39,12 +40,19 @@ void handle_sub_msg(zmq_msg_t& cmd, zmq_msg_t& data) {
 	assert(strncmp(pCmd, g_sn, strlen(g_sn)) == 0);
 	pCmd = pCmd + strlen(g_sn) + 1;
 
+	json _json;
+	char* str = (char*)zmq_msg_data(&data);
+	try {
+		_json = json::parse(str);
+	}
+	catch (...) {
+		return;
+	}
+
 	if (0 == strncmp(pCmd, "CREATE", strlen("CREATE"))) {
-		if (zmq_msg_size(&data) >= sizeof(StreamProcess) + sizeof(ConnectionInfo)) {
-			StreamProcess sp;
-			ConnectionInfo info;
-			memcpy(&sp, zmq_msg_data(&data), sizeof(StreamProcess));
-			memcpy(&info, (char*)zmq_msg_data(&data) + sizeof(StreamProcess), sizeof(ConnectionInfo));
+		StreamProcess sp;
+		ConnectionInfo info;
+		if (KOO_PARSE_JSON(sp, _json["sp"]) && KOO_PARSE_JSON(info, _json["info"])) {
 			int rc = g_StreamMgr->Create(sp, info);
 			// FIXME: For failure handlesss
 			if (rc != 0) {
@@ -62,16 +70,12 @@ void handle_sub_msg(zmq_msg_t& cmd, zmq_msg_t& data) {
 		}
 	}
 	else if (0 == strncmp(pCmd, "DESTROY", strlen("DESTROY"))) {
-		if (zmq_msg_size(&data) < sizeof(StreamProcess) + sizeof(int)) {
-			std::cerr << "Recevied Incorrect Size of DESTROY " << std::endl;
-			std::cerr << "Received Size " << zmq_msg_size(&data);
-			std::cerr << " Expected Size " << sizeof(StreamProcess) + sizeof(int);
-			std::cerr << std::endl;
+		StreamProcess sp;
+		if (!KOO_PARSE_JSON(sp, _json["sp"])) {
+			std::cerr << "Recevied Incorrect JSON of DESTROY " << std::endl;
 		}
 		else {
-			StreamProcess sp;
-			memcpy(&sp, zmq_msg_data(&data), sizeof(StreamProcess));
-			int channel = atoi((char*)zmq_msg_data(&data) + sizeof(StreamProcess));
+			int channel = _json["channel"];
 			int rc = g_StreamMgr->Destroy(sp, channel);
 			if (rc != 0) {
 				std::cerr << "StreamMgr Destroy failure, returns " << rc << std::endl;
@@ -172,68 +176,41 @@ int GetReturnRC(zmq_msg_t* data) {
 	return atoi(pBuf);
 }
 
-int SendCmd(const char* id, const char* cmd_str, const void* data_str, size_t len) {
+int SendCmd(const KZPacket& packet) {
 	void* sock = g_req_socket;
-	int rc = zmq_send(sock, id, strlen(id), ZMQ_SNDMORE);
-	if (rc == -1)
-		return rc;
-	rc = zmq_send(sock, cmd_str, strlen(cmd_str), ZMQ_SNDMORE);
-	if (rc == -1)
-		return rc;
-	rc = zmq_send(sock, data_str, len, 0);
-	if (rc == -1)
-		return rc;
-
-	zmq_msg_t rid;
-	zmq_msg_t cmd;
-	zmq_msg_t data;
-	zmq_msg_init(&rid);
-	zmq_msg_init(&cmd);
-	zmq_msg_init(&data);
-	int ret = -1;
-	rc = zmq_msg_recv(&rid, sock, 0);
-	if (rc == -1 || !zmq_msg_more(&rid))
-		goto LOGIN_RETURN;
-	rc = zmq_msg_recv(&cmd, sock, 0);
-	if (rc == -1 || !zmq_msg_more(&cmd))
-		goto LOGIN_RETURN;
-	rc = zmq_msg_recv(&data, sock, 0);
-	if (rc != -1 && !zmq_msg_more(&data)) {
-		if (COMPARE_MSG_STR(rid, id)) {
-			if (COMPARE_MSG_STR(cmd, cmd_str)) {
-				ret = GetReturnRC(&data);
-			} 
-			else if(COMPARE_MSG_STR(cmd, "TIMEOUT")) {
+	int rc = koo_zmq_send(sock, packet);
+	if (rc >= 0) {
+		KZPacket data;
+		rc = koo_zmq_recv(sock, data);
+		if (rc == 0) {
+			if (packet.cmd() == data.cmd())
+				return data.get("result");
+			else if (data.cmd() == "TIMEOUT")
 				return -10000;
-			} 
-			else {
+			else
 				return -20000;
-			}
 		}
-		else {
-			printf("Incorrect ID returned : %s\n", std::string((char*)zmq_msg_data(&data), zmq_msg_size(&data)).c_str());
-		}
-	}
-	while (zmq_msg_more(&data)) {
-		zmq_msg_recv(&data, sock, 0);
 	}
 
-LOGIN_RETURN:
-	zmq_msg_close(&rid);
-	zmq_msg_close(&cmd);
-	zmq_msg_close(&data);
-	return ret;
+	return rc;
 }
+
 int Login() {
-	return SendCmd("@DEVICE@", "LOGIN", g_sn, strlen(g_sn));
+	KZPacket packet("@DEVICE@", "LOGIN");
+	packet.set("sn", g_sn);
+	return SendCmd(packet);
 }
 
 int Logout() {
-	return SendCmd("@DEVICE@", "LOGOUT", g_sn, strlen(g_sn));
+	KZPacket packet("@DEVICE@", "LOGOUT");
+	packet.set("sn", g_sn);
+	return SendCmd(packet);
 }
 
 int Heartbeat() {
-	return SendCmd("@DEVICE@", "HEARTBEAT", g_sn, strlen(g_sn));
+	KZPacket packet("@DEVICE@", "HEARTBEAT");
+	packet.set("sn", g_sn);
+	return SendCmd(packet);
 }
 void Heartbeat_Timer(uv_timer_t* handle){
 	std::cout << "Send Heartbeat..." << std::endl;

@@ -180,6 +180,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\libs\api\api.vcxproj">
+      <Project>{847182ce-47fa-457e-beab-e6e58fc56ec0}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\libs\common\common.vcxproj">
       <Project>{ff5c36d8-7d75-4997-b83a-c1ef1619f8e9}</Project>
     </ProjectReference>

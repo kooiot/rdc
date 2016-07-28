@@ -154,6 +154,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AccApi.cpp" />
+    <ClCompile Include="DataJson.cpp" />
     <ClCompile Include="PluginApi.cpp" />
     <ClCompile Include="PluginLoader.cpp" />
     <ClCompile Include="ServicesApi.cpp" />
@@ -162,6 +163,7 @@
   <ItemGroup>
     <ClInclude Include="AccApi.h" />
     <ClInclude Include="DataDefs.h" />
+    <ClInclude Include="DataJson.h" />
     <ClInclude Include="PluginApi.h" />
     <ClInclude Include="PluginDefs.h" />
     <ClInclude Include="PluginLoader.h" />

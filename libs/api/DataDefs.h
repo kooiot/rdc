@@ -19,7 +19,7 @@ extern "C" {
 #define RC_MAX_IP_LEN 128
 #define RC_MAX_PATH 512
 #define RC_MAX_PLUGIN_NAME_LEN 32
-#define RC_MAX_PLUGIN_DATA_LEN 512
+#define RC_MAX_PLUGIN_DATA_LEN 2048
 
 #define RC_MAX_ONLINE_DEVICE 2048
 #define RC_MAX_ONLINE_USER 512
@@ -157,7 +157,7 @@ extern "C" {
 		char Phone[RC_MAX_PHONE_LEN];
 		time_t CreateTime; // In UTC
 		time_t ValidTime; // In UTC
-		ConnectionInfo Connections[RC_MAX_CONNECTION];
+		//ConnectionInfo Connections[RC_MAX_CONNECTION];
 	};
 
 	struct AllowInfo {
@@ -177,9 +177,6 @@ extern "C" {
 		int Port;
 		void* __inner;
 	};
-
-#define S_SUCCESS	"__SUCCESS__"
-#define S_FAILED	"__FAILED__"
 
 	enum StreamEvent {
 		SE_CONNECT = 0,
