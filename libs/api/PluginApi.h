@@ -24,16 +24,16 @@ extern "C" {
 	typedef int (__stdcall * PluginSendCB)(const char* buf, size_t len, void* ptr);
 	typedef int (__stdcall * PluginCloseCB)(void* ptr);
 
-	typedef RDC_PLUGIN_TYPE(__stdcall * FGetType)();
-	typedef const char* (__stdcall * FGetName)();
-	typedef long (__stdcall * FCreateHandle)(char *config,
+	typedef RDC_PLUGIN_TYPE(* FGetType)();
+	typedef const char* (* FGetName)();
+	typedef long (* FCreateHandle)(char *config,
 		PluginSendCB send,
 		PluginCloseCB close,
 		void* ptr);
-	typedef int (__stdcall * FDestory)(long Handle);
-	typedef int (__stdcall * FOpen)(long Handle);
-	typedef int (__stdcall * FClose)(long Handle);
-	typedef int (__stdcall * FWrite)(long Handle, const char* buf, size_t len);
+	typedef int (* FDestory)(long Handle);
+	typedef int (* FOpen)(long Handle);
+	typedef int (* FClose)(long Handle);
+	typedef int (* FWrite)(long Handle, const char* buf, size_t len);
 
 	typedef struct _PluginApi {
 #ifndef RDC_LINUX_SYS
