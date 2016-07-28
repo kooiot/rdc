@@ -2,6 +2,9 @@
 #include <cstring>
 #include <cassert>
 #include <cstdio>
+#include <json.hpp>
+
+using json = nlohmann::json;
 
 #ifdef RDC_LINUX_SYS
 #define LOAD_DLL_FUNC(HANDLE, FUNC, TYPE, NAME) \
@@ -42,7 +45,13 @@
 #endif
 
 const char* NO_GetInfo() {
-	return "";
+	static json info;
+	info["desc"] = "Plugin does not implement the GetInfo function.";
+	info["version"] = "0.0.0";
+	info["author"] = "Unknown";
+	static std::stringstream ss;
+	info >> ss;
+	return ss.str().c_str();
 }
 int RDC_PluginLoad(const char * dll, PluginApi * api)
 {
