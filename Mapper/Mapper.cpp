@@ -300,8 +300,17 @@ int main(int argc, char* argv[])
 	if (rc != 0)
 		exit(EXIT_FAILURE);
 	rc = Login();
-	if (rc != 0)
+	if (rc != 0) {
+		if (rc == -99) {
+			printf("Device SN not authed!\n");
+#ifndef RDC_LINUX_SYS
+			Sleep(5000);
+#else
+			sleep(5);
+#endif
+		}
 		exit(EXIT_FAILURE);
+	}
 	rc = create_sub_socket(ctx);
 	if (rc != 0)
 		exit(EXIT_FAILURE);

@@ -27,8 +27,13 @@ solution "rdc"
 		defines {"RDC_LINUX_SYS"}
 		location "build"
 		targetdir "bin"
-		includedirs {"libs/api"}
-		files {"libs/api/PluginApi.cpp", "libs/api/PluginLoader.cpp" }
+		includedirs {"libs/api", "libs/common/include"}
+		files {
+			"libs/api/**.h",
+			"libs/api/DataJson.cpp",
+			"libs/api/PluginApi.cpp",
+			"libs/api/PluginLoader.cpp",
+		}
 		links { "rt", "pthread"}
 
 		configuration "Debug"
@@ -49,7 +54,7 @@ solution "rdc"
 		targetdir "bin"
 		files {"./Mapper/**.h", "./Mapper/**.cpp" }
 		links { "dl", "pthread", "rt", "zmq", "enet", "uv", "serial", "api"}
-		includedirs { "libs/api", "libs/serial/include", "libs/enet/include", "libs/zeromq/include", "libs/libuv-v1.9.1/include" }
+		includedirs { "libs/api", "libs/common/include", "libs/serial/include", "libs/enet/include", "libs/zeromq/include", "libs/libuv-v1.9.1/include" }
 		libdirs {"libs/.libs"}
 		
 		configuration "Debug"

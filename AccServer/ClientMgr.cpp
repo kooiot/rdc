@@ -84,6 +84,9 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 				AddMapper(dev_sn);
 				nReturn = 0;
 			}
+		       	else {
+				nReturn = -99; // Not valid device
+			}
 		}
 		else {
 			std::cout << "Client LOGIN: " << cmd.id() << "\t" << cmd.get("pass") << std::endl;
