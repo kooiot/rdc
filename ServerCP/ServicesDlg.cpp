@@ -64,11 +64,8 @@ BOOL CServicesDlg::OnInitDialog()
 	if (!m_pApi->Connect())
 		MessageBox("Failed to connect to ServiceStater");
 
-	ServiceNode Nodes[64];
-	int rc = m_pApi->List(Nodes, 64);
+	int rc = m_pApi->List(m_Nodes, 64);
 	for (int i = 0; i < rc; ++i) {
-		memcpy(&m_Nodes[i], &Nodes[i], sizeof(ServiceNode));
-		m_Nodes[i].New = false;
 		int n = m_listServices.InsertItem(i, m_Nodes[i].Name);
 		m_listServices.SetItemText(n, 1, m_Nodes[i].Desc);
 	}
@@ -108,7 +105,7 @@ void CServicesDlg::BindService(int nCur, bool bEdit)
 	if (nCur < 0 || nCur > 64)
 		return;
 
-	ServiceNodeEx& info = m_Nodes[nCur];
+	ServiceNode& info = m_Nodes[nCur];
 	m_editName.SetWindowText(info.Name);
 	m_editDesc.SetWindowText(info.Desc);
 	m_editExec.SetWindowText(info.Exec);
@@ -119,7 +116,7 @@ void CServicesDlg::BindService(int nCur, bool bEdit)
 
 void CServicesDlg::DumpService(int nCur)
 {
-	ServiceNodeEx& info = m_Nodes[nCur];
+	ServiceNode& info = m_Nodes[nCur];
 
 	m_editName.GetWindowText(info.Name, RC_MAX_NAME_LEN);
 	m_editDesc.GetWindowText(info.Desc, RC_MAX_DESC_LEN);
@@ -136,12 +133,12 @@ void CServicesDlg::OnBnClickedButtonAdd()
 	char name[RC_MAX_NAME_LEN];
 	sprintf(name, "Services %d", nCur);
 	int n = m_listServices.InsertItem(nCur, name);
+	m_Nodes[n].Index = -1;
 	strcpy(m_Nodes[n].Name, name);
 	strcpy(m_Nodes[n].Desc, "");
 	strcpy(m_Nodes[n].Exec, "");
 	strcpy(m_Nodes[n].WorkDir, "");
 	strcpy(m_Nodes[n].Args, "");
-	m_Nodes[n].New = true;
 	m_listServices.SetItemState(nCur, LVNI_FOCUSED | LVIS_SELECTED, LVNI_FOCUSED | LVIS_SELECTED);
 	BindService(nCur, true);
 }
@@ -159,8 +156,8 @@ void CServicesDlg::OnBnClickedButtonDel()
 	}
 
 	ServiceNode& info = m_Nodes[m_CurSel];
-	if (strlen(info.Name) > 0) {
-		int rc = m_pApi->Delete(info.Name);
+	if (info.Index != -1) {
+		int rc = m_pApi->Delete(info.Index);
 		if (rc != 0) {
 			MessageBox("Delete Service Failed");
 			return;
@@ -186,19 +183,19 @@ void CServicesDlg::OnBnClickedButtonSave()
 	DumpService(m_CurSel);
 
 	ServiceNode& info = m_Nodes[m_CurSel];
-	if (m_Nodes[m_CurSel].New) {
+	if (m_Nodes[m_CurSel].Index == -1) {
 		int rc = m_pApi->Add(&info);
 		if (rc < 0) {
 			MessageBox("Add Device Failed");
 		}
 		else {
 			MessageBox("Add Device Done!");
-			m_Nodes[m_CurSel].New = false;
+			m_Nodes[m_CurSel].Index = rc;
 		}
 	}
 	else {
 		int rc = m_pApi->Modify(&info);
-		if (rc != 0) {
+		if (rc < 0) {
 			MessageBox("Modify Device Failed");
 		}
 		else {

@@ -36,6 +36,7 @@ void ServiceMgr::Load(const std::string& conf)
 
 		for (auto &node : doc) {
 			ServiceNode Node;
+			Node.Index = node["Index"];
 			GET_NODE_STRING(node, "Name", Node.Name, RC_MAX_NAME_LEN);
 			GET_NODE_STRING(node, "Desc", Node.Desc, RC_MAX_DESC_LEN);
 			GET_NODE_STRING(node, "Exec", Node.Exec, RC_MAX_PATH);
@@ -66,6 +67,7 @@ void ServiceMgr::Save()
 		ServiceNodeMap::iterator ptr = m_Nodes.begin();
 		for (; ptr != m_Nodes.end(); ++ptr, ++i) {
 			ServiceNodeEx* pNode = ptr->second;
+			doc[i]["Index"] = pNode->Index;
 			doc[i]["Name"] = pNode->Name;
 			doc[i]["Desc"] = pNode->Desc;
 			doc[i]["Exec"] = pNode->Exec;
@@ -141,6 +143,7 @@ void ServiceMgr::ProcessReq(void* socket)
 		ServiceNodeMap::iterator ptr = m_Nodes.begin();
 		for (; ptr != m_Nodes.end(); ++ptr, ++i) {
 			ServiceNodeEx* pNode = ptr->second;
+			doc[i]["Index"] = pNode->Index;
 			doc[i]["Name"] = pNode->Name;
 			doc[i]["Desc"] = pNode->Desc;
 			doc[i]["Exec"] = pNode->Exec;
@@ -153,9 +156,10 @@ void ServiceMgr::ProcessReq(void* socket)
 		return;
 	}
 	else if (packet.cmd() == "ADD") {
-		nlohmann::json doc = packet.get("result");
+		nlohmann::json doc = packet.get("node");
 		ServiceNode node;
 		std::string name = doc["Name"];
+		node.Index = doc["Index"];
 		GET_NODE_STRING(doc, "Name", node.Name, RC_MAX_NAME_LEN);
 		GET_NODE_STRING(doc, "Desc", node.Desc, RC_MAX_DESC_LEN);
 		GET_NODE_STRING(doc, "Exec", node.Exec, RC_MAX_PATH);
@@ -165,12 +169,13 @@ void ServiceMgr::ProcessReq(void* socket)
 		rc = AddNode(node);
 	}
 	else if (packet.cmd() == "DELETE") {
-		std::string name = packet.get("name");
-		rc = DeleteNode(name);
+		int index = packet.get("index");
+		rc = DeleteNode(index);
 	}
 	else if (packet.cmd() == "UPDATE") {
-		nlohmann::json doc = packet.get("result");
+		nlohmann::json doc = packet.get("node");
 		ServiceNode node;
+		node.Index = doc["Index"];
 		GET_NODE_STRING(doc, "Name", node.Name, RC_MAX_NAME_LEN);
 		GET_NODE_STRING(doc, "Desc", node.Desc, RC_MAX_DESC_LEN);
 		GET_NODE_STRING(doc, "Exec", node.Exec, RC_MAX_PATH);
@@ -180,26 +185,39 @@ void ServiceMgr::ProcessReq(void* socket)
 		rc = UpdateNode(node);
 	}
 	else if (packet.cmd() == "START") {
-		std::string name = packet.get("name");
-		rc = StartNode(name);
+		int index = packet.get("index");
+		rc = StartNode(index);
 	}
 	else if (packet.cmd() == "STOP") {
-		std::string name = packet.get("name");
-		rc = StopNode(name);
+		int index = packet.get("index");
+		rc = StopNode(index);
 	}
 	koo_zmq_send_result(socket, packet, rc);
 }
 
 int ServiceMgr::AddNode(const ServiceNode & node)
 {
-	ServiceNodeMap::iterator ptr = m_Nodes.find(node.Name);
-	if (ptr != m_Nodes.end()) {
+	if (node.Index != -1) {
 		return -1;
 	}
 	ServiceNodeEx* pNode = new ServiceNodeEx();
 	memcpy(pNode, &node, sizeof(ServiceNode));
 
-	m_Nodes[node.Name] = pNode;
+	int index = 0;
+	while (index < 64) {
+		auto ptr = m_Nodes.begin();
+		for (; ptr != m_Nodes.end(); ++ptr) {
+			if (ptr->first == index)
+				break;
+		}
+		if (ptr == m_Nodes.end())
+			break;
+	}
+	if (index >= 64)
+		return -1;
+
+	pNode->Index = index;
+	m_Nodes[index] = pNode;
 
 	if (pNode->Mode != SM_DISABLE) {
 		pNode->Process = new koo_process(node.Name, node.WorkDir, node.Exec, node.Args, g_bServerConsole);
@@ -214,26 +232,25 @@ int ServiceMgr::AddNode(const ServiceNode & node)
 		pNode->Process->start();
 
 	Save();
-	return 0;
+	return index;
 }
 
 int ServiceMgr::UpdateNode(const ServiceNode & node)
 {
-	ServiceNodeMap::iterator ptr = m_Nodes.find(node.Name);
+	ServiceNodeMap::iterator ptr = m_Nodes.find(node.Index);
 	if (ptr == m_Nodes.end()) {
 		return -1;
 	}
 	ServiceNodeEx* pNode = ptr->second;
 	memcpy(pNode, &node, sizeof(ServiceNode));
 
-	if (pNode->Mode == SM_DISABLE) {
-		if (pNode->Process) {
-			pNode->Process->stop();
-			delete pNode->Process;
-			pNode->Process = NULL;
-		}
+	if (pNode->Process) {
+		pNode->Process->stop();
+		delete pNode->Process;
+		pNode->Process = NULL;
 	}
-	else {
+
+	if (pNode->Mode != SM_DISABLE) {
 		if (pNode->Process == NULL) {
 			pNode->Process = new koo_process(pNode->Name, pNode->WorkDir, pNode->Exec, pNode->Args, g_bServerConsole);
 		}
@@ -247,9 +264,9 @@ int ServiceMgr::UpdateNode(const ServiceNode & node)
 	return 0;
 }
 
-int ServiceMgr::DeleteNode(const std::string & name)
+int ServiceMgr::DeleteNode(int index)
 {
-	ServiceNodeMap::iterator ptr = m_Nodes.find(name);
+	ServiceNodeMap::iterator ptr = m_Nodes.find(index);
 	if (ptr == m_Nodes.end()) {
 		return -1;
 	}
@@ -265,9 +282,9 @@ int ServiceMgr::DeleteNode(const std::string & name)
 	return 0;
 }
 
-int ServiceMgr::StartNode(const std::string & name)
+int ServiceMgr::StartNode(int index)
 {
-	ServiceNodeMap::iterator ptr = m_Nodes.find(name);
+	ServiceNodeMap::iterator ptr = m_Nodes.find(index);
 	if (ptr == m_Nodes.end()) {
 		return -1;
 	}
@@ -288,9 +305,9 @@ int ServiceMgr::StartNode(const std::string & name)
 	return 0;
 }
 
-int ServiceMgr::StopNode(const std::string & name)
+int ServiceMgr::StopNode(int index)
 {
-	ServiceNodeMap::iterator ptr = m_Nodes.find(name);
+	ServiceNodeMap::iterator ptr = m_Nodes.find(index);
 	if (ptr == m_Nodes.end()) {
 		return -1;
 	}

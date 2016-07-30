@@ -10,7 +10,7 @@ struct ServiceNodeEx : public ServiceNode
 	koo_process* Process;
 };
 
-typedef std::map<std::string, ServiceNodeEx*> ServiceNodeMap;
+typedef std::map<int, ServiceNodeEx*> ServiceNodeMap;
 
 class ServiceMgr
 {
@@ -27,9 +27,9 @@ private:
 	void ProcessReq(void* socket);
 	int AddNode(const ServiceNode& node);
 	int UpdateNode(const ServiceNode& node);
-	int DeleteNode(const std::string& name);
-	int StartNode(const std::string& name);
-	int StopNode(const std::string& name);
+	int DeleteNode(int index);
+	int StartNode(int index);
+	int StopNode(int index);
 private:
 	bool m_bAbort;
 	std::string m_Config;

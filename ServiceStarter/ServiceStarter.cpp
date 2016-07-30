@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
 #define stricmp _stricmp
 ServiceMgr g_ServiceMgr;
 
-#define RDC_RUN_SERVICES 1
+//#define RDC_RUN_SERVICES 1
 #ifndef RDC_RUN_SERVICES
 int APIENTRY WinMain(HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,

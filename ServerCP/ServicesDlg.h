@@ -36,10 +36,7 @@ protected:
 
 	int m_CurSel;
 	CServicesApi * m_pApi;
-	struct ServiceNodeEx : public ServiceNode {
-		bool New;
-	};
-	ServiceNodeEx m_Nodes[64];
+	ServiceNode m_Nodes[64];
 protected:
 	void BindService(int nCur, bool bEdit);
 	void DumpService(int nCur);

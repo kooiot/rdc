@@ -81,7 +81,9 @@ int CServicesApi::Disconnect()
 
 int CServicesApi::Add(const ServiceNode * node)
 {
+	assert(node->Index == -1);
 	nlohmann::json doc;
+	doc["Index"] = node->Index;
 	doc["Name"] = node->Name;
 	doc["Desc"] = node->Desc;
 	doc["Exec"] = node->Exec;
@@ -100,6 +102,7 @@ int CServicesApi::Add(const ServiceNode * node)
 int CServicesApi::Modify(const ServiceNode * node)
 {
 	nlohmann::json doc;
+	doc["Index"] = node->Index;
 	doc["Name"] = node->Name;
 	doc["Desc"] = node->Desc;
 	doc["Exec"] = node->Exec;
@@ -115,10 +118,10 @@ int CServicesApi::Modify(const ServiceNode * node)
 	return rc;
 }
 
-int CServicesApi::Delete(const char* name)
+int CServicesApi::Delete(int index)
 {
 	KZPacket packet("KOOIOT", "DELETE");
-	packet.set("name", name);
+	packet.set("index", index);
 
 	int rc = SendRequest(packet);
 
@@ -135,8 +138,7 @@ int CServicesApi::List(ServiceNode* list, int list_len, bool only_online)
 
 		for (auto &node : doc) {
 			ServiceNode* pNode = list + i;
-			std::string name = node["Name"];
-
+			pNode->Index = node["Index"];
 			GET_NODE_STRING(node, "Name", pNode->Name, RC_MAX_NAME_LEN);
 			GET_NODE_STRING(node, "Desc", pNode->Desc, RC_MAX_DESC_LEN);
 			GET_NODE_STRING(node, "Exec", pNode->Exec, RC_MAX_PATH);

@@ -18,7 +18,7 @@ public:
 
 	int Add(const ServiceNode* node);
 	int Modify(const ServiceNode* node);
-	int Delete(const char* name);
+	int Delete(int index);
 	int List(ServiceNode* list, int list_len, bool only_online = true);
 	int Start(const char* name);
 	int Stop(const char* name);

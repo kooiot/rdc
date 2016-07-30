@@ -202,6 +202,7 @@ extern "C" {
 		SM_AUTO = 2,
 	};
 	struct ServiceNode {
+		int Index;
 		char Name[RC_MAX_NAME_LEN];
 		char Desc[RC_MAX_DESC_LEN];
 		char Exec[RC_MAX_PATH];
