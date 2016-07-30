@@ -19,9 +19,13 @@ koo_process::koo_process(const std::string& rolename, const std::string& workpat
 
 int koo_process::stop()
 {
+	if (pid() > 0)
+	{
+		_close_process();
+	}
+
     if (trd_proc_control != 0)
     {
-        _close_process();
         {
             k_lock(lck, mtx_proc_control);
             m_run_flag = false;
@@ -228,8 +232,7 @@ int koo_process::wait_exec(int timeout /*= 2000*/)
 
 int koo_process::start_once(int timeout /*= 2000*/)
 {
-    _close_process();
-    int ret = _open_process();
+    int ret = start_exec();
     if (ret == K_OK)
     {
 		if (timeout > 0)

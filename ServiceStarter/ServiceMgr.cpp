@@ -85,8 +85,6 @@ void ServiceMgr::Save()
 
 void ServiceMgr::Run()
 {
-	m_bAbort = false;
-
 	void* ctx = zmq_ctx_new();
 	void* rep = zmq_socket(ctx, ZMQ_REP);
 
@@ -110,8 +108,6 @@ void ServiceMgr::Run()
 			ProcessReq(rep);
 		}
 	}
-	zmq_close(rep);
-	zmq_ctx_term(ctx);
 
 	// Close all services
 	//ServiceNodeMap::iterator ptr = m_Nodes.begin();
@@ -123,6 +119,8 @@ void ServiceMgr::Run()
 		}
 	}
 
+	zmq_close(rep);
+	zmq_ctx_term(ctx);
 }
 
 void ServiceMgr::Stop()
@@ -166,7 +164,10 @@ void ServiceMgr::ProcessReq(void* socket)
 		GET_NODE_STRING(doc, "WorkDir", node.WorkDir, RC_MAX_PATH);
 		GET_NODE_STRING(doc, "Args", node.Args, RC_MAX_PATH);
 		node.Mode = (ServiceMode)(int)doc["Mode"];
-		rc = AddNode(node);
+		if (node.Index == -1)
+			rc = AddNode(node);
+		else
+			rc = -1;
 	}
 	else if (packet.cmd() == "DELETE") {
 		int index = packet.get("index");
@@ -197,27 +198,28 @@ void ServiceMgr::ProcessReq(void* socket)
 
 int ServiceMgr::AddNode(const ServiceNode & node)
 {
-	if (node.Index != -1) {
-		return -1;
-	}
 	ServiceNodeEx* pNode = new ServiceNodeEx();
 	memcpy(pNode, &node, sizeof(ServiceNode));
 
-	int index = 0;
-	while (index < 64) {
-		auto ptr = m_Nodes.begin();
-		for (; ptr != m_Nodes.end(); ++ptr) {
-			if (ptr->first == index)
+	if (node.Index == -1) {
+		int index = 0;
+		while (index < 64) {
+			auto ptr = m_Nodes.begin();
+			for (; ptr != m_Nodes.end(); ++ptr) {
+				if (ptr->first == index)
+					break;
+			}
+			if (ptr == m_Nodes.end())
 				break;
+			index++;
 		}
-		if (ptr == m_Nodes.end())
-			break;
-	}
-	if (index >= 64)
-		return -1;
+		if (index >= 64)
+			return -1;
 
-	pNode->Index = index;
-	m_Nodes[index] = pNode;
+		pNode->Index = index;
+	}
+
+	m_Nodes[pNode->Index] = pNode;
 
 	if (pNode->Mode != SM_DISABLE) {
 		pNode->Process = new koo_process(node.Name, node.WorkDir, node.Exec, node.Args, g_bServerConsole);
@@ -232,7 +234,7 @@ int ServiceMgr::AddNode(const ServiceNode & node)
 		pNode->Process->start();
 
 	Save();
-	return index;
+	return pNode->Index;
 }
 
 int ServiceMgr::UpdateNode(const ServiceNode & node)
