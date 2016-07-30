@@ -57,7 +57,7 @@
 
 
 time_t str2time(const std::string &strTime);
-time_t str2time_utc(const std::string& strTime);
+//time_t str2time_utc(const std::string& strTime);
 
 const std::string time2str(const time_t *_Time = NULL);
-const std::string time2str_utc(const time_t *_Time = NULL);
+//const std::string time2str_utc(const time_t *_Time = NULL);

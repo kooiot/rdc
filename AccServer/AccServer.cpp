@@ -1,9 +1,12 @@
 ﻿// AccServer.cpp : 定义控制台应用程序的入口点。
 //
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <cassert>
 #include <zmq.h>
+#include <json.hpp>
+using json = nlohmann::json;
 
 #include "StreamServerMgr.h"
 #include "ClientMgr.h"
@@ -23,16 +26,59 @@ void on_close() {
 	zmq_ctx_term(ctx);
 }
 
+std::string GetModuleFilePath();
 
+void load_conf(std::string& bip, int& port_rep, int& port_pub, int& port_stream)
+{
+	try {
+#ifndef RDC_LINUX_SYS
+		std::ifstream file(GetModuleFilePath() + "\\AccServer.conf");
+#else
+		std::ifstream file(GetModuleFilePath() + "/acc.conf");
+#endif
+		json doc;
+		doc << file;
+		file.close();
+		bip = doc["ip"];
+		port_rep = doc["reply_port"];
+		port_pub = doc["public_port"];
+		port_stream = doc["stream_port"];
+	}
+	catch (...) {
 
+	}
+}
+
+void save_conf(const std::string& bip, int port_rep, int port_pub, int port_stream)
+{
+	try {
+#ifndef RDC_LINUX_SYS
+		std::ofstream file(GetModuleFilePath() + "\\AccServer.conf");
+#else
+		std::ofstream file(GetModuleFilePath() + "/acc.conf");
+#endif
+		json doc;
+		doc["ip"] = bip;
+		doc["reply_port"] = port_rep;
+		doc["public_port"] = port_pub;
+		doc["stream_port"] = port_stream;
+		doc >> file;
+		file.close();
+	}
+	catch (...) {
+
+	}
+}
 int main(int argc, char* argv[])
 {
 	int r = atexit(on_close);
 
-	const char* bip = "127.0.0.1";
+	std::string bip = "127.0.0.1";
 	int port_rep = 6600;
 	int port_pub = 6601;
 	int port_stream = 6602;
+
+	load_conf(bip, port_rep, port_pub, port_stream);
 
 	if (argc >= 2)
 		bip = argv[1];
@@ -47,11 +93,13 @@ int main(int argc, char* argv[])
 	std::cout << "Port_REP: \t" << port_rep << std::endl;
 	std::cout << "Port_PUB: \t" << port_pub << std::endl;
 	std::cout << "Port_STREAM: \t" << port_stream << std::endl;
-	
+
+	save_conf(bip, port_rep, port_pub, port_stream);
+
 	ctx = zmq_ctx_new();
 
-	void* sm_skt = StreamMgr.Init(ctx, bip, port_stream);
-	void* cli_skt = ClientMgr.Init(ctx, bip, port_rep, port_pub);
+	void* sm_skt = StreamMgr.Init(ctx, bip.c_str(), port_stream);
+	void* cli_skt = ClientMgr.Init(ctx, bip.c_str(), port_rep, port_pub);
 
 	//k_kill_process("StreamServer.exe");
 	std::stringstream args;

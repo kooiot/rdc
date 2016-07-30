@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include <iostream>
+#include <fstream>
 #include <cstdlib>
 #include <cstdio>
 #include <sstream>
@@ -59,13 +60,70 @@ bool send_remove_stream(int id, void* socket) {
 
 	return result.get("result");
 }
+
+std::string GetModuleFilePath();
+
+void load_conf(std::string& sip, int& sport, std::string& bip, int& bport)
+{
+	try {
+#ifndef RDC_LINUX_SYS
+		std::ifstream file(GetModuleFilePath() + "\\StreamServer.conf");
+#else
+		std::ifstream file(GetModuleFilePath() + "/stream.conf");
+#endif
+		json doc;
+		doc << file;
+		file.close();
+		sip = doc["server_ip"];
+		sport = doc["server_port"];
+		bip = doc["local_ip"];
+		bport = doc["local_port"];
+	}
+	catch (...) {
+
+	}
+}
+
+void save_conf(const std::string& sip, int sport, const std::string& bip, int bport)
+{
+	try {
+#ifndef RDC_LINUX_SYS
+		std::ofstream file(GetModuleFilePath() + "\\StreamServer.conf");
+#else
+		std::ofstream file(GetModuleFilePath() + "/stream.conf");
+#endif
+		json doc;
+		doc["server_ip"] = bip;
+		doc["server_port"] = sport;
+		doc["local_ip"] = bip;
+		doc["local_port"] = bport;
+		doc >> file;
+		file.close();
+	}
+	catch (...) {
+
+	}
+}
 int main(int argc, char* argv[])
 {
 	int id = RC_STREAM_SERVER_ID_BASE;
-	const char* sip = "127.0.0.1";
+	std::string sip = "127.0.0.1";
 	int sport = 6602;
-	const char* bip = "127.0.0.1";
+	std::string bip = "127.0.0.1";
 	int port = 6800;
+
+#ifndef _DEBUG
+	if (argc < 2) {
+		std::cerr << "You need input an stream server id [";
+		std::cerr << RC_STREAM_SERVER_ID_BASE;
+		std::cerr << " - ";
+		std::cerr << RC_STREAM_SERVER_ID_BASE + RC_MAX_STREAM_SERVER_COUNT - 1;
+		std::cerr << "]" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+#endif
+
+	load_conf(sip, sport, bip, port);
 
 	if (argc >= 2)
 		id = atoi(argv[1]);
@@ -78,7 +136,7 @@ int main(int argc, char* argv[])
 	if (argc >= 6)
 		port = atoi(argv[5]);
 
-	if (id < RC_STREAM_SERVER_ID_BASE || id > RC_STREAM_SERVER_ID_BASE + RC_MAX_STREAM_SERVER_COUNT)
+	if (id < RC_STREAM_SERVER_ID_BASE || id >= RC_STREAM_SERVER_ID_BASE + RC_MAX_STREAM_SERVER_COUNT)
 	{
 		std::cerr << "Invalid Stream Server id: " << id << std::endl;
 		std::cerr << "Valid From " << RC_STREAM_SERVER_ID_BASE;
@@ -92,15 +150,17 @@ int main(int argc, char* argv[])
 	std::cout << "Bind IP: \t" << bip << std::endl;
 	std::cout << "Bind Port: \t" << port << std::endl;
 
+	save_conf(sip, sport, bip, port);
+
 	enet_initialize();
 
 	ENetAddress address;
 	ENetHost * remote;
-	if (strcmp(bip, "*") == 0) {
+	if (bip == "*") {
 		address.host = ENET_HOST_ANY;
 	}
 	else {
-		enet_address_set_host(&address, bip);
+		enet_address_set_host(&address, bip.c_str());
 	}
 	address.port = port;
 
@@ -128,7 +188,7 @@ int main(int argc, char* argv[])
 
 	IPInfo info;
 	info.port = port;
-	sprintf(info.sip, "%s", bip);
+	sprintf(info.sip, "%s", bip.c_str());
 	if (!send_add_stream(id, req, info))
 		goto CLOSE;
 

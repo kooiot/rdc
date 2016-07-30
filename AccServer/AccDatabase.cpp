@@ -51,6 +51,8 @@ std::string GetModuleFilePath()
 
 time_t str2time(const std::string &strTime)
 {
+	if (strTime.empty())
+		return 0;
 	struct tm sTime;
 	sscanf(strTime.c_str(), "%d-%d-%d %d:%d:%d", &sTime.tm_year, &sTime.tm_mon, &sTime.tm_mday, &sTime.tm_hour, &sTime.tm_min, &sTime.tm_sec);
 	sTime.tm_year -= 1900;
@@ -58,10 +60,10 @@ time_t str2time(const std::string &strTime)
 	time_t ft = mktime(&sTime);
 	return ft;
 }
-time_t str2time_utc(const std::string& strTime) {
-	time_t t = str2time(strTime);
-	return t + 8 * 60 * 60;
-}
+//time_t str2time_utc(const std::string& strTime) {
+//	time_t t = str2time(strTime);
+//	return t + 8 * 60 * 60;
+//}
 
 const std::string time2str(const time_t *_Time = NULL) {
 	char buffer[80];
@@ -72,20 +74,20 @@ const std::string time2str(const time_t *_Time = NULL) {
 
 	return std::string(buffer);
 }
-const std::string time2str_utc(const time_t *_Time = NULL) {
-	char buffer[80];
-	time_t now = _Time != NULL ? *_Time : time(NULL);
-
-	struct tm * timeinfo = gmtime(&now);
-	strftime(buffer, 80, "%F %T", timeinfo);
-
-	return std::string(buffer);
-}
+//const std::string time2str_utc(const time_t *_Time = NULL) {
+//	char buffer[80];
+//	time_t now = _Time != NULL ? *_Time : time(NULL);
+//
+//	struct tm * timeinfo = gmtime(&now);
+//	strftime(buffer, 80, "%F %T", timeinfo);
+//
+//	return std::string(buffer);
+//}
 
 bool CheckValidTime(const std::string& valid_time) {
 
 	time_t now = time(NULL);
-	time_t valid = str2time_utc(valid_time);
+	time_t valid = str2time(valid_time);
 
 	return valid > now;
 }
@@ -392,7 +394,7 @@ int CAccDatabase::AddUser(const DbUserInfo& info, const std::string & passwd)
 	sql << "'" << passwd << "',";
 	sql << "'" << info.Email << "',";
 	sql << "'" << info.Phone << "',";
-	if (info.ValidTime != -1)
+	if (info.ValidTime != 0)
 		sql << "'" << time2str(&info.ValidTime) << "')";
 	else
 		sql << "NULL)";
@@ -473,7 +475,7 @@ int CAccDatabase::UpdateUser(const DbUserInfo& info, const std::string & passwd)
 	sql << "'" << passwd << "',";
 	sql << "'" << info.Email << "',";
 	sql << "'" << info.Phone << "',";
-	if (info.ValidTime != -1)
+	if (info.ValidTime != 0)
 		sql << "'" << time2str(&info.ValidTime) << "')";
 	else
 		sql << "NULL)";
@@ -547,7 +549,7 @@ int CAccDatabase::AddDevice(const DbDeviceInfo& info)
 	sql << "values('" << info.SN << "',";
 	sql << "'" << info.Name << "',";
 	sql << "'" << info.Desc << "',";
-	if (info.ValidTime != -1)
+	if (info.ValidTime != 0)
 		sql << "'" << time2str(&info.ValidTime) << "')";
 	else
 		sql << "NULL)";
@@ -622,7 +624,7 @@ int CAccDatabase::UpdateDevice(const DbDeviceInfo& info)
 	sql << "'" << info.SN << "',";
 	sql << "'" << info.Name << "',";
 	sql << "'" << info.Desc << "',";
-	if (info.ValidTime != -1)
+	if (info.ValidTime != 0)
 		sql << "'" << time2str(&info.ValidTime) << "')";
 	else
 		sql << "NULL)";
@@ -829,7 +831,7 @@ int CAccDatabase::_Allow(int user, int dev, time_t * _Time)
 	}
 	else {
 		sql << "insert into valid_time (uid, devid, valid_time) values(";
-		sql << user << ", " << dev << ", " << time2str_utc(_Time) << ")";
+		sql << user << ", " << dev << ", " << time2str(_Time) << ")";
 	}
 
 	std::string valid_time;

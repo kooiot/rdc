@@ -9,6 +9,8 @@
 
 time_t str2time(const std::string &strTime)
 {
+	if (strTime.empty())
+		return 0;
 	struct tm sTime;
 	sscanf(strTime.c_str(), "%d-%d-%d %d:%d:%d", &sTime.tm_year, &sTime.tm_mon, &sTime.tm_mday, &sTime.tm_hour, &sTime.tm_min, &sTime.tm_sec);
 	sTime.tm_year -= 1900;
@@ -16,10 +18,10 @@ time_t str2time(const std::string &strTime)
 	time_t ft = mktime(&sTime);
 	return ft;
 }
-time_t str2time_utc(const std::string& strTime) {
-	time_t t = str2time(strTime);
-	return t + 8 * 60 * 60;
-}
+//time_t str2time_utc(const std::string& strTime) {
+//	time_t t = str2time(strTime);
+//	return t + 8 * 60 * 60;
+//}
 
 const std::string time2str(const time_t *_Time) {
 	char buffer[80];
@@ -30,12 +32,12 @@ const std::string time2str(const time_t *_Time) {
 
 	return std::string(buffer);
 }
-const std::string time2str_utc(const time_t *_Time) {
-	char buffer[80];
-	time_t now = _Time != NULL ? *_Time : time(NULL);
-
-	struct tm * timeinfo = gmtime(&now);
-	strftime(buffer, 80, "%F %T", timeinfo);
-
-	return std::string(buffer);
-}
+//const std::string time2str_utc(const time_t *_Time) {
+//	char buffer[80];
+//	time_t now = _Time != NULL ? *_Time : time(NULL);
+//
+//	struct tm * timeinfo = gmtime(&now);
+//	strftime(buffer, 80, "%F %T", timeinfo);
+//
+//	return std::string(buffer);
+//}

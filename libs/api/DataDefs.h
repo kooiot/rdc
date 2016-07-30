@@ -141,8 +141,8 @@ extern "C" {
 		char SN[RC_MAX_SN_LEN];
 		char Name[RC_MAX_NAME_LEN];
 		char Desc[RC_MAX_DESC_LEN];
-		time_t CreateTime; // In UTC
-		time_t ValidTime; // In UTC
+		time_t CreateTime;
+		time_t ValidTime;
 	};
 
 	struct UserInfo
@@ -155,15 +155,15 @@ extern "C" {
 		char Passwd[RC_MAX_PASSWD_LEN];
 		char Email[RC_MAX_EMAIL_LEN];
 		char Phone[RC_MAX_PHONE_LEN];
-		time_t CreateTime; // In UTC
-		time_t ValidTime; // In UTC
+		time_t CreateTime;
+		time_t ValidTime;
 		//ConnectionInfo Connections[RC_MAX_CONNECTION];
 	};
 
 	struct AllowInfo {
 		char ID[RC_MAX_ID_LEN];
 		char DevSN[RC_MAX_SN_LEN];
-		time_t ValidTime; // In UTC
+		time_t ValidTime;
 	};
 	struct DenyInfo {
 		char ID[RC_MAX_ID_LEN];

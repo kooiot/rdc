@@ -6,7 +6,7 @@
 	strncpy(BUF, NODE[NAME].get<std::string>().c_str(), BUF_LEN)
 
 #define GET_NODE_TIME(NODE, NAME, VAL) \
-	VAL = str2time_utc(NODE[NAME].get<std::string>())
+	VAL = str2time(NODE[NAME].get<std::string>())
 
 #define GET_NODE_ENUM(NODE, NAME, ETYPE, VAL) \
 	VAL = (ETYPE)NODE[NAME].get<int>()
@@ -15,16 +15,14 @@ namespace koo {
 
 time_t str2time(const std::string &strTime)
 {
+	if (strTime.empty())
+		return 0;
 	struct tm sTime;
 	sscanf(strTime.c_str(), "%d-%d-%d %d:%d:%d", &sTime.tm_year, &sTime.tm_mon, &sTime.tm_mday, &sTime.tm_hour, &sTime.tm_min, &sTime.tm_sec);
 	sTime.tm_year -= 1900;
 	sTime.tm_mon -= 1;
 	time_t ft = mktime(&sTime);
 	return ft;
-}
-time_t str2time_utc(const std::string& strTime) {
-	time_t t = str2time(strTime);
-	return t + 8 * 60 * 60;
 }
 
 const std::string time2str(const time_t *_Time = NULL) {
@@ -36,17 +34,6 @@ const std::string time2str(const time_t *_Time = NULL) {
 
 	return std::string(buffer);
 }
-const std::string time2str_utc(const time_t *_Time = NULL) {
-	char buffer[80];
-	time_t now = _Time != NULL ? *_Time : time(NULL);
-
-	struct tm * timeinfo = gmtime(&now);
-	strftime(buffer, 80, "%F %T", timeinfo);
-
-	return std::string(buffer);
-}
-
-
 
 bool parse_json(SerialInfo& info, const json& j) {
 	try {
@@ -94,18 +81,17 @@ bool parse_json(ConnectionInfo& info, const json& j) {
 		GET_NODE_STRING(j, "dev_sn", info.DevSN, RC_MAX_SN_LEN);
 
 		bool ret = true;
-		const json& ij = j["info"];
 		switch(info.Type) {
 		case CT_SERIAL:
-			ret = parse_json(info.Serial, ij);
+			ret = parse_json(info.Serial, j["info"]);
 		case CT_TCPC:
-			ret = parse_json(info.TCPClient, ij);
+			ret = parse_json(info.TCPClient, j["info"]);
 		case CT_UDP:
-			ret = parse_json(info.UDP, ij);
+			ret = parse_json(info.UDP, j["info"]);
 		case CT_TCPS:
-			ret = parse_json(info.TCPServer, ij);
+			ret = parse_json(info.TCPServer, j["info"]);
 		case CT_PLUGIN:
-			ret = parse_json(info.Plugin, ij);
+			ret = parse_json(info.Plugin, j["info"]);
 		case CT_TEST:
 		default:
 			break;
@@ -208,8 +194,8 @@ json generate_json(const UserInfo& info) {
 	j["passwd"] = info.Passwd;
 	j["email"] = info.Email;
 	j["phone"] = info.Phone;
-	j["create_time"] = time2str_utc(&info.CreateTime);
-	j["valid_time"] = time2str_utc(&info.ValidTime);
+	j["create_time"] = time2str(&info.CreateTime);
+	j["valid_time"] = time2str(&info.ValidTime);
 	return j;
 }
 
@@ -219,8 +205,8 @@ json generate_json(const DeviceInfo& info) {
 	j["sn"] = info.SN;
 	j["name"] = info.Name;
 	j["desc"] = info.Desc;
-	j["create_time"] = time2str_utc(&info.CreateTime);
-	j["valid_time"] = time2str_utc(&info.ValidTime);
+	j["create_time"] = time2str(&info.CreateTime);
+	j["valid_time"] = time2str(&info.ValidTime);
 	return j;
 }
 
@@ -281,6 +267,7 @@ json generate_json(const ConnectionInfo& info) {
 			j["info"] = generate_json(info.Plugin);
 		case CT_TEST:
 		default:
+			j["info"] = "";
 			break;
 	}
 	return j;
@@ -306,7 +293,7 @@ json generate_json(const AllowInfo& info) {
 	json j;
 	j["id"] = info.ID;
 	j["dev_sn"] = info.DevSN;
-	j["valid_time"] = time2str_utc(&info.ValidTime);
+	j["valid_time"] = time2str(&info.ValidTime);
 	return j;
 }
 

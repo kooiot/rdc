@@ -132,14 +132,14 @@ void CUsersDlg::BindUser(int nCur, bool bEdit)
 		m_boxLevel.SetCurSel(1);
 	else
 		m_boxLevel.SetCurSel(0);
-	m_editCreateTime.SetWindowText(time2str_utc(&info.CreateTime).c_str());
+	m_editCreateTime.SetWindowText(time2str(&info.CreateTime).c_str());
 
-	if (info.ValidTime != -1) {
-		char buffer[80];
-		struct tm * timeinfo = gmtime(&info.ValidTime);
-		strftime(buffer, 80, "%Y/%m/%d", timeinfo);
+
+	CTime valid(info.ValidTime);
+	m_dtValid.SetTime(&valid);
+
+	if (info.ValidTime != 0) {
 		m_dtValid.EnableWindow(bEdit ? TRUE : FALSE);
-		m_dtValid.SetWindowText(buffer);
 		m_chkValid.SetCheck(1);
 	}
 	else {
@@ -178,7 +178,7 @@ void CUsersDlg::DumpUser(int nCur)
 		info.ValidTime = mktime(valid.GetGmtTm(&t));
 	}
 	else {
-		info.ValidTime = -1;
+		info.ValidTime = 0;
 	}
 
 	m_listUsers.SetItemText(nCur, 0, info.ID);
@@ -194,7 +194,7 @@ void CUsersDlg::OnBnClickedButtonAdd()
 	ASSERT(m_Users[n].Index == 0 && m_Users[n].CreateTime == 0);
 	m_Users[n].Index = -1;
 	m_Users[n].CreateTime = time(NULL);
-	m_Users[n].ValidTime = -1;
+	m_Users[n].ValidTime = 0;
 	sprintf(m_Users[n].ID, "%s", "New_User");
 	//m_listUsers.SetItem(nCur, 0, LVIF_STATE, NULL, 0, LVIS_SELECTED, LVIS_SELECTED, 0);
 	m_listUsers.SetItemState(nCur, LVNI_FOCUSED | LVIS_SELECTED, LVNI_FOCUSED | LVIS_SELECTED);
