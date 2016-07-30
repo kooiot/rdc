@@ -97,7 +97,8 @@ void save_conf(const std::string& sip, int sport, const std::string& bip, int bp
 		doc["server_port"] = sport;
 		doc["local_ip"] = bip;
 		doc["local_port"] = bport;
-		doc >> file;
+		std::cout << doc.dump(0) << std::endl;
+		file << doc.dump(0);
 		file.close();
 	}
 	catch (...) {

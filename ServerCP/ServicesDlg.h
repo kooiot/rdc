@@ -50,4 +50,7 @@ protected:
 	afx_msg void OnBnClickedButtonSave();
 	afx_msg void OnLvnItemchangedListServices(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMDblclkListServices(NMHDR *pNMHDR, LRESULT *pResult);
+public:
+	afx_msg void OnBnClickedButtonAcc();
+	afx_msg void OnBnClickedButtonStream();
 };

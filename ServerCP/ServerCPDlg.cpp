@@ -3,6 +3,7 @@
 //
 
 #include "stdafx.h"
+#include <winsvc.h>  
 #include "ServerCP.h"
 #include "ServerCPDlg.h"
 #include "afxdialogex.h"
@@ -58,9 +59,11 @@ END_MESSAGE_MAP()
 
 
 CServerCPDlg::CServerCPDlg(CWnd* pParent /*=NULL*/)
-	: CDialogEx(IDD_SERVERCP_DIALOG, pParent),
-	m_pProcess(NULL),
-	m_pMapperProcess(NULL)
+	: CDialogEx(IDD_SERVERCP_DIALOG, pParent)
+#ifdef CONSOLE_RUN
+	, m_pProcess(NULL)
+	, m_pMapperProcess(NULL)
+#endif
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_Users = new UserInfo[2048];
@@ -173,6 +176,8 @@ BOOL CServerCPDlg::OnInitDialog()
 
 	m_CTX = zmq_ctx_new();
 
+#ifdef CONSOLE_RUN
+
 #ifndef _DEBUG
 	m_ServerIP = "123.57.13.218";
 #else
@@ -192,6 +197,8 @@ BOOL CServerCPDlg::OnInitDialog()
 		RC_STREAM_SERVER_ID_BASE,
 		m_StreamServerPort);
 	m_editServerInfo.SetWindowText(info);
+
+#endif
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -241,12 +248,14 @@ void CServerCPDlg::OnPaint()
 void CServerCPDlg::OnClose()
 {
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
+#ifdef CONSOLE_RUN
 	if (m_pMapperProcess)
 		m_pMapperProcess->stop();
 	if (m_pProcess) {
 		m_pProcess->stop();
 		k_kill_process("StreamServer.exe");
 	}
+#endif
 	CDialogEx::OnClose();
 }
 
@@ -276,6 +285,7 @@ LRESULT CServerCPDlg::OnDataMsg(WPARAM wParam, LPARAM lParam)
 
 void CServerCPDlg::OnBnClickedButtonStart()
 {
+#ifdef CONSOLE_RUN
 	if (m_pProcess)
 	{
 		if (m_pMapperProcess)
@@ -311,6 +321,42 @@ void CServerCPDlg::OnBnClickedButtonStart()
 		m_pMapperProcess->start();
 		GetDlgItem(IDC_BUTTON_START)->SetWindowText("Stop");
 	}
+#else
+	TCHAR szServiceName[] = _T("KooIoT_Service_Starter");
+	SERVICE_STATUS ssStatus;
+
+	//获得ServiceControl Manager的句柄     
+	SC_HANDLE shServiceManager = OpenSCManager(NULL, SERVICES_ACTIVE_DATABASE, SC_MANAGER_ALL_ACCESS);
+
+	//然后获得用户希望检查的服务的句柄     
+	SC_HANDLE shDefineService = OpenService(shServiceManager, szServiceName, SERVICE_ALL_ACCESS);
+
+	if ((QueryServiceStatus(shDefineService, &ssStatus)) == 0)
+	{
+		AfxMessageBox(_T("无法确定服务状态"), MB_ICONINFORMATION);
+	}
+
+	//下面的代码用于检查服务是否被停止,如果停止则打开此服务     
+	SC_HANDLE stService;
+	if (ssStatus.dwCurrentState == SERVICE_STOPPED)
+	{
+		//AfxMessageBox("启动Tomcat8服务",MB_ICONINFORMATION);     
+		stService = OpenService(shServiceManager, szServiceName, SERVICE_START | GENERIC_EXECUTE);
+		StartService(stService, 0, NULL);
+		CloseServiceHandle(stService);
+		GetDlgItem(IDC_BUTTON_START)->SetWindowText("Stop");
+	}
+	else  //如果是运行状态就停止  
+	{     
+	  //AfxMessageBox("停止Tomcat8服务",MB_ICONINFORMATION);     
+	  stService=OpenService(shServiceManager, szServiceName,SERVICE_STOP|GENERIC_EXECUTE);
+	  ControlService(stService,SERVICE_CONTROL_STOP,&ssStatus);     
+	  CloseServiceHandle(stService);   
+	  GetDlgItem(IDC_BUTTON_START)->SetWindowText("Start");
+	}
+	CloseServiceHandle(shDefineService);
+	CloseServiceHandle(shServiceManager);
+#endif
 }
 
 void CServerCPDlg::OnBnClickedButtonConnect()
@@ -329,7 +375,11 @@ void CServerCPDlg::OnBnClickedButtonConnect()
 	else {
 		// TODO: 在此添加控件通知处理程序代码
 		m_pAccApi = new CAccApi(m_CTX);
+#ifdef CONSOLE_RUN
 		bool br = m_pAccApi->Connect(m_ServerIP.c_str(), m_ServerRepPort, "admin", "admin");
+#else
+		bool br = m_pAccApi->Connect("127.0.0.1", 6600, "admin", "admin");
+#endif
 		if (br) {
 			MessageBox("Connected");
 			StreamProcess sp;

@@ -41,6 +41,8 @@ BEGIN_MESSAGE_MAP(CServicesDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_SAVE, &CServicesDlg::OnBnClickedButtonSave)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_SERVICES, &CServicesDlg::OnLvnItemchangedListServices)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_SERVICES, &CServicesDlg::OnNMDblclkListServices)
+	ON_BN_CLICKED(IDC_BUTTON_ACC, &CServicesDlg::OnBnClickedButtonAcc)
+	ON_BN_CLICKED(IDC_BUTTON_STREAM, &CServicesDlg::OnBnClickedButtonStream)
 END_MESSAGE_MAP()
 
 
@@ -219,4 +221,55 @@ void CServicesDlg::OnNMDblclkListServices(NMHDR *pNMHDR, LRESULT *pResult)
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	BindService(pNMItemActivate->iItem, true);
 	*pResult = 0;
+}
+
+
+void CServicesDlg::OnBnClickedButtonAcc()
+{
+	if (m_CurSel == -1) {
+		return;
+	}
+
+	if (LVIS_SELECTED != m_listServices.GetItemState(m_CurSel, LVIS_SELECTED)) {
+		return;
+	}
+
+	ServiceNode& info = m_Nodes[m_CurSel];
+	sprintf(info.Name, "Acc Server %d", m_CurSel);
+	sprintf(info.Desc, "Default Acc Server %d", m_CurSel);
+	sprintf(info.Exec, "AccServer.exe");
+	sprintf(info.WorkDir, "");
+	std::string bip = "127.0.0.1";
+	int port_rep = 6600;
+	int port_pub = 6601;
+	int port_stream = 6602;
+	sprintf(info.Args, "%s %d %d %d", bip.c_str(), port_rep, port_pub, port_stream);
+
+	BindService(m_CurSel, true);
+}
+
+
+void CServicesDlg::OnBnClickedButtonStream()
+{
+	if (m_CurSel == -1) {
+		return;
+	}
+
+	if (LVIS_SELECTED != m_listServices.GetItemState(m_CurSel, LVIS_SELECTED)) {
+		return;
+	}
+
+	ServiceNode& info = m_Nodes[m_CurSel];
+	sprintf(info.Name, "Stream Server %d", m_CurSel);
+	sprintf(info.Desc, "Default Stream Server %d", m_CurSel);
+	sprintf(info.Exec, "StreamServer.exe");
+	sprintf(info.WorkDir, "");
+	int id = RC_STREAM_SERVER_ID_BASE + m_CurSel;
+	std::string sip = "127.0.0.1";
+	int sport = 6602;
+	std::string bip = "127.0.0.1";
+	int bport = 6800;
+	sprintf(info.Args, "%d %s %d %s %d", id, sip.c_str(), sport, bip.c_str(), bport);
+
+	BindService(m_CurSel, true);
 }

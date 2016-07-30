@@ -43,6 +43,7 @@ void load_conf(std::string& bip, int& port_rep, int& port_pub, int& port_stream)
 		port_rep = doc["reply_port"];
 		port_pub = doc["public_port"];
 		port_stream = doc["stream_port"];
+
 	}
 	catch (...) {
 
@@ -62,7 +63,9 @@ void save_conf(const std::string& bip, int port_rep, int port_pub, int port_stre
 		doc["reply_port"] = port_rep;
 		doc["public_port"] = port_pub;
 		doc["stream_port"] = port_stream;
-		doc >> file;
+
+		std::cout << doc.dump(0) << std::endl;
+		file << doc.dump(0);
 		file.close();
 	}
 	catch (...) {

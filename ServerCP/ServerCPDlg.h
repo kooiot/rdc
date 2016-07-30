@@ -31,6 +31,7 @@ public:
 // й╣ож
 protected:
 	HICON m_hIcon;
+#ifdef CONSOLE_RUN
 	std::string m_ServerIP;
 	int m_ServerRepPort;
 	int m_ServerPubPort;
@@ -40,6 +41,7 @@ protected:
 	koo_process* m_pProcess;
 	koo_process* m_pStreamProcess;
 	koo_process* m_pMapperProcess;
+#endif
 	CAccApi* m_pAccApi;
 	CStreamApi* m_pStreamApi;
 	void* m_CTX;
