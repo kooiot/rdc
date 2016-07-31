@@ -11,6 +11,8 @@ class koo_process;
 #define WM_USER_DATA WM_USER + 100
 #define WM_USER_EVENT WM_USER + 100
 
+#define CONSOLE_RUN
+
 // CServerCPDlg ¶Ô»°¿ò
 class CServerCPDlg : public CDialogEx, IStreamHandler
 {

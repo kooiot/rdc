@@ -84,14 +84,19 @@ bool parse_json(ConnectionInfo& info, const json& j) {
 		switch(info.Type) {
 		case CT_SERIAL:
 			ret = parse_json(info.Serial, j["info"]);
+			break;
 		case CT_TCPC:
 			ret = parse_json(info.TCPClient, j["info"]);
+			break;
 		case CT_UDP:
 			ret = parse_json(info.UDP, j["info"]);
+			break;
 		case CT_TCPS:
 			ret = parse_json(info.TCPServer, j["info"]);
+			break;
 		case CT_PLUGIN:
 			ret = parse_json(info.Plugin, j["info"]);
+			break;
 		case CT_TEST:
 		default:
 			break;
@@ -257,14 +262,19 @@ json generate_json(const ConnectionInfo& info) {
 	switch(info.Type) {
 		case CT_SERIAL:
 			j["info"] = generate_json(info.Serial);
+			break;
 		case CT_TCPC:
 			j["info"] = generate_json(info.TCPClient);
+			break;
 		case CT_UDP:
 			j["info"] = generate_json(info.UDP);
+			break;
 		case CT_TCPS:
 			j["info"] = generate_json(info.TCPServer);
+			break;
 		case CT_PLUGIN:
 			j["info"] = generate_json(info.Plugin);
+			break;
 		case CT_TEST:
 		default:
 			j["info"] = "";

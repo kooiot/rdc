@@ -63,9 +63,7 @@ void handle_sub_msg(zmq_msg_t& cmd, zmq_msg_t& data) {
 			}
 		}
 		else {
-			std::cerr << "Recevied Incorrect Size of CREATE " << std::endl;
-			std::cerr << "Received Size " << zmq_msg_size(&data);
-			std::cerr << " Expected Size " << sizeof(StreamProcess) + sizeof(ConnectionInfo);
+			std::cerr << "Recevied Incorrect CREATE JSON" << std::endl;
 			std::cerr << std::endl;
 		}
 	}
