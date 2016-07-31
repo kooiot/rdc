@@ -14,7 +14,7 @@ project "serial"
 
 	filter "configurations:Debug"
 		defines { "DEBUG" }
-		flags { "Symbols" }
+		symbols "On"
 
 	filter "configurations:Release"
 		defines { "NDEBUG" }
@@ -38,7 +38,7 @@ project "api"
 
 	filter "configurations:Debug"
 		defines { "DEBUG" }
-		flags { "Symbols" }
+		symbols "On"
 
 	filter "configurations:Release"
 		defines { "NDEBUG" }
@@ -52,14 +52,14 @@ project "mapper"
 	location "build"
 	targetdir "bin/%{cfg.buildcfg}"
 
-	files {"./Mapper/**.h", "./Mapper/**.cpp" }
+	files {"Mapper/**.h", "Mapper/**.cpp" }
 	links { "dl", "pthread", "rt", "zmq", "enet", "uv", "serial", "api"}
 	includedirs { "libs/api", "libs/common/include", "libs/serial/include", "libs/enet/include", "libs/zeromq/include", "libs/libuv-v1.9.1/include" }
 	libdirs {"libs/.libs"}
 
 	filter "configurations:Debug"
 		defines { "DEBUG" }
-		flags { "Symbols" }
+		symbols "On"
 
 	filter "configurations:Release"
 		defines { "NDEBUG" }
@@ -73,14 +73,14 @@ project "example"
 	location "build/plugins"
 	targetdir "bin/%{cfg.buildcfg}/plugins"
 
-	files {"./Plugins/Example/**.h", "./Plugins/Example/**.cpp" }
+	files {"Plugins/Example/**.h", "Plugins/Example/**.cpp" }
 	links { "pthread", "rt"}
 	includedirs { "libs/api" }
 	libdirs {"libs/.libs"}
 
 	filter "configurations:Debug"
 		defines { "DEBUG" }
-		flags { "Symbols" }
+		symbols "On"
 
 	filter "configurations:Release"
 		defines { "NDEBUG" }

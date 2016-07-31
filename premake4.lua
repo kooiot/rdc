@@ -69,9 +69,10 @@ solution "rdc"
 		kind "SharedLib"
 		platforms {"Native"}
 		language "C++"
+		defines {"RDC_LINUX_SYS"}
 		location "build"
 		includedirs {"libs/api"}
-		files {"libs/Plugins/Example/**.h", "libs/Plugins/Example/**.cpp" }
+		files {"Plugins/Example/**.h", "Plugins/Example/**.cpp" }
 		links { "rt", "pthread"}
 
 		configuration "Debug"

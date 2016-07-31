@@ -14,7 +14,7 @@ project "common"
 
 	filter "configurations:Debug"
 		defines { "DEBUG" }
-		flags { "Symbols" }
+		symbols "On"
 
 	filter "configurations:Release"
 		defines { "NDEBUG" }
@@ -32,7 +32,7 @@ project "serial"
 
 	filter "configurations:Debug"
 		defines { "DEBUG" }
-		flags { "Symbols" }
+		symbols "On"
 
 	filter "configurations:Release"
 		defines { "NDEBUG" }
@@ -52,7 +52,7 @@ project "api"
 
 	filter "configurations:Debug"
 		defines { "DEBUG" }
-		flags { "Symbols" }
+		symbols "On"
 
 	filter "configurations:Release"
 		defines { "NDEBUG" }
@@ -73,7 +73,7 @@ project "acc"
 
 	filter "configurations:Debug"
 		defines { "DEBUG" }
-		flags { "Symbols" }
+		symbols "On"
 
 	filter "configurations:Release"
 		defines { "NDEBUG" }
@@ -94,7 +94,7 @@ project "stream"
 
 	filter "configurations:Debug"
 		defines { "DEBUG" }
-		flags { "Symbols" }
+		symbols "On"
 
 	filter "configurations:Release"
 		defines { "NDEBUG" }
@@ -115,7 +115,7 @@ project "starter"
 
 	filter "configurations:Debug"
 		defines { "DEBUG" }
-		flags { "Symbols" }
+		symbols "On"
 
 	filter "configurations:Release"
 		defines { "NDEBUG" }
@@ -136,7 +136,7 @@ project "mapper"
 
 	filter "configurations:Debug"
 		defines { "DEBUG" }
-		flags { "Symbols" }
+		symbols "On"
 
 	filter "configurations:Release"
 		defines { "NDEBUG" }
@@ -157,7 +157,7 @@ project "example"
 
 	filter "configurations:Debug"
 		defines { "DEBUG" }
-		flags { "Symbols" }
+		symbols "On"
 
 	filter "configurations:Release"
 		defines { "NDEBUG" }
