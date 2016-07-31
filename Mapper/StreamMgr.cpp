@@ -267,14 +267,9 @@ int StreamMgr::Destroy(const StreamProcess& StreamServer, int channel)
 			IStreamPort* pPort = m_PeerChannel2Port[std::make_pair(m_Peers[i], channel)];
 			if (pPort) {
 				m_PendingClosePorts.push_back(pPort);
+				return 0;
 			}
-
-			long& count = *(long*)&m_Peers[i]->data;
-			count--;
-			if (count <= 0) {
-				m_PendingClose.push_back(i);
-			}
-			return 0;
+			break;
 		}
 	}
 	return -1;
@@ -319,6 +314,13 @@ int StreamMgr::ProcessPending()
 	std::list<int>::iterator ptr = m_PendingClose.begin();
 	for (; ptr != m_PendingClose.end(); ++ptr) {
 		int i = *ptr;
+		if (!m_Peers[i]) {
+			printf("What happed!!! my GOD!!!!\n");
+			if (m_StreamServers[i]) {
+				printf("StreamServer[i] is not empty\n");
+			}
+			continue;
+		}
 		enet_peer_disconnect_later(m_Peers[i], 0);
 
 		delete m_StreamServers[i];

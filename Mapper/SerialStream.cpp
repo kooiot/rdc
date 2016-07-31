@@ -27,7 +27,7 @@ bool SerialStream::Open()
 	try {
 		m_Serial = new Serial(m_Info.ConnInfo.Serial.dev,
 			m_Info.ConnInfo.Serial.baudrate,
-			Timeout::simpleTimeout(1000),
+			Timeout::simpleTimeout(100),
 			(bytesize_t)m_Info.ConnInfo.Serial.bytesize,
 			(parity_t)m_Info.ConnInfo.Serial.parity,
 			(stopbits_t)m_Info.ConnInfo.Serial.stopbits,
@@ -95,15 +95,18 @@ void SerialStream::Run()
 #endif
 		return;
 	}
+
+#ifdef RDC_LINUX_SYS
+	if (!m_Serial->waitReadable())
+		return;
+	int len = m_Serial->read(buf, 1024);
+#else
 	int len = m_Serial->read(buf, 1024);
 	if (len == 0) {
-//#ifdef RDC_LINUX_SYS
-//		usleep(50 * 1000);
-//#else
-//		Sleep(50);
-//#endif
+		Sleep(1);
 		return;
 	}
+#endif
 	SendData(buf, len);
 }
 

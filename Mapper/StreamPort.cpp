@@ -36,8 +36,9 @@ int StreamPortBase::OnClientData(void * data, size_t len)
 	char* pbuf = (char*)data;
 	pbuf += sizeof(int);
 
+	printf("Write To Port len: %d  ", len - sizeof(int));
 	int n = this->OnWrite((uint8_t*)pbuf, len - sizeof(int));
-	printf("Write To Port len: %d  returns: %d\n", len - sizeof(int), n);
+	printf(" returns: %d\n", n);
 	return n;
 }
 
