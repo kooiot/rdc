@@ -41,7 +41,8 @@ bool CPort::Open()
 			m_Send("Hello World", strlen("Hello World"), m_ptr);
 		}
 
-		m_Close(m_ptr);
+		if (!m_bAbort)
+			m_Close(m_ptr);
 	});
 	return true;
 }

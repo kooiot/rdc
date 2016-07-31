@@ -43,10 +43,11 @@ bool parse_json(SerialInfo& info, const json& j) {
 		GET_NODE_ENUM(j, "parity", parity, info.parity);
 		GET_NODE_ENUM(j, "stopbits", stopbits, info.stopbits);
 		GET_NODE_ENUM(j, "flowcontrol", flowcontrol, info.flowcontrol);
+		return true;
 	}
 	catch(...) {
+		return false;
 	}
-	return false;
 }
 
 bool parse_json(TCPClientInfo& info, const json& j) {
@@ -70,8 +71,9 @@ bool parse_json(PluginInfo& info, const json& j) {
 		GET_NODE_STRING(j, "data", info.Data, RC_MAX_PLUGIN_DATA_LEN);
 		return true;
 	}
-	catch(...) {}
-	return false;
+	catch (...) {
+		return false;
+	}
 }
 
 bool parse_json(ConnectionInfo& info, const json& j) {
@@ -103,9 +105,9 @@ bool parse_json(ConnectionInfo& info, const json& j) {
 		}
 		return ret;
 	}
-	catch(...) {
+	catch (...) {
+		return false;
 	}
-	return false;
 }
 
 bool parse_json(DeviceInfo& info, const json& j) {
@@ -161,8 +163,9 @@ bool parse_json(IPInfo& info, const json& j) {
 		info.port = j["port"];
 		return true;
 	}
-	catch(...) {}
-	return false;
+	catch (...) {
+		return false;
+	}
 
 }
 

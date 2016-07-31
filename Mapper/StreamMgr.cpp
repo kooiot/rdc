@@ -218,27 +218,34 @@ int StreamMgr::Create(const StreamProcess& StreamServer, const ConnectionInfo & 
 	switch (info.Type) {
 	case CT_SERIAL:
 		pPort = new SerialStream(spi);
+		printf("Serial Port\n");
 		break;
 	case CT_TCPC:
 		pPort = new TcpClientStream(m_UVLoop, spi);
+		printf("TCPC Port\n");
 		break;
 	case CT_UDP:
 		pPort = new UdpStream(m_UVLoop, spi);
+		printf("UDP Port\n");
 		break;
 	case CT_PLUGIN:
 		pPort = new PluginStream(g_PluginLoader, spi);
+		printf("Plugin Port\n");
 		break;
 	default:
 		pPort = new TestStream(spi);
+		printf("Test Port\n");
 		break;
 	}
 	if (!pPort) {
 		return -1;
 	}
 	if (peer->state != ENET_PEER_STATE_CONNECTED) {
+		printf("Add Pending Port\n");
 		m_PendingPorts[peer].push_back(pPort);
 	}
 	else {
+		printf("Open Port\n");
 		pPort->Open();
 	}
 
@@ -259,10 +266,7 @@ int StreamMgr::Destroy(const StreamProcess& StreamServer, int channel)
 		{
 			IStreamPort* pPort = m_PeerChannel2Port[std::make_pair(m_Peers[i], channel)];
 			if (pPort) {
-				pPort->Close();
-				m_PendingDelete.push_back(pPort);
-				m_PortInfo.erase(pPort);
-				m_PeerChannel2Port[std::make_pair(m_Peers[i], channel)] = NULL;
+				m_PendingClosePorts.push_back(pPort);
 			}
 
 			long& count = *(long*)&m_Peers[i]->data;

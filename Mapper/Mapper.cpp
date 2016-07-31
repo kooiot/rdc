@@ -41,11 +41,12 @@ void handle_sub_msg(zmq_msg_t& cmd, zmq_msg_t& data) {
 	pCmd = pCmd + strlen(g_sn) + 1;
 
 	json _json;
-	char* str = (char*)zmq_msg_data(&data);
+	std::string str((char*)zmq_msg_data(&data), zmq_msg_size(&data));
 	try {
 		_json = json::parse(str);
 	}
 	catch (...) {
+		std::cerr << "Json Parse Exception!!! " << std::endl;
 		return;
 	}
 
@@ -64,7 +65,6 @@ void handle_sub_msg(zmq_msg_t& cmd, zmq_msg_t& data) {
 		}
 		else {
 			std::cerr << "Recevied Incorrect CREATE JSON" << std::endl;
-			std::cerr << std::endl;
 		}
 	}
 	else if (0 == strncmp(pCmd, "DESTROY", strlen("DESTROY"))) {
@@ -284,7 +284,8 @@ int main(int argc, char* argv[])
 #ifndef RDC_LINUX_SYS
 	std::string plugin_folder = GetModuleFilePath() + "\\plugins";
 #else
-	std::string plugin_folder = GetModuleFilePath() + "/plugins";
+	//std::string plugin_folder = GetModuleFilePath() + "/plugins";
+	std::string plugin_folder = "plugins";
 #endif
 	g_PluginLoader.Load(plugin_folder.c_str());
 
