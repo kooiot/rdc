@@ -23,6 +23,7 @@ StreamMgr::StreamMgr(uv_loop_t * uv_loop)
 	: m_UVLoop(uv_loop), m_ClientHost(NULL), m_pThread(NULL), m_bAbort(false)
 {
 	memset(m_Peers, 0, sizeof(ENetPeer*) * RC_MAX_CONNECTION);
+	memset(m_StreamServers, 0, sizeof(StreamProcess*) * RC_MAX_CONNECTION);
 }
 
 

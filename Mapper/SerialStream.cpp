@@ -25,13 +25,14 @@ bool SerialStream::Open()
 {
 	printf("Open Serial On PORT %s", m_Info.ConnInfo.Serial.dev);
 	try {
-		m_Serial = new Serial(m_Info.ConnInfo.Serial.dev,
+		auto s = new Serial(m_Info.ConnInfo.Serial.dev,
 			m_Info.ConnInfo.Serial.baudrate,
 			Timeout::simpleTimeout(100),
 			(bytesize_t)m_Info.ConnInfo.Serial.bytesize,
 			(parity_t)m_Info.ConnInfo.Serial.parity,
 			(stopbits_t)m_Info.ConnInfo.Serial.stopbits,
 			(flowcontrol_t)m_Info.ConnInfo.Serial.flowcontrol);
+		m_Serial = s;
 	}
 	catch (const IOException& ex) {
 		printf("%s\n", ex.what());
@@ -78,7 +79,11 @@ void SerialStream::Close()
 	delete m_pThread;
 	m_pThread = NULL;
 
-	m_Serial->close();
+	if (m_Serial) {
+		m_Serial->close();
+	}
+	delete m_Serial;
+	m_Serial = NULL;
 
 	FireEvent(SE_CHANNEL_CLOSED);
 }

@@ -50,11 +50,11 @@ void ServiceMgr::Load(const std::string& conf)
 	}
 	catch (const std::exception& ex)
 	{
-		std::cerr << "Failed loading ini file " << ex.what() <<  std::endl;
+		std::cerr << "Loading json conf file exception: " << ex.what() <<  std::endl;
 	}
 	catch (...)
 	{
-		std::cerr << "Failed loading ini file" << std::endl;
+		std::cerr << "Loading json conf file unknown exception." <<  std::endl;
 	}
 }
 
