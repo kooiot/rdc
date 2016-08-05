@@ -166,7 +166,7 @@ int main(int argc, char* argv[])
 	address.port = port;
 
 	remote = enet_host_create(&address /* the address to bind the server host to */,
-		RC_MAX_CONNECTION_PER_SERVER      /* allow up to 32 clients and/or outgoing connections */,
+		RC_MAX_CONNECTION_PER_SERVER * RC_MAX_CONNECTION      /* allow up to 32 clients and/or outgoing connections */,
 		RC_MAX_CONNECTION + 1      /* allow up to 2 channels to be used, 0 and 1 */,
 		0      /* assume any amount of incoming bandwidth */,
 		0      /* assume any amount of outgoing bandwidth */);
@@ -226,14 +226,20 @@ int main(int argc, char* argv[])
 				ClientMapperMap[nIndex].push_back(data);
 			}
 			else if (nType == CLIENT_TYPE) {
-				// This is the client
-				ENetPeer* pOldPeer = ClientPeers[nIndex];
-				// This is the mapper
-				if (pOldPeer != NULL && pOldPeer != event.peer) {
-					printf("New client for index %u, disconnect old one\n", nIndex);
-					enet_peer_disconnect(pOldPeer, -2);
+				if (nIndex < 0 || nIndex > RC_MAX_CONNECTION_PER_SERVER) {
+					printf("Connection index is incorrect %d\n", nIndex);
+					enet_peer_disconnect(pOldPeer, -99);
 				}
-				ClientPeers[nIndex] = event.peer;
+				else {
+					// This is the client
+					ENetPeer* pOldPeer = ClientPeers[nIndex];
+					// This is the mapper
+					if (pOldPeer != NULL && pOldPeer != event.peer) {
+						printf("New client for index %u, disconnect old one\n", nIndex);
+						enet_peer_disconnect(pOldPeer, -2);
+					}
+					ClientPeers[nIndex] = event.peer;
+				}
 			}
 			else {
 				printf("Incorrect client type %u\n", nType);
