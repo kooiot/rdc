@@ -20,6 +20,7 @@ extern "C" {
 #define RC_MAX_PATH 512
 #define RC_MAX_PLUGIN_NAME_LEN 32
 #define RC_MAX_PLUGIN_DATA_LEN 2048
+#define RC_MAX_PEVENT_MSG_LEN 128
 
 #define RC_MAX_ONLINE_DEVICE 2048
 #define RC_MAX_ONLINE_USER 512
@@ -173,7 +174,7 @@ extern "C" {
 	struct StreamProcess {
 		int Index;
 		int Mask; // For connection info
-		char StreamIP[128];
+		char StreamIP[RC_MAX_IP_LEN];
 		int Port;
 		void* __inner;
 	};
@@ -192,7 +193,7 @@ extern "C" {
 	struct StreamEventPacket {
 		StreamEvent event;
 		int channel;
-		char msg[128];
+		char msg[RC_MAX_PEVENT_MSG_LEN];
 	};
 
 	/// ServiceStarter

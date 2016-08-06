@@ -4,6 +4,7 @@
 #include <cstring>
 #include <enet/enet.h>
 #include "DataDefs.h"
+#include "DataJson.h"
 
 CStreamApi::CStreamApi(IStreamHandler & Handler, int nType, int nIndex, int nStreamMask)
 	: m_Handler(Handler),
@@ -107,11 +108,16 @@ int CStreamApi::SendData(int channel, void * buf, size_t len)
 int CStreamApi::OnData(int channel, void * data, size_t len)
 {
 	if (channel == RC_MAX_CONNECTION) {
-		assert(len == sizeof(StreamEventPacket));
-		StreamEventPacket* sp = (StreamEventPacket*)data;
-		m_Handler.OnEvent(sp->channel, sp->event, sp->msg);
+		// Event
+		StreamEventPacket sep;
+		std::string str((char*)data, len);
+		json j = json::parse(str);
+		if (KOO_PARSE_JSON(sep, j)) {
+			m_Handler.OnEvent(sep.channel, sep.event, sep.msg);
+		}
 		return 0;
 	}
+	// Data
 	int Mask = *(long*)data;
 	if (Mask != m_nStreamMask) {
 		fprintf(stderr, "Incorrect Mask Packet %ld - %ld", Mask, m_nStreamMask);

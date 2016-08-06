@@ -43,6 +43,7 @@ BOOL CPluginDlg::OnInitDialog()
 	for (auto& str : m_List) {
 		m_cbList.AddString(str.c_str());
 	}
+	m_cbList.SetCurSel(0);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // 异常: OCX 属性页应返回 FALSE

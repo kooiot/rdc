@@ -17,7 +17,11 @@
 #include "StreamMgr.h"
 
 const char* g_sn = "4C05D6F6-92EA-4a23-8EFF-179F91CBAA6A";
+#ifdef _DEBUG
 const char* g_sip = "127.0.0.1";
+#else
+const char* g_sip = "123.57.13.218";
+#endif
 int g_port_req = 6600;
 int g_port_sub = 6601;
 

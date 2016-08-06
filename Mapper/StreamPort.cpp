@@ -2,6 +2,7 @@
 #include "StreamMgr.h"
 #include <cstring>
 #include <cstdarg>
+#include "DataJson.h"
 
 const static char* StreamEventNames[] = {
 	"SE_CONNECT",
@@ -80,8 +81,13 @@ int StreamPortBase::_FireEvent(StreamEvent se, const char* msg)
 	StreamEventPacket sp;
 	sp.event = se;
 	sp.channel = m_Info.ConnInfo.Channel;
-	sprintf(sp.msg, "%s", msg);
-	ENetPacket* packet = enet_packet_create(&sp, sizeof(StreamEventPacket), ENET_PACKET_FLAG_RELIABLE);
+	snprintf(sp.msg, RC_MAX_PEVENT_MSG_LEN, "%s", msg);
+
+	auto j = KOO_GEN_JSON(sp);
+	std::stringstream ss;
+	j >> ss;
+
+	ENetPacket* packet = enet_packet_create(ss.str().c_str(), ss.str().length(), ENET_PACKET_FLAG_RELIABLE);
 	int rc = enet_peer_send(m_Info.Peer, RC_MAX_CONNECTION, packet);
 	printf("Send StreamEvent returns %d\n", rc);
 

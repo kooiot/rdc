@@ -19,6 +19,7 @@ namespace koo {
 	bool parse_json(IPInfo&, const json&);
 	bool parse_json(AllowInfo&, const json&);
 	bool parse_json(DenyInfo&, const json&);
+	bool parse_json(StreamEventPacket&, const json&);
 
 	json generate_json(const UserInfo&);
 	json generate_json(const DeviceInfo&);
@@ -27,4 +28,5 @@ namespace koo {
 	json generate_json(const IPInfo&);
 	json generate_json(const AllowInfo&);
 	json generate_json(const DenyInfo&);
+	json generate_json(const StreamEventPacket&);
 }

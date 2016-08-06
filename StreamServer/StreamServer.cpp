@@ -292,14 +292,19 @@ int main(int argc, char* argv[])
 			}
 			else {
 				if (RC_MAX_CONNECTION == event.channelID) {
-					StreamEventPacket* sep = (StreamEventPacket*)event.packet->data;
-					if (nType == MAPPER_TYPE) {
-						if (sep->event == SE_CHANNEL_OPENED || sep->event == SE_CHANNEL_CLOSED) {
+					StreamEventPacket sep;
+					std::string str((char*)event.packet->data, event.packet->dataLength);
+					json j = json::parse(str);
+					if (!KOO_PARSE_JSON(sep, j)) {
+						printf("Parse Json StreamEvent Packet failed!\n");
+					}
+					else if (nType == MAPPER_TYPE) {
+						if (sep.event == SE_CHANNEL_OPENED || sep.event == SE_CHANNEL_CLOSED) {
 							MapperData* pData = NULL;
 							std::vector<MapperData*>::iterator ptr = ClientMapperMap[nIndex].begin();
 							for (; ptr != ClientMapperMap[nIndex].end(); ++ptr) {
 								if (event.peer == (*ptr)->Peer) {
-									(*ptr)->Channels[sep->channel] = sep->event == SE_CHANNEL_OPENED ? true : false;
+									(*ptr)->Channels[sep.channel] = sep.event == SE_CHANNEL_OPENED ? true : false;
 									pData = *ptr;
 									break;
 								}

@@ -192,6 +192,19 @@ bool parse_json(DenyInfo& info, const json& j) {
 	}
 }
 
+bool parse_json(StreamEventPacket & p, const json & j)
+{
+	try {
+		GET_NODE_ENUM(j, "event", StreamEvent, p.event);
+		p.channel = j["channel"];
+		GET_NODE_STRING(j, "msg", p.msg, RC_MAX_SN_LEN);
+		return true;
+	}
+	catch (...) {
+		return false;
+	}
+}
+
 json generate_json(const UserInfo& info) {
 	json j;
 	j["index"] = info.Index;
@@ -314,6 +327,15 @@ json generate_json(const DenyInfo& info) {
 	json j;
 	j["id"] = info.ID;
 	j["dev_sn"] = info.DevSN;
+	return j;
+}
+
+json generate_json(const StreamEventPacket &p)
+{
+	json j;
+	j["event"] = (int)p.event;
+	j["channel"] = p.channel;
+	j["msg"] = p.msg;
 	return j;
 }
 

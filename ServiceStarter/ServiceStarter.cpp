@@ -208,7 +208,7 @@ BOOL Install()
 	SC_HANDLE hService = ::CreateService(
 		hSCM, szServiceName, szServiceName,
 		SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS,
-		SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL,
+		SERVICE_AUTO_START, SERVICE_ERROR_NORMAL,
 		szFilePath, NULL, NULL, _T(""), NULL, NULL);
 
 	if (hService == NULL)
