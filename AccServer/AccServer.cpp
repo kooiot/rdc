@@ -10,17 +10,13 @@ using json = nlohmann::json;
 
 #include "StreamServerMgr.h"
 #include "ClientMgr.h"
-//#include "koo_process.h"
 
 void* ctx = NULL;
 CStreamServerMgr StreamMgr;
 CClientMgr ClientMgr(StreamMgr);
-//koo_process *process = NULL;
 
 void on_close() {
 	printf("Exit function called\n");
-	//if (process)
-	//	process->stop();
 	StreamMgr.Close();
 	ClientMgr.Close();
 	zmq_ctx_term(ctx);
@@ -103,17 +99,6 @@ int main(int argc, char* argv[])
 
 	void* sm_skt = StreamMgr.Init(ctx, bip.c_str(), port_stream);
 	void* cli_skt = ClientMgr.Init(ctx, bip.c_str(), port_rep, port_pub);
-
-	//k_kill_process("StreamServer.exe");
-	std::stringstream args;
-	args << RC_STREAM_SERVER_ID_BASE << " ";
-	args << bip << " ";
-	args << port_stream << " ";
-	args << bip << " ";
-	args << 6800 << " ";
-
-	//process = new koo_process("StreamServer", "", "StreamServer.exe", args.str(), true);
-	//process->start();
 
 	while (true) {
 		zmq_pollitem_t items[] = {

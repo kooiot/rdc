@@ -210,9 +210,13 @@ int main(int argc, char* argv[])
 	if (!send_add_stream(id, req, info))
 		goto CLOSE;
 
-	auto hb = new std::thread([id, req, info] {
+	std::thread hb([id, req, info] {
 		while (true) {
+#ifndef RDC_LINUX_SYS
 			Sleep(5000);
+#else
+			sleep(5);
+#endif
 			if (!send_heartbeat_stream(id, req, info))
 			{
 				exit(EXIT_FAILURE);
