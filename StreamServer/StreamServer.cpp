@@ -371,11 +371,11 @@ int main(int argc, char* argv[])
 	std::stringstream ss;
 	ss << "tcp://" << sip << ":" << sport;
 	rc = zmq_connect(req, ss.str().c_str());
-	if (rc != 0) {
+	if (rc == 0) {
 		IPInfo info;
 		info.port = port;
 		sprintf(info.sip, "%s", bip.c_str());
-		if (!send_add_stream(id, req, info)) {
+		if (send_add_stream(id, req, info)) {
 			std::thread hb([id, req, info] {
 				while (true) {
 #ifndef RDC_LINUX_SYS
@@ -390,9 +390,11 @@ int main(int argc, char* argv[])
 				}
 			});
 			printf("%s\n", "Initialized!");
+
 			run_loop(remote);
+
+			send_remove_stream(id, req);
 		}
-		send_remove_stream(id, req);
 	}
 
 	zmq_close(req);

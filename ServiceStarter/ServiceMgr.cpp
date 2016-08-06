@@ -222,6 +222,7 @@ int ServiceMgr::AddNode(const ServiceNode & node)
 	m_Nodes[pNode->Index] = pNode;
 
 	if (pNode->Mode != SM_DISABLE) {
+		std::cout << node.Args << std::endl;
 		pNode->Process = new koo_process(node.Name, node.WorkDir, node.Exec, node.Args, g_bServerConsole);
 	}
 	else {
