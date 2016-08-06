@@ -15,6 +15,7 @@
 #include <koo_zmq_helpers.h>
 #include <DataDefs.h>
 #include <DataJson.h>
+#include <thread>
 
 //ENetPeer* MapperPeers[RC_MAX_CONNECTION_PER_SERVER];
 
@@ -61,6 +62,22 @@ bool send_remove_stream(int id, void* socket) {
 	return result.get("result");
 }
 
+bool send_heartbeat_stream(int id, void* socket, const IPInfo& info) {
+	std::cerr << "Fire HEARTBEAT" << std::endl;
+	std::stringstream ss;
+	ss << id;
+	KZPacket add(ss.str(), "HEARTBEAT");
+	add.set("info", KOO_GEN_JSON(info));
+	int rc = koo_zmq_send(socket, add);
+	if (rc < 0)
+		return false;
+	KZPacket result;
+	rc = koo_zmq_recv(socket, result);
+	if (rc != 0)
+		return false;
+
+	return result.get("result");
+}
 std::string GetModuleFilePath();
 
 void load_conf(std::string& sip, int& sport, std::string& bip, int& bport)
@@ -192,6 +209,16 @@ int main(int argc, char* argv[])
 	sprintf(info.sip, "%s", bip.c_str());
 	if (!send_add_stream(id, req, info))
 		goto CLOSE;
+
+	auto hb = new std::thread([id, req, info] {
+		while (true) {
+			Sleep(5000);
+			if (!send_heartbeat_stream(id, req, info))
+			{
+				exit(EXIT_FAILURE);
+			}
+		}
+	});
 
 	printf("%s\n", "Initialized!");
 	ENetEvent event;

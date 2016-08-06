@@ -23,12 +23,14 @@ public:
 
 	bool AddStream(int id, IPInfo* Process);
 	bool RemoveStream(int id);
+	bool UpdateStream(int id, IPInfo* Process);
 
 private:
 	void * m_pSocket;
 	struct StreamProcessVector {
 		int Online;
 		int Counter;
+		time_t Update;
 		bool Used[RC_MAX_CONNECTION_PER_SERVER];
 		StreamProcess List[RC_MAX_CONNECTION_PER_SERVER];
 	};

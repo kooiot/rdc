@@ -49,16 +49,17 @@ void CStreamServerMgr::Close()
 void CStreamServerMgr::HandleKZPacket(const KZPacket& cmd, void* rep)
 {
 	bool bSuccess = false;
+	std::cout << __FUNCTION__ << ": " << cmd.cmd() << "\t" << cmd.id() << std::endl;
 	if (cmd.cmd() == "ADD") {
-		printf("Add event %s\n", cmd.id().c_str());
 		JSON_FROM_PACKET(cmd, IPInfo, info);
-		AddStream(atoi(cmd.id().c_str()), &info);
-		bSuccess = true;
+		bSuccess = AddStream(atoi(cmd.id().c_str()), &info);
 	}
 	else if (cmd.cmd() == "REMOVE") {
-		printf("Remove event %s\n", cmd.id().c_str());
-		bSuccess = true;
-		RemoveStream(atoi(cmd.id().c_str()));
+		bSuccess = RemoveStream(atoi(cmd.id().c_str()));
+	}
+	else if (cmd.cmd() == "HEARTBEAT") {
+		JSON_FROM_PACKET(cmd, IPInfo, info);
+		bSuccess = UpdateStream(atoi(cmd.id().c_str()), &info);
 	}
 	
 	koo_zmq_send_result(rep, cmd, bSuccess);
@@ -121,10 +122,14 @@ bool CStreamServerMgr::AddStream(int id, IPInfo * Process)
 	id = id - RC_STREAM_SERVER_ID_BASE;
 	StreamProcessVector& sp = m_Streams[id];
 	if (sp.Online) {
-		return false;
+		if (strcmp(sp.List[0].StreamIP, Process->sip) != 0 || sp.List[0].Port != Process->port)
+			return false;
+		else
+			printf("StreamServer %d reconnected!!\n", id);
 	}
 
 	sp.Online = true;
+	sp.Counter = 0;
 	for (int j = 0; j < RC_MAX_CONNECTION_PER_SERVER; ++j) {
 		memcpy(sp.List[j].StreamIP, Process->sip, RC_MAX_IP_LEN);
 		sp.List[j].Port = Process->port;
@@ -137,5 +142,19 @@ bool CStreamServerMgr::RemoveStream(int id)
 	id = id - RC_STREAM_SERVER_ID_BASE;
 	StreamProcessVector& sp = m_Streams[id];
 	sp.Online = false;
+	sp.Counter = 0;
 	return true;
+}
+
+bool CStreamServerMgr::UpdateStream(int id, IPInfo * Process)
+{
+	id = id - RC_STREAM_SERVER_ID_BASE;
+	StreamProcessVector& sp = m_Streams[id];
+	if (sp.Online) {
+		if (strcmp(sp.List[0].StreamIP, Process->sip) != 0 || sp.List[0].Port != Process->port)
+			return false;
+		sp.Update = time(NULL);
+		return true;
+	}
+	return false;
 }
