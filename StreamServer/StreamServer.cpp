@@ -220,26 +220,24 @@ int main(int argc, char* argv[])
 				nIndex,
 				event.peer->address.host,
 				event.peer->address.port);
-			if (nType == MAPPER_TYPE) {
+			if (nIndex < 0 || nIndex > RC_MAX_CONNECTION_PER_SERVER) {
+				printf("Connection index is incorrect %d\n", nIndex);
+				enet_peer_disconnect(event.peer, -99);
+			}
+			else if (nType == MAPPER_TYPE) {
 				MapperData* data = new MapperData();
 				data->Peer = event.peer;
 				ClientMapperMap[nIndex].push_back(data);
 			}
 			else if (nType == CLIENT_TYPE) {
-				if (nIndex < 0 || nIndex > RC_MAX_CONNECTION_PER_SERVER) {
-					printf("Connection index is incorrect %d\n", nIndex);
-					enet_peer_disconnect(pOldPeer, -99);
+				// This is the client
+				ENetPeer* pOldPeer = ClientPeers[nIndex];
+				// This is the mapper
+				if (pOldPeer != NULL && pOldPeer != event.peer) {
+					printf("New client for index %u, disconnect old one\n", nIndex);
+					enet_peer_disconnect(pOldPeer, -2);
 				}
-				else {
-					// This is the client
-					ENetPeer* pOldPeer = ClientPeers[nIndex];
-					// This is the mapper
-					if (pOldPeer != NULL && pOldPeer != event.peer) {
-						printf("New client for index %u, disconnect old one\n", nIndex);
-						enet_peer_disconnect(pOldPeer, -2);
-					}
-					ClientPeers[nIndex] = event.peer;
-				}
+				ClientPeers[nIndex] = event.peer;
 			}
 			else {
 				printf("Incorrect client type %u\n", nType);
@@ -335,7 +333,9 @@ int main(int argc, char* argv[])
 			int nIndex = (data & 0xFFFF);
 			printf("connection %d - %d disconnected.\n", nType, nIndex);
 
-			if (nType == MAPPER_TYPE) {
+			if (nIndex < 0 || nIndex > RC_MAX_CONNECTION_PER_SERVER) {
+			}
+			else if (nType == MAPPER_TYPE) {
 				std::vector<MapperData*>::iterator ptr = ClientMapperMap[nIndex].begin();
 				for (; ptr != ClientMapperMap[nIndex].end(); ++ptr) {
 					if (event.peer == (*ptr)->Peer) {
