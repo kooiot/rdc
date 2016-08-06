@@ -122,113 +122,13 @@ void save_conf(const std::string& sip, int sport, const std::string& bip, int bp
 
 	}
 }
-int main(int argc, char* argv[])
+
+void run_loop(ENetHost* remote) 
 {
-	int id = RC_STREAM_SERVER_ID_BASE;
-	std::string sip = "127.0.0.1";
-	int sport = 6602;
-	std::string bip = "127.0.0.1";
-	int port = 6800;
-
-#ifndef _DEBUG
-	if (argc < 2) {
-		std::cerr << "You need input an stream server id [";
-		std::cerr << RC_STREAM_SERVER_ID_BASE;
-		std::cerr << " - ";
-		std::cerr << RC_STREAM_SERVER_ID_BASE + RC_MAX_STREAM_SERVER_COUNT - 1;
-		std::cerr << "]" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-#endif
-
-	load_conf(sip, sport, bip, port);
-
-	if (argc >= 2)
-		id = atoi(argv[1]);
-	if (argc >= 3)
-		sip = argv[2];
-	if (argc >= 4)
-		sport = atoi(argv[3]);
-	if (argc >= 5)
-		bip = argv[4];
-	if (argc >= 6)
-		port = atoi(argv[5]);
-
-	if (id < RC_STREAM_SERVER_ID_BASE || id >= RC_STREAM_SERVER_ID_BASE + RC_MAX_STREAM_SERVER_COUNT)
-	{
-		std::cerr << "Invalid Stream Server id: " << id << std::endl;
-		std::cerr << "Valid From " << RC_STREAM_SERVER_ID_BASE;
-		std::cerr << " to " << RC_STREAM_SERVER_ID_BASE + RC_MAX_STREAM_SERVER_COUNT << std::endl;
-		exit(EXIT_FAILURE);
-	}
-
-	std::cout << "StreamServer ID: \t" << id << std::endl;
-	std::cout << "Server IP: \t" << sip << std::endl;
-	std::cout << "Server Port: \t" << sport << std::endl;
-	std::cout << "Bind IP: \t" << bip << std::endl;
-	std::cout << "Bind Port: \t" << port << std::endl;
-
-	save_conf(sip, sport, bip, port);
-
-	enet_initialize();
-
-	ENetAddress address;
-	ENetHost * remote;
-	if (bip == "*") {
-		address.host = ENET_HOST_ANY;
-	}
-	else {
-		enet_address_set_host(&address, bip.c_str());
-	}
-	address.port = port;
-
-	remote = enet_host_create(&address /* the address to bind the server host to */,
-		RC_MAX_CONNECTION_PER_SERVER * RC_MAX_CONNECTION      /* allow up to 32 clients and/or outgoing connections */,
-		RC_MAX_CONNECTION + 1      /* allow up to 2 channels to be used, 0 and 1 */,
-		0      /* assume any amount of incoming bandwidth */,
-		0      /* assume any amount of outgoing bandwidth */);
-	if (remote == NULL)
-	{
-		fprintf(stderr,
-			"An error occurred while trying to create an ENet server host.\n");
-		exit(EXIT_FAILURE);
-	}
-
-	void* ctx = zmq_ctx_new();
-	void* req = zmq_socket(ctx, ZMQ_REQ);
-	int timeo = 0;
-	int rc = zmq_setsockopt(req, ZMQ_LINGER, &timeo, sizeof(int));
-	std::stringstream ss;
-	ss << "tcp://" << sip << ":" << sport;
-	rc = zmq_connect(req, ss.str().c_str());
-	if (rc != 0)
-		goto CLOSE;
-
-	IPInfo info;
-	info.port = port;
-	sprintf(info.sip, "%s", bip.c_str());
-	if (!send_add_stream(id, req, info))
-		goto CLOSE;
-
-	std::thread hb([id, req, info] {
-		while (true) {
-#ifndef RDC_LINUX_SYS
-			Sleep(5000);
-#else
-			sleep(5);
-#endif
-			if (!send_heartbeat_stream(id, req, info))
-			{
-				exit(EXIT_FAILURE);
-			}
-		}
-	});
-
-	printf("%s\n", "Initialized!");
 	ENetEvent event;
-	/* Wait up to 5000 milliseconds for an event. */
 	while (true)
 	{
+		/* Wait up to 5000 milliseconds for an event. */
 		int nRet = enet_host_service(remote, &event, 5000);
 		if (nRet < 0) {
 			int nr = errno;
@@ -391,9 +291,109 @@ int main(int argc, char* argv[])
 			event.peer->data = NULL;
 		}
 	}
+}
+int main(int argc, char* argv[])
+{
+	int id = RC_STREAM_SERVER_ID_BASE;
+	std::string sip = "127.0.0.1";
+	int sport = 6602;
+	std::string bip = "127.0.0.1";
+	int port = 6800;
 
-CLOSE:
-	send_remove_stream(id, req);
+#ifndef _DEBUG
+	if (argc < 2) {
+		std::cerr << "You need input an stream server id [";
+		std::cerr << RC_STREAM_SERVER_ID_BASE;
+		std::cerr << " - ";
+		std::cerr << RC_STREAM_SERVER_ID_BASE + RC_MAX_STREAM_SERVER_COUNT - 1;
+		std::cerr << "]" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+#endif
+
+	load_conf(sip, sport, bip, port);
+
+	if (argc >= 2)
+		id = atoi(argv[1]);
+	if (argc >= 3)
+		sip = argv[2];
+	if (argc >= 4)
+		sport = atoi(argv[3]);
+	if (argc >= 5)
+		bip = argv[4];
+	if (argc >= 6)
+		port = atoi(argv[5]);
+
+	if (id < RC_STREAM_SERVER_ID_BASE || id >= RC_STREAM_SERVER_ID_BASE + RC_MAX_STREAM_SERVER_COUNT)
+	{
+		std::cerr << "Invalid Stream Server id: " << id << std::endl;
+		std::cerr << "Valid From " << RC_STREAM_SERVER_ID_BASE;
+		std::cerr << " to " << RC_STREAM_SERVER_ID_BASE + RC_MAX_STREAM_SERVER_COUNT << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	std::cout << "StreamServer ID: \t" << id << std::endl;
+	std::cout << "Server IP: \t" << sip << std::endl;
+	std::cout << "Server Port: \t" << sport << std::endl;
+	std::cout << "Bind IP: \t" << bip << std::endl;
+	std::cout << "Bind Port: \t" << port << std::endl;
+
+	save_conf(sip, sport, bip, port);
+
+	enet_initialize();
+
+	ENetAddress address;
+	ENetHost * remote;
+	if (bip == "*") {
+		address.host = ENET_HOST_ANY;
+	}
+	else {
+		enet_address_set_host(&address, bip.c_str());
+	}
+	address.port = port;
+
+	remote = enet_host_create(&address /* the address to bind the server host to */,
+		RC_MAX_CONNECTION_PER_SERVER * RC_MAX_CONNECTION      /* allow up to 32 clients and/or outgoing connections */,
+		RC_MAX_CONNECTION + 1      /* allow up to 2 channels to be used, 0 and 1 */,
+		0      /* assume any amount of incoming bandwidth */,
+		0      /* assume any amount of outgoing bandwidth */);
+	if (remote == NULL)
+	{
+		fprintf(stderr,
+			"An error occurred while trying to create an ENet server host.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	void* ctx = zmq_ctx_new();
+	void* req = zmq_socket(ctx, ZMQ_REQ);
+	int timeo = 0;
+	int rc = zmq_setsockopt(req, ZMQ_LINGER, &timeo, sizeof(int));
+	std::stringstream ss;
+	ss << "tcp://" << sip << ":" << sport;
+	rc = zmq_connect(req, ss.str().c_str());
+	if (rc != 0) {
+		IPInfo info;
+		info.port = port;
+		sprintf(info.sip, "%s", bip.c_str());
+		if (!send_add_stream(id, req, info)) {
+			std::thread hb([id, req, info] {
+				while (true) {
+#ifndef RDC_LINUX_SYS
+					Sleep(5000);
+#else
+					sleep(5);
+#endif
+					if (!send_heartbeat_stream(id, req, info))
+					{
+						exit(EXIT_FAILURE);
+					}
+				}
+			});
+			printf("%s\n", "Initialized!");
+			run_loop(remote);
+		}
+		send_remove_stream(id, req);
+	}
 
 	zmq_close(req);
 	zmq_ctx_term(ctx);
