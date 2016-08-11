@@ -89,4 +89,6 @@ protected:
 	afx_msg void OnBnClickedButtonAddTcp();
 	afx_msg void OnBnClickedButtonAddUdp();
 	afx_msg void OnBnClickedButtonAddPlugin();
+public:
+	afx_msg void OnBnClickedButtonListchns();
 };

@@ -336,3 +336,23 @@ int CAccApi::DestroyConnection(int index)
 	return rc;
 }
 
+int CAccApi::ListConnection(int* channels)
+{
+	for (int i = 0; i < RC_MAX_CONNECTION; ++i) {
+		channels[i] = -1;
+	}
+
+	KZPacket packet(m_User, "LIST_CHANNELS");
+	packet.set("user", m_User);
+
+	int rc = SendRequest(packet, [channels](KZPacket& data) {
+		const json list = data.get("result");
+		int i = 0;
+		for (auto & j : list) {
+			channels[i++] = j;
+		}
+		return 0;
+	});
+	return rc;
+}
+

@@ -121,6 +121,7 @@ BEGIN_MESSAGE_MAP(CRemoteConnectorDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_ADD_TCP, &CRemoteConnectorDlg::OnBnClickedButtonAddTcp)
 	ON_BN_CLICKED(IDC_BUTTON_ADD_UDP, &CRemoteConnectorDlg::OnBnClickedButtonAddUdp)
 	ON_BN_CLICKED(IDC_BUTTON_ADD_PLUGIN, &CRemoteConnectorDlg::OnBnClickedButtonAddPlugin)
+	ON_BN_CLICKED(IDC_BUTTON_LISTCHNS, &CRemoteConnectorDlg::OnBnClickedButtonListchns)
 END_MESSAGE_MAP()
 
 
@@ -455,6 +456,7 @@ void CRemoteConnectorDlg::OnBnClickedButtonDisconnect()
 	m_btnDisconnect.EnableWindow(FALSE);
 	m_btnListDevs.EnableWindow(FALSE);
 	m_listDevs.DeleteAllItems();
+	m_listConnections.DeleteAllItems();
 }
 
 
@@ -723,4 +725,12 @@ void CRemoteConnectorDlg::OnBnClickedButtonAddPlugin()
 	memcpy(lci->DevSN, info->SN, RC_MAX_SN_LEN);
 	lci->Plugin = pinfo;
 	AddConnection(ci, lci);
+}
+
+
+void CRemoteConnectorDlg::OnBnClickedButtonListchns()
+{
+	RC_CHANNEL channels[RC_MAX_CONNECTION];
+	int rc = RC_ListChannels(m_hApi, channels);
+
 }

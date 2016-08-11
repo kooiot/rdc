@@ -33,21 +33,21 @@ void CPortMgr::Close()
 		m_thread->join();
 	}
 }
-
-UVUdpPort * CPortMgr::CreateUdpPort(int channel, IPortHandler & handler, const std::string & name)
-{
-	return nullptr;
-}
-
-void CPortMgr::FreeUdpPort(UVUdpPort * port)
-{
-}
-
-UVTcpPort * CPortMgr::CreateTcpPort(int channel, IPortHandler & handler, const std::string & name)
-{
-	return nullptr;
-}
-
-void CPortMgr::FreeTcpPort(UVTcpPort * port)
-{
-}
+//
+//UVUdpPort * CPortMgr::CreateUdpPort(int channel, IPortHandler & handler, const std::string & name)
+//{
+//	return nullptr;
+//}
+//
+//void CPortMgr::FreeUdpPort(UVUdpPort * port)
+//{
+//}
+//
+//UVTcpPort * CPortMgr::CreateTcpPort(int channel, IPortHandler & handler, const std::string & name)
+//{
+//	return nullptr;
+//}
+//
+//void CPortMgr::FreeTcpPort(UVTcpPort * port)
+//{
+//}

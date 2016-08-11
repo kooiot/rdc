@@ -52,7 +52,7 @@ bool Udp::Open()
 
 	m_udp_handle->data = this;
 
-	rc = uv_udp_bind(m_udp_handle, (const struct sockaddr*)&addr, _UDP_REUSEADDR);
+	rc = uv_udp_bind(m_udp_handle, (const struct sockaddr*)&addr, UV_UDP_REUSEADDR);
 	if (0 != rc) {
 		uv_close((uv_handle_t*)m_udp_handle, close_cb);
 		printf("Cannot bind UDP bind address %d\n", rc);

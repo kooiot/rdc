@@ -57,6 +57,7 @@ private:
 	int AllocStream(const std::string& id, const std::string& mapper_id);
 	MapperData* FindStream(const std::string& id, int channel);
 	int FreeStream(const std::string& id, int channel);
+	int ListStream(const std::string& id, std::vector<int> channels);
 private:
 	void* m_pReply;
 	void* m_pPublish;

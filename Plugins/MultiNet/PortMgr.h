@@ -16,10 +16,10 @@ public:
 	int Init();
 	void Close();
 
-	UVUdpPort* CreateUdpPort(int channel, IPortHandler& handler, const std::string& name);
-	void FreeUdpPort(UVUdpPort* port);
-	UVTcpPort* CreateTcpPort(int channel, IPortHandler& handler, const std::string& name);
-	void FreeTcpPort(UVTcpPort* port);
+	//UVUdpPort* CreateUdpPort(int channel, IPortHandler& handler, const std::string& name);
+	//void FreeUdpPort(UVUdpPort* port);
+	//UVTcpPort* CreateTcpPort(int channel, IPortHandler& handler, const std::string& name);
+	//void FreeTcpPort(UVTcpPort* port);
 
 private:
 	uv_loop_t * m_uv_loop;

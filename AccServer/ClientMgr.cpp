@@ -146,6 +146,18 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 			nReturn = FreeStream(cmd.id(), channel);
 		}
 	}
+	else if (cmd.cmd() == "LIST_CHANNELS") {
+		std::string user = cmd.get("user");
+		std::vector<int> channels;
+		ListStream(user, channels);
+		json list;
+		for (auto & i : channels) {
+			list[i] = channels[i];
+		}
+		int rc = koo_zmq_send_result(m_pReply, cmd, list);
+		assert(rc >= 0);
+		return;
+	}
 	else if (cmd.cmd() == "ADD_DEV") {
 		JSON_FROM_PACKET(cmd, DeviceInfo, info);
 		DbDeviceInfo dbInfo;
@@ -309,7 +321,7 @@ int CClientMgr::AddMapper(const std::string & id)
 
 int CClientMgr::RemoveMapper(const std::string & id)
 {
-	std::cout << "Remove Client " << id << std::endl;
+	std::cout << "Remove Mapper " << id << std::endl;
 
 	MapperMap::iterator ptr = m_Mappers.find(id);
 	if (ptr == m_Mappers.end())
@@ -326,6 +338,7 @@ int CClientMgr::RemoveMapper(const std::string & id)
 					std::cout << "Mapper Destroy Stream Channel " << i << std::endl;
 					delete Data;
 					pClient->Connections[i] = NULL;
+					// FIXME: How to notify Client the mapper is removed???
 				}
 			}
 		}
@@ -474,13 +487,29 @@ int CClientMgr::FreeStream(const std::string& id, int channel)
 	return -1;
 }
 
+int CClientMgr::ListStream(const std::string & id, std::vector<int> channels)
+{
+	ClientMap::iterator ptr = m_Clients.find(id);
+	if (ptr == m_Clients.end())
+		return -1;
+	
+	ClientData* pClient = ptr->second;
+
+	for (int i = 0; i < RC_MAX_CONNECTION; ++i) {
+		if (!pClient->Connections[i]) {
+			channels.push_back(i);
+		}
+	}
+	return 0;
+}
+
 void CClientMgr::OnTimer(int nTime)
 {
 	std::list<std::string> rlist;
 	// Check Clients
 	ClientMap::iterator ptr = m_Clients.begin();
 	for (; ptr != m_Clients.end(); ++ptr) {
-		if (nTime - ptr->second->Heartbeat > CLIENT_HEARTBEAT_TIME * 100) {
+		if (nTime - ptr->second->Heartbeat > CLIENT_HEARTBEAT_TIME * 5) {
 			// Logger
 			rlist.push_back(ptr->first);
 		}
@@ -494,7 +523,7 @@ void CClientMgr::OnTimer(int nTime)
 	// Check Clients
 	MapperMap::iterator mptr = m_Mappers.begin();
 	for (; mptr != m_Mappers.end(); ++mptr) {
-		if (nTime - mptr->second->Heartbeat > MAPPER_HEARTBEAT_TIME * 100) {
+		if (nTime - mptr->second->Heartbeat > MAPPER_HEARTBEAT_TIME * 5) {
 			// Logger
 			rlist.push_back(mptr->first);
 		}

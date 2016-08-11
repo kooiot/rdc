@@ -40,6 +40,7 @@ public:
 	// Return the Connection Channel Index
 	int CreateConnection(const ConnectionInfo* info);
 	int DestroyConnection(int index);
+	int ListConnection(int* channels); // RC_MAX_CONNECTION
 private:
 	bool _Connect();
 	int SendRequest(KZPacket& packet, std::function< int(KZPacket&)> cb = nullptr);
@@ -49,6 +50,7 @@ private:
 	bool m_bStop;
 	void* m_CTX;
 	void* m_Socket;
+	void* m_PubSocket;
 	std::string m_Conn;
 	std::string m_User;
 	std::string m_Pass;

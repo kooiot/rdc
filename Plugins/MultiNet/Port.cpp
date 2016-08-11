@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "Port.h"
 #include <cstring>
 

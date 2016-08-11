@@ -246,6 +246,20 @@ REMOTECONNECTORAPI_API RC_CHANNEL RC_ConnectPlugin(RC_HANDLE api, const char * s
 }
 
 extern "C"
+int RC_ListChannels(RC_HANDLE api, RC_CHANNEL * channels)
+{
+	ApiHandle* pHandle = (ApiHandle*)api;
+	if (!pHandle)
+		return -1;
+
+	CAccApi* pApi = pHandle->Acc;
+	if (pApi) {
+		return pApi->ListConnection(channels);
+	}
+	return -1;
+}
+
+extern "C"
 int RC_CloseChannel(RC_HANDLE api, RC_CHANNEL channel)
 {
 	ApiHandle* pHandle = (ApiHandle*)api;
