@@ -3,7 +3,8 @@
 
 #include "stdafx.h"
 #include <PluginDefs.h>
-#include "Port.h"
+#include "PortMgr.h"
+#include "PortHandler.h"
 
 extern "C" 
 RDC_PLUGIN_TYPE GetType()
@@ -14,7 +15,7 @@ RDC_PLUGIN_TYPE GetType()
 extern "C"
 const char* GetName()
 {
-	return "Example";
+	return "MultiNet";
 }
 
 extern "C"
@@ -23,23 +24,28 @@ long CreateHandle(char *config,
 	PluginCloseCB close,
 	void* ptr)
 {
-	CPort* port =  new CPort(config, send, close, ptr);
+	CPortMgr::Instance().Init();
+
+	CPortHandler* handler = new CPortHandler(send, close, ptr);
+	IPort* port = CPortMgr::Instance().Create(handler, config);
+	
 	return (long)port;
 }
 
 extern "C"
 int Destory(long Handle)
 {
-	CPort* port = (CPort*)Handle;
+	IPort* port = (IPort*)Handle;
 	if (port)
-		delete port;
+		CPortMgr::Instance().Destory(port);
+
 	return 0;
 }
 
 extern "C"
 int Open(long Handle)
 {
-	CPort* port = (CPort*)Handle;
+	IPort* port = (IPort*)Handle;
 	if (port)
 		port->Open();
 	return 0;
@@ -48,7 +54,7 @@ int Open(long Handle)
 extern "C"
 int Close(long Handle)
 {
-	CPort* port = (CPort*)Handle;
+	IPort* port = (IPort*)Handle;
 	if (port)
 		port->Close();
 	return 0;
@@ -57,8 +63,8 @@ int Close(long Handle)
 extern "C"
 int Write(long Handle, const char* buf, size_t len)
 {
-	CPort* port = (CPort*)Handle;
+	IPort* port = (IPort*)Handle;
 	if (port)
-		return port->Write(buf, len);
+		return port->Write((void*)buf, len);
 	return 0;
 }

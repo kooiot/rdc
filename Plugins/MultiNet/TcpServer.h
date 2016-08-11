@@ -2,12 +2,12 @@
 #include "Handlers.h"
 #include <uv.h>
 
-class TcpServer : public IStreamHandler
+class TcpServer : public IPort
 {
 public:
 	TcpServer(uv_loop_t* uv_loop,
 		int channel,
-		IPortHandler& Handler,
+		IPortHandler* Handler,
 		const TCPServerInfo& Info);
 	~TcpServer();
 
@@ -15,8 +15,7 @@ public:
 	virtual bool Open();
 	virtual void Close();
 
-	virtual int OnData(void* buf, size_t len);
-	virtual int OnEvent(StreamEvent evt);
+	virtual int Write(void* buf, size_t len);
 
 private:
 	static void ConnectionCB(uv_stream_t* remote, int status);
@@ -25,8 +24,6 @@ private:
 	static void WriteCB(uv_write_t* req, int status);
 
 private:
-	int m_nChannel;
-	IPortHandler& m_Handler;
 	TCPServerInfo m_Info;
 
 	uv_loop_t * m_uv_loop;

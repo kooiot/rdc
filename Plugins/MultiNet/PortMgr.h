@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Handlers.h"
+#include "DataDefs.h"
 #include <string>
 #include <thread>
 #include <uv.h>
@@ -9,17 +10,17 @@ class UdpPort;
 class TcpPort;
 class CPortMgr
 {
-public:
+protected:
 	CPortMgr();
 	~CPortMgr();
 
+public:
+	static CPortMgr& Instance();
 	int Init();
 	void Close();
 
-	//UVUdpPort* CreateUdpPort(int channel, IPortHandler& handler, const std::string& name);
-	//void FreeUdpPort(UVUdpPort* port);
-	//UVTcpPort* CreateTcpPort(int channel, IPortHandler& handler, const std::string& name);
-	//void FreeTcpPort(UVTcpPort* port);
+	IPort* Create(int channel, IPortHandler* handler, const ConnectionInfo& info);
+	void Destory(IPort* port);
 
 private:
 	uv_loop_t * m_uv_loop;

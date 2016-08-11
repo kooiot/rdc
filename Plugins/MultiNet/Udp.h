@@ -3,12 +3,12 @@
 #include <uv.h>
 #include <string>
 
-class Udp : public IStreamHandler
+class Udp : public IPort
 {
 public:
 	Udp(uv_loop_t* uv_loop,
 		int channel,
-		IPortHandler& Handler,
+		IPortHandler* Handler,
 		const UDPInfo& Info);
 	~Udp();
 
@@ -16,8 +16,7 @@ public:
 	virtual bool Open();
 	virtual void Close();
 
-	virtual int OnData(void* buf, size_t len);
-	virtual int OnEvent(StreamEvent evt);
+	virtual int Write(void* buf, size_t len);
 
 private:
 	static void UdpRecvCB(uv_udp_t* handle,
@@ -33,8 +32,6 @@ private:
 	static void SendCB(uv_udp_send_t* req, int status);
 
 private:
-	int m_nChannel;
-	IPortHandler& m_Handler;
 	UDPInfo m_Info;
 
 	uv_loop_t * m_uv_loop;

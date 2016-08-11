@@ -16,10 +16,12 @@ static void close_cb(uv_handle_t* handle) {
 
 TcpServer::TcpServer(uv_loop_t* uv_loop,
 	int channel,
-	IPortHandler& Handler,
+	IPortHandler* Handler,
 	const TCPServerInfo& Info)
-	: m_uv_loop(uv_loop), m_nChannel(channel), m_Handler(Handler), m_Info(Info),
-	m_tcp_client(NULL)
+	: IPort(channel, Handler)
+	, m_uv_loop(uv_loop)
+	, m_Info(Info)
+	, m_tcp_client(NULL)
 {
 	m_tcp_server = new uv_tcp_t();
 }
@@ -72,7 +74,7 @@ void TcpServer::ReadCB(uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf
 	}
 	else {
 		TcpServer* pThis = (TcpServer*)stream->data;
-		pThis->m_Handler.Send(pThis->m_nChannel, buf->base, nread);
+		pThis->m_pHandler->Send(pThis->m_nChannel, buf->base, nread);
 	}
 }
 
@@ -126,7 +128,7 @@ void TcpServer::Close()
 	uv_close((uv_handle_t*)m_tcp_server, close_cb);
 }
 
-int TcpServer::OnData(void * buf, size_t len)
+int TcpServer::Write(void * buf, size_t len)
 {
 	RLOG("OnData called len %d\n", len);
 	if (m_tcp_client == NULL) {
@@ -141,10 +143,4 @@ int TcpServer::OnData(void * buf, size_t len)
 		1,
 		WriteCB);
 	return rc;
-}
-
-int TcpServer::OnEvent(StreamEvent evt)
-{
-	RLOG("OnEvent evt %d\n", evt);
-	return 0;
 }

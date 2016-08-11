@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "PortMgr.h"
-
+#include <DataJson.h>
+#include "Udp.h"
+//#include "TcpClient.h"
+#include "TcpServer.h"
 
 CPortMgr::CPortMgr()
 	: m_uv_loop(NULL)
@@ -14,8 +17,17 @@ CPortMgr::~CPortMgr()
 {
 }
 
+CPortMgr & CPortMgr::Instance()
+{
+	static CPortMgr obj;
+	return obj;
+}
+
 int CPortMgr::Init()
 {
+	if (m_thread)
+		return 0;
+
 	m_uv_loop = uv_default_loop();
 	m_thread = new std::thread([this](void) {
 		while (!m_abort) {
@@ -33,21 +45,24 @@ void CPortMgr::Close()
 		m_thread->join();
 	}
 }
-//
-//UVUdpPort * CPortMgr::CreateUdpPort(int channel, IPortHandler & handler, const std::string & name)
-//{
-//	return nullptr;
-//}
-//
-//void CPortMgr::FreeUdpPort(UVUdpPort * port)
-//{
-//}
-//
-//UVTcpPort * CPortMgr::CreateTcpPort(int channel, IPortHandler & handler, const std::string & name)
-//{
-//	return nullptr;
-//}
-//
-//void CPortMgr::FreeTcpPort(UVTcpPort * port)
-//{
-//}
+IPort * CPortMgr::Create(int channel, IPortHandler* handler, const ConnectionInfo& info)
+{
+	IPort* port = nullptr;
+	switch (info.Type) {
+	case CT_UDP:
+		port = new Udp(m_uv_loop, channel, handler, info.UDP);
+		break;
+	case CT_TCPC:
+		break;
+	case CT_TCPS:
+		port = new TcpServer(m_uv_loop, channel, handler, info.TCPServer);
+		break;
+	default:
+		break;
+	}
+	return port;
+}
+void CPortMgr::Destory(IPort * port)
+{
+	delete port;
+}

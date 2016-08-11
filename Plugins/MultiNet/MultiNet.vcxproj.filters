@@ -27,9 +27,6 @@
     <ClInclude Include="Handlers.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Port.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="PortMgr.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -37,6 +34,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Udp.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PortHandler.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -50,9 +50,6 @@
     <ClCompile Include="MultiNet.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Port.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="PortMgr.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -60,6 +57,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Udp.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PortHandler.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

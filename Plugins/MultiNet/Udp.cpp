@@ -15,9 +15,11 @@ static void close_cb(uv_handle_t* handle) {
 
 Udp::Udp(uv_loop_t* uv_loop,
 			int channel,
-			IPortHandler& Handler,
+			IPortHandler* Handler,
 			const UDPInfo& Info)
-	: m_uv_loop(uv_loop), m_nChannel(channel), m_Handler(Handler), m_Info(Info)
+	: IPort(channel, Handler)
+	, m_uv_loop(uv_loop)
+	, m_Info(Info)
 {
 	m_udp_handle = new uv_udp_t();
 }
@@ -75,17 +77,12 @@ void Udp::Close()
 	uv_close((uv_handle_t*)m_udp_handle, close_cb);
 }
 
-int Udp::OnData(void * buf, size_t len)
+int Udp::Write(void * buf, size_t len)
 {
 	uv_udp_send_t* send_req = new uv_udp_send_t();
 	uv_buf_t uvbuf = uv_buf_init((char*)buf, len);
 	int rc = uv_udp_send(send_req, m_udp_handle, &uvbuf, 1, (const struct sockaddr*)&m_peer_addr, SendCB);
 	return rc;
-}
-
-int Udp::OnEvent(StreamEvent evt)
-{
-	return 0;
 }
 
 void Udp::UdpRecvCB(uv_udp_t * handle, ssize_t nread, const uv_buf_t * buf, const sockaddr * addr, unsigned flags)
@@ -112,7 +109,7 @@ void Udp::_UdpRecvCB(uv_udp_t * handle, ssize_t nread, const uv_buf_t * buf, con
 	else {
 		memcpy(&m_peer_addr, (struct sockaddr_in*)addr, sizeof(sockaddr_in));
 	}
-	m_Handler.Send(m_nChannel, buf->base, nread);
+	m_pHandler->Send(m_nChannel, buf->base, nread);
 }
 
 
