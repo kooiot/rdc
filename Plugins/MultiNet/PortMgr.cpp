@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "PortMgr.h"
 #include "Udp.h"
-//#include "TcpClient.h"
+#include "TcpClient.h"
 #include "TcpServer.h"
 
 CPortMgr::CPortMgr()
@@ -48,6 +48,7 @@ IPort * CPortMgr::Create(int channel, IPortHandler* handler, const ConnectionInf
 		port = new Udp(m_uv_loop, channel, handler, info.UDP);
 		break;
 	case CT_TCPC:
+		port = new TcpClient(m_uv_loop, channel, handler, info.TCPClient);
 		break;
 	case CT_TCPS:
 		port = new TcpServer(m_uv_loop, channel, handler, info.TCPServer);

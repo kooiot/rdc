@@ -5,7 +5,7 @@
 class TcpClient : public IPort 
 {
 public:
-	TcpClient(uv_loop_t* uv_loop, int channel, const TcpClientInfo& info);
+	TcpClient(uv_loop_t* uv_loop, int channel, IPortHandler* handler, const TCPClientInfo& info);
 	~TcpClient();
 
 public:
@@ -26,5 +26,6 @@ private:
 	bool m_bConnected;
 	uv_loop_t * m_uv_loop;
 	uv_tcp_t* m_tcp_handle;
+	TCPClientInfo m_Info;
 };
 

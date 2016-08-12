@@ -17,14 +17,19 @@ static void close_cb(uv_handle_t* handle) {
 
 TcpServer::TcpServer(uv_loop_t* uv_loop,
 	int channel,
-	IPortHandler* Handler,
-	const TCPServerInfo& Info)
-	: IPort(channel, Handler)
+	IPortHandler* handler,
+	const TCPServerInfo& info)
+	: IPort(channel, handler)
 	, m_uv_loop(uv_loop)
-	, m_Info(Info)
+	, m_Info(info)
 	, m_tcp_server(NULL)
 	, m_tcp_client(NULL)
 {
+	printf("Create TCPServer   R:%s:%d L:%s:%d\n", 
+		info.remote.sip,
+		info.remote.port,
+		info.bind.sip,
+		info.bind.port);
 }
 
 

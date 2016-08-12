@@ -18,6 +18,9 @@ public:
 
 	virtual bool Open() = 0;
 	virtual void Close() = 0;
+	virtual void OnClose() {
+		m_pHandler->Close();
+	}
 protected:
 	int m_nChannel;
 	IPortHandler* m_pHandler;

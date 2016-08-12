@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "TcpClient.h"
 #include <cassert>
 
@@ -12,15 +13,20 @@ static void close_cb(uv_handle_t* handle) {
 	delete (uv_tcp_t*)handle;
 }
 
-TcpClient::TcpClient(uv_loop_t* uv_loop, PortInfo& info)
-	: PortBase(info)
+TcpClient::TcpClient(uv_loop_t* uv_loop,
+	       	int channel,
+	       	IPortHandler* handler,
+		const TCPClientInfo& info)
+	: IPort(channel, handler)
+	, m_bConnected(false)
 	, m_uv_loop(uv_loop)
+	, m_tcp_handle(NULL)
 {
 	printf("Create TCPClient   C:%s:%d L:%s:%d\n", 
-		info.ConnInfo.TCPClient.remote.sip,
-		info.ConnInfo.TCPClient.remote.port,
-		info.ConnInfo.TCPClient.bind.sip,
-		info.ConnInfo.TCPClient.bind.port);
+		info.remote.sip,
+		info.remote.port,
+		info.bind.sip,
+		info.bind.port);
 }
 
 
@@ -35,23 +41,20 @@ void TcpClient::ConnectCB(uv_connect_t* req, int status) {
 
 void TcpClient::_ConnectCB(uv_connect_t * req, int status)
 {
-	uv_handle_t *handle = req->handle;
+	uv_stream_t *handle = req->handle;
 	delete req;
 
 	if (0 != status) {
-		FireEvent(SE_CHANNEL_OPEN_FAILED, "Connect to TCP server failed, status %d", status);
+		printf("Connect to TCP server failed, status %d\n", status);
 		OnClose();
 		return;
 	}
 	if (0 != uv_read_start(handle, echo_alloc, ReadCB)) {
-		FireEvent(SE_CHANNEL_OPEN_FAILED, "Connect Start Read on socket");
+		printf("Connect Start Read on socket\n");
 		OnClose();
 		return;
 	}
 	m_bConnected = true;
-
-	int rc = FireEvent(SE_CHANNEL_OPENED);
-	printf("Fire Opened %d\n", rc);
 }
 
 void TcpClient::ReadCB(uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf)
@@ -64,7 +67,7 @@ void TcpClient::ReadCB(uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf
 		pThis->OnClose();
 	}
 	else {
-		pThis->SendData(buf->base, nread);
+		pThis->m_pHandler->Send(pThis->m_nChannel, buf->base, nread);
 	}
 }
 
@@ -84,9 +87,9 @@ bool TcpClient::Open()
 	m_bConnected = false;
 	struct sockaddr_in addr;
 
-	int rc = uv_ip4_addr(m_Info.ConnInfo.TCPClient.remote.sip, m_Info.ConnInfo.TCPClient.remote.port, &addr);
+	int rc = uv_ip4_addr(m_Info.remote.sip, m_Info.remote.port, &addr);
 	if (0 != rc) {
-		FireEvent(SE_CHANNEL_OPEN_FAILED, "Incorrect TCP server address %d\n", rc);
+		printf("Incorrect TCP server address %d\n", rc);
 		return false;
 	}
 	
@@ -95,23 +98,23 @@ bool TcpClient::Open()
 	if (0 != rc) {
 		delete m_tcp_handle;
 		m_tcp_handle = NULL;
-		FireEvent(SE_CHANNEL_OPEN_FAILED, "Cannot Init TCP handle %d\n", rc);
+		printf("Cannot Init TCP handle %d\n", rc);
 		return false;
 	}
 	m_tcp_handle->data = this;
 
-	if (m_Info.ConnInfo.TCPClient.bind.port != 0) {
+	if (m_Info.bind.port != 0) {
 		struct sockaddr_in bind_addr;
-		rc = uv_ip4_addr(m_Info.ConnInfo.TCPClient.bind.sip, m_Info.ConnInfo.TCPClient.bind.port, &bind_addr);
+		rc = uv_ip4_addr(m_Info.bind.sip, m_Info.bind.port, &bind_addr);
 		if (0 != rc) {
 			uv_close((uv_handle_t*)m_tcp_handle, close_cb);
-			FireEvent(SE_CHANNEL_OPEN_FAILED, "Incorrect TCP bind address %d\n", rc);
+			printf("Incorrect TCP bind address %d\n", rc);
 			return false;
 		}
 		rc = uv_tcp_bind(m_tcp_handle, (const struct sockaddr*)&bind_addr, 0);
 		if (0 != rc) {
 			uv_close((uv_handle_t*)m_tcp_handle, close_cb);
-			FireEvent(SE_CHANNEL_OPEN_FAILED, "Cannot Bind TCP to bind ip %d\n", rc);
+			printf("Cannot Bind TCP to bind ip %d\n", rc);
 			return false;
 		}
 	}
@@ -121,7 +124,7 @@ bool TcpClient::Open()
 	rc = uv_tcp_connect(connect_req, m_tcp_handle, (const struct sockaddr*) &addr, ConnectCB);
 	if (0 != rc) {
 		uv_close((uv_handle_t*)m_tcp_handle, close_cb);
-		FireEvent(SE_CHANNEL_OPEN_FAILED, "Cannot Connect TCP to server %d\n", rc);
+		printf("Cannot Connect TCP to server %d\n", rc);
 		return false;
 	}
 	uv_tcp_nodelay(m_tcp_handle, 1);
@@ -133,7 +136,6 @@ void TcpClient::Close()
 {
 	uv_read_stop((uv_stream_t*)m_tcp_handle);
 	uv_close((uv_handle_t*)m_tcp_handle, close_cb);
-	FireEvent(SE_CHANNEL_CLOSED);
 }
 
 int TcpClient::Write(void * data, size_t len)

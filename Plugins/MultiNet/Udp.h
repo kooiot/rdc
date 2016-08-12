@@ -8,8 +8,8 @@ class Udp : public IPort
 public:
 	Udp(uv_loop_t* uv_loop,
 		int channel,
-		IPortHandler* Handler,
-		const UDPInfo& Info);
+		IPortHandler* handler,
+		const UDPInfo& info);
 	~Udp();
 
 public:

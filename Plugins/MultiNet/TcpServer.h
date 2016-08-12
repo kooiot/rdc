@@ -7,8 +7,8 @@ class TcpServer : public IPort
 public:
 	TcpServer(uv_loop_t* uv_loop,
 		int channel,
-		IPortHandler* Handler,
-		const TCPServerInfo& Info);
+		IPortHandler* handler,
+		const TCPServerInfo& info);
 	~TcpServer();
 
 public:
