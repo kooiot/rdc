@@ -173,7 +173,7 @@ project "multi-net"
 
 	files {"./Plugins/MultiNet/**.h", "./Plugins/MultiNet/**.cpp" }
 	links { "pthread", "rt", "uv"}
-	includedirs { "libs/api" }
+	includedirs { "libs/api", "libs/common/include", "libs/libuv-v1.9.1/include" }
 	libdirs {"libs/.libs"}
 
 	filter "configurations:Debug"

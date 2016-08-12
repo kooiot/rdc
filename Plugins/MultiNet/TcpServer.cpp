@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "TcpServer.h"
 #include <cassert>
+#include <cstring>
 
 static void echo_alloc(uv_handle_t* handle,
 	size_t suggested_size,
@@ -21,9 +22,9 @@ TcpServer::TcpServer(uv_loop_t* uv_loop,
 	: IPort(channel, Handler)
 	, m_uv_loop(uv_loop)
 	, m_Info(Info)
+	, m_tcp_server(NULL)
 	, m_tcp_client(NULL)
 {
-	m_tcp_server = new uv_tcp_t();
 }
 
 
@@ -95,6 +96,7 @@ bool TcpServer::Open()
 		return false;
 	}
 	
+	m_tcp_server = new uv_tcp_t();
 	rc = uv_tcp_init(m_uv_loop, m_tcp_server);
 	if (0 != rc) {
 		RLOG("Cannot Init TCP handle %d\n", rc);

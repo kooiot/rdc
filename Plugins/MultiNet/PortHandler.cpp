@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "PortHandler.h"
 #include <cstdio>
+#include <cstring>
 
 CPortHandler::CPortHandler(PluginSendCB send,
 	PluginCloseCB close,

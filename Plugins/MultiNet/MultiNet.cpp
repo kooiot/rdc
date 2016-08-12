@@ -3,8 +3,7 @@
 
 #include "stdafx.h"
 #include <PluginDefs.h>
-#include "PortMgr.h"
-#include "PortHandler.h"
+#include "Port.h"
 
 extern "C" 
 RDC_PLUGIN_TYPE GetType()
@@ -19,33 +18,34 @@ const char* GetName()
 }
 
 extern "C"
+const char* GetInfo()
+{
+	return "Mutiple Network Connections via One Channel";
+}
+
+extern "C"
 long CreateHandle(char *config,
 	PluginSendCB send,
 	PluginCloseCB close,
 	void* ptr)
 {
-	CPortMgr::Instance().Init();
-
-	CPortHandler* handler = new CPortHandler(send, close, ptr);
-	IPort* port = CPortMgr::Instance().Create(handler, config);
-	
+	CPort* port =  new CPort(config, send, close, ptr);
 	return (long)port;
 }
 
 extern "C"
 int Destory(long Handle)
 {
-	IPort* port = (IPort*)Handle;
+	CPort* port = (CPort*)Handle;
 	if (port)
-		CPortMgr::Instance().Destory(port);
-
+		delete port;
 	return 0;
 }
 
 extern "C"
 int Open(long Handle)
 {
-	IPort* port = (IPort*)Handle;
+	CPort* port = (CPort*)Handle;
 	if (port)
 		port->Open();
 	return 0;
@@ -54,7 +54,7 @@ int Open(long Handle)
 extern "C"
 int Close(long Handle)
 {
-	IPort* port = (IPort*)Handle;
+	CPort* port = (CPort*)Handle;
 	if (port)
 		port->Close();
 	return 0;
@@ -63,8 +63,9 @@ int Close(long Handle)
 extern "C"
 int Write(long Handle, const char* buf, size_t len)
 {
-	IPort* port = (IPort*)Handle;
+	CPort* port = (CPort*)Handle;
 	if (port)
-		return port->Write((void*)buf, len);
+		return port->Write(buf, len);
 	return 0;
 }
+

@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "PortMgr.h"
-#include <DataJson.h>
 #include "Udp.h"
 //#include "TcpClient.h"
 #include "TcpServer.h"
@@ -17,18 +16,14 @@ CPortMgr::~CPortMgr()
 {
 }
 
-CPortMgr & CPortMgr::Instance()
-{
-	static CPortMgr obj;
-	return obj;
-}
-
 int CPortMgr::Init()
 {
-	if (m_thread)
+	if (m_uv_loop)
 		return 0;
 
-	m_uv_loop = uv_default_loop();
+	m_uv_loop = new uv_loop_t();
+	uv_loop_init(m_uv_loop);
+
 	m_thread = new std::thread([this](void) {
 		while (!m_abort) {
 			uv_run(m_uv_loop, UV_RUN_ONCE);

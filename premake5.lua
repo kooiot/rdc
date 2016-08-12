@@ -86,3 +86,24 @@ project "example"
 		defines { "NDEBUG" }
 		optimize "On"
 
+project "multi-net"
+	kind "SharedLib"
+	language "C++"
+	flags {"C++11"}
+	defines {"RDC_LINUX_SYS"}
+	location "build/plugins"
+	targetdir "bin/%{cfg.buildcfg}/plugins"
+
+	files {"./Plugins/MultiNet/**.h", "./Plugins/MultiNet/**.cpp" }
+	links { "pthread", "rt", "uv"}
+	includedirs { "libs/api", "libs/common/include", "libs/libuv-v1.9.1/include" }
+	libdirs {"libs/.libs"}
+
+	filter "configurations:Debug"
+		defines { "DEBUG" }
+		symbols "On"
+
+	filter "configurations:Release"
+		defines { "NDEBUG" }
+		optimize "On"
+

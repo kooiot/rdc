@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Udp.h"
 #include <cassert>
+#include <cstring>
 
 static void echo_alloc(uv_handle_t* handle,
 	size_t suggested_size,
@@ -103,7 +104,11 @@ void Udp::_UdpRecvCB(uv_udp_t * handle, ssize_t nread, const uv_buf_t * buf, con
 		struct sockaddr_in* in_addr = (struct sockaddr_in*)addr;
 		if (m_peer_addr.sin_port != in_addr->sin_port)
 			return;
-		if (m_peer_addr.sin_addr.S_un.S_addr != in_addr->sin_addr.S_un.S_addr)
+#ifndef RDC_LINUX_SYS
+		if (m_peer_addr.sin_addr.S_addr != in_addr->sin_addr.S_addr)
+#else
+		if (m_peer_addr.sin_addr.s_addr != in_addr->sin_addr.s_addr)
+#endif
 			return;
 	}
 	else {

@@ -10,12 +10,10 @@ class UdpPort;
 class TcpPort;
 class CPortMgr
 {
-protected:
+public:
 	CPortMgr();
 	~CPortMgr();
 
-public:
-	static CPortMgr& Instance();
 	int Init();
 	void Close();
 
