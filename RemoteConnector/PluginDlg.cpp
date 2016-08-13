@@ -57,43 +57,83 @@ void CPluginDlg::OnOK()
 {
 	m_cbList.GetWindowText(m_Info.Name, RC_MAX_PLUGIN_NAME_LEN);
 	m_editConfig.GetWindowText(m_Info.Data, RC_MAX_PLUGIN_DATA_LEN);
+
+	m_cbList.GetWindowText(m_LocalInfo.Name, RC_MAX_PLUGIN_NAME_LEN);
+	m_edtConfigLocal.GetWindowText(m_LocalInfo.Data, RC_MAX_PLUGIN_DATA_LEN);
 	CDialogEx::OnOK();
 }
 
 
 void CPluginDlg::OnBnClickedButtonSlrm()
 {
-	ConnectionInfo tcp1;
-	memset(&tcp1, 0, sizeof(ConnectionInfo));
-	tcp1.Type = CT_TCPC;
-	tcp1.Channel = 0;
-	tcp1.TCPClient.remote.port = 9200;
-	sprintf(tcp1.TCPClient.remote.sip, "%s", "127.0.0.1");
+	{
+		ConnectionInfo tcp1;
+		memset(&tcp1, 0, sizeof(ConnectionInfo));
+		tcp1.Type = CT_TCPC;
+		tcp1.Channel = 0;
+		tcp1.TCPClient.remote.port = 9200;
+		sprintf(tcp1.TCPClient.remote.sip, "%s", "127.0.0.1");
 
-	ConnectionInfo tcp2;
-	memset(&tcp2, 0, sizeof(ConnectionInfo));
-	tcp2.Type = CT_TCPC;
-	tcp2.Channel = 0;
-	tcp2.TCPClient.remote.port = 9210;
-	sprintf(tcp2.TCPClient.remote.sip, "%s", "127.0.0.1");
+		ConnectionInfo tcp2;
+		memset(&tcp2, 0, sizeof(ConnectionInfo));
+		tcp2.Type = CT_TCPC;
+		tcp2.Channel = 0;
+		tcp2.TCPClient.remote.port = 9210;
+		sprintf(tcp2.TCPClient.remote.sip, "%s", "127.0.0.1");
 
 
-	ConnectionInfo udp1;
-	memset(&udp1, 0, sizeof(ConnectionInfo));
-	udp1.Type = CT_UDP;
-	udp1.Channel = 0;
-	udp1.TCPClient.remote.port = 9800;
-	sprintf(udp1.TCPClient.remote.sip, "%s", "127.0.0.1");
-	udp1.TCPClient.bind.port = 9801;
-	sprintf(udp1.TCPClient.bind.sip, "%s", "127.0.0.1");
+		ConnectionInfo udp1;
+		memset(&udp1, 0, sizeof(ConnectionInfo));
+		udp1.Type = CT_UDP;
+		udp1.Channel = 0;
+		udp1.UDP.remote.port = 9800;
+		sprintf(udp1.UDP.remote.sip, "%s", "127.0.0.1");
+		udp1.UDP.bind.port = 9801;
+		sprintf(udp1.UDP.bind.sip, "%s", "127.0.0.1");
 
-	json j;
-	j[0] = KOO_GEN_JSON(tcp1);
-	j[1] = KOO_GEN_JSON(tcp2);
-	j[2] = KOO_GEN_JSON(udp1);
+		json j;
+		j[0] = KOO_GEN_JSON(tcp1);
+		j[1] = KOO_GEN_JSON(tcp2);
+		j[2] = KOO_GEN_JSON(udp1);
 
-	std::stringstream ss;
-	j >> ss;
+		std::stringstream ss;
+		j >> ss;
 
-	m_editConfig.SetWindowText(ss.str().c_str());
+		m_editConfig.SetWindowText(ss.str().c_str());
+	}
+
+	{
+
+		ConnectionInfo tcp1;
+		memset(&tcp1, 0, sizeof(ConnectionInfo));
+		tcp1.Type = CT_TCPS;
+		tcp1.Channel = 0;
+		tcp1.TCPServer.bind.port = 9201;
+		sprintf(tcp1.TCPServer.bind.sip, "%s", "127.0.0.1");
+
+		ConnectionInfo tcp2;
+		memset(&tcp2, 0, sizeof(ConnectionInfo));
+		tcp2.Type = CT_TCPC;
+		tcp2.Channel = 0;
+		tcp2.TCPServer.remote.port = 9211;
+		sprintf(tcp2.TCPServer.remote.sip, "%s", "127.0.0.1");
+
+
+		ConnectionInfo udp1;
+		memset(&udp1, 0, sizeof(ConnectionInfo));
+		udp1.Type = CT_UDP;
+		udp1.Channel = 0;
+		udp1.UDP.bind.port = 9900;
+		sprintf(udp1.UDP.bind.sip, "%s", "127.0.0.1");
+
+		json j;
+		j[0] = KOO_GEN_JSON(tcp1);
+		j[1] = KOO_GEN_JSON(tcp2);
+		j[2] = KOO_GEN_JSON(udp1);
+
+		std::stringstream ss;
+		j >> ss;
+
+		m_edtConfigLocal.SetWindowText(ss.str().c_str());
+	}
 }

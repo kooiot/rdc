@@ -245,20 +245,20 @@ json generate_json(const SerialInfo& info) {
 json generate_json(const TCPClientInfo& info) {
 	json j;
 	j["bind"] = generate_json(info.bind);
-	j["remote"] = generate_json(info.bind);
+	j["remote"] = generate_json(info.remote);
 	return j;
 }
 json generate_json(const UDPInfo& info) {
 	json j;
 	j["bind"] = generate_json(info.bind);
-	j["remote"] = generate_json(info.bind);
+	j["remote"] = generate_json(info.remote);
 	return j;
 }
 
 json generate_json(const TCPServerInfo& info) {
 	json j;
 	j["bind"] = generate_json(info.bind);
-	j["remote"] = generate_json(info.bind);
+	j["remote"] = generate_json(info.remote);
 	return j;
 }
 

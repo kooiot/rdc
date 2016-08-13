@@ -142,8 +142,8 @@ void CDevicesDlg::DumpDevice(int nCur)
 		info.ValidTime = 0;
 	}
 
-	m_listDevs.SetItemText(nCur, 0, info.SN);
-	m_listDevs.SetItemText(nCur, 1, info.Name);
+	m_listDevs.SetItemText(nCur, 0, info.Name);
+	m_listDevs.SetItemText(nCur, 1, info.SN);
 	m_listDevs.SetItemText(nCur, 2, info.Desc);
 }
 
@@ -170,14 +170,15 @@ void CDevicesDlg::OnBnClickedButtonAdd()
 {
 	int nCur = m_listDevs.GetItemCount();
 	const char* uuid = newGUID();
-	int n = m_listDevs.InsertItem(nCur, uuid);
+	int n = m_listDevs.InsertItem(nCur, "");
+	m_listDevs.SetItemText(n, 0, uuid);
 	ASSERT(m_Devs[n].Index == 0 && m_Devs[n].CreateTime == 0);
 	m_Devs[n].Index = -1;
 	m_Devs[n].CreateTime = time(NULL);
 	m_Devs[n].ValidTime = 0;
 
 	sprintf(m_Devs[n].SN, "%s", uuid);
-	m_listDevs.SetItemState(nCur, LVNI_FOCUSED | LVIS_SELECTED, LVNI_FOCUSED | LVIS_SELECTED);
+	m_listDevs.SetItemState(n, LVNI_FOCUSED | LVIS_SELECTED, LVNI_FOCUSED | LVIS_SELECTED);
 	BindDevice(nCur, true);
 }
 
