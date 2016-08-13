@@ -29,4 +29,6 @@ public:
 	std::list<std::string> m_List;
 	PluginInfo m_Info;
 	virtual void OnOK();
+	afx_msg void OnBnClickedButtonSlrm();
+	CEdit m_edtConfigLocal;
 };

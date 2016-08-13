@@ -92,7 +92,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../libs/libuv/include;../libs/enet/include;../libs/zeromq/include;../libs/api</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../libs/libuv/include;../libs/enet/include;../libs/zeromq/include;../libs/api;../libs/common/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -117,7 +117,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../libs/libuv/include;../libs/enet/include;../libs/zeromq/include;../libs/api</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../libs/libuv/include;../libs/enet/include;../libs/zeromq/include;../libs/api;../libs/common/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -144,7 +144,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../libs/libuv/include;../libs/enet/include;../libs/zeromq/include;../libs/api</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../libs/libuv/include;../libs/enet/include;../libs/zeromq/include;../libs/api;../libs/common/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -173,7 +173,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../libs/libuv/include;../libs/enet/include;../libs/zeromq/include;../libs/api</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../libs/libuv/include;../libs/enet/include;../libs/zeromq/include;../libs/api;../libs/common/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

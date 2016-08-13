@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include <DataJson.h>
 #include <PluginDefs.h>
 #include "Port.h"
@@ -30,14 +31,26 @@ CPort::~CPort()
 
 bool CPort::Open()
 {
+	for (auto & port : m_Ports) {
+		if (!port->Open()) {
+			return false;
+		}
+	}
 }
 
 void CPort::Close()
 {
+	for (auto & port : m_Ports) {
+		port->Close();
+	}
 }
 
 int CPort::Write(const char * buf, size_t len)
 {
-	printf("Write %d\n", len);
-	return len;
+	int index = *buf;
+	if (index < 0 || index > m_Ports.size())
+		return -1;
+
+	const char* p = buf + 1;
+	return m_Ports[index]->Write((void*)p, len);
 }

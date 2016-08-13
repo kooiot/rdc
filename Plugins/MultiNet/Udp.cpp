@@ -110,7 +110,7 @@ void Udp::_UdpRecvCB(uv_udp_t * handle, ssize_t nread, const uv_buf_t * buf, con
 		if (m_peer_addr.sin_port != in_addr->sin_port)
 			return;
 #ifndef RDC_LINUX_SYS
-		if (m_peer_addr.sin_addr.S_addr != in_addr->sin_addr.S_addr)
+		if (m_peer_addr.sin_addr.S_un.S_addr != in_addr->sin_addr.S_un.S_addr)
 #else
 		if (m_peer_addr.sin_addr.s_addr != in_addr->sin_addr.s_addr)
 #endif
