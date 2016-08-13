@@ -67,7 +67,7 @@ bool StreamMgr::Init()
 					break;
 
 				case ENET_EVENT_TYPE_DISCONNECT:
-					printf("ENet peer disconnected, count %ld.\n", (long)event.peer->data);
+					printf("ENet peer disconnected, count %ld event.data %d.\n", (long)event.peer->data, event.data);
 					OnDisconnected(event.peer);
 				}
 			}

@@ -27,6 +27,7 @@ CPort::CPort(char *config,
 
 CPort::~CPort()
 {
+	m_Mgr.Close();
 }
 
 bool CPort::Open()

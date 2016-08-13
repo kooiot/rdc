@@ -22,7 +22,6 @@ Udp::Udp(uv_loop_t* uv_loop,
 	, m_uv_loop(uv_loop)
 	, m_Info(info)
 {
-	m_udp_handle = new uv_udp_t();
 	printf("Create UDP  	R:%s:%d L:%s:%d\n", 
 		info.remote.sip,
 		info.remote.port,
@@ -52,8 +51,10 @@ bool Udp::Open()
 		return false;
 	}
 
+	m_udp_handle = new uv_udp_t();
 	rc = uv_udp_init(m_uv_loop, m_udp_handle);
 	if (0 != rc) {
+		delete m_udp_handle;
 		printf("Cannot init UDP handle %d\n", rc);
 		return false;
 	}
@@ -73,14 +74,17 @@ bool Udp::Open()
 		printf("Cannot start UDP recv callback %d\n", rc);
 		return false;
 	}
+	printf("Start UDP Done!\n");
 
 	return true;
 }
 
 void Udp::Close()
 {
-	uv_udp_recv_stop(m_udp_handle);
-	uv_close((uv_handle_t*)m_udp_handle, close_cb);
+	if (m_udp_handle) {
+		uv_udp_recv_stop(m_udp_handle);
+		uv_close((uv_handle_t*)m_udp_handle, close_cb);
+	}
 }
 
 int Udp::Write(void * buf, size_t len)

@@ -132,7 +132,9 @@ void TcpServer::Close()
 		uv_close((uv_handle_t*)m_tcp_client, close_cb);
 	}
 
-	uv_close((uv_handle_t*)m_tcp_server, close_cb);
+	if (m_tcp_server) {
+		uv_close((uv_handle_t*)m_tcp_server, close_cb);
+	}
 }
 
 int TcpServer::Write(void * buf, size_t len)

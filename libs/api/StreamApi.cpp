@@ -71,7 +71,7 @@ bool CStreamApi::Connect(const char * ip, int port)
 					break;
 
 				case ENET_EVENT_TYPE_DISCONNECT:
-					printf("%s disconnected.\n", (char*)event.peer->data);
+					printf("%s disconnected. event.data %d\n", (char*)event.peer->data, event.data);
 					/* Reset the peer's client information. */
 					//event.peer->data = NULL;
 					m_Handler.OnEvent(-1, SE_DISCONNECT, "");

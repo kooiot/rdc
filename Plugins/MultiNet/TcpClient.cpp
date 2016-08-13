@@ -21,6 +21,7 @@ TcpClient::TcpClient(uv_loop_t* uv_loop,
 	, m_bConnected(false)
 	, m_uv_loop(uv_loop)
 	, m_tcp_handle(NULL)
+	, m_Info(info)
 {
 	printf("Create TCPClient   C:%s:%d L:%s:%d\n", 
 		info.remote.sip,
@@ -54,6 +55,7 @@ void TcpClient::_ConnectCB(uv_connect_t * req, int status)
 		OnClose();
 		return;
 	}
+	printf("Connect to TCP server sucessed\n");
 	m_bConnected = true;
 }
 
@@ -83,7 +85,7 @@ void TcpClient::Start()
 
 bool TcpClient::Open()
 {
-	printf("Open TCP ...\n");
+	printf("Open TCP Client ...\n");
 	m_bConnected = false;
 	struct sockaddr_in addr;
 
@@ -134,8 +136,10 @@ bool TcpClient::Open()
 
 void TcpClient::Close()
 {
-	uv_read_stop((uv_stream_t*)m_tcp_handle);
-	uv_close((uv_handle_t*)m_tcp_handle, close_cb);
+	if (m_tcp_handle) {
+		uv_read_stop((uv_stream_t*)m_tcp_handle);
+		uv_close((uv_handle_t*)m_tcp_handle, close_cb);
+	}
 }
 
 int TcpClient::Write(void * data, size_t len)

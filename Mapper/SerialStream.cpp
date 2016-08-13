@@ -112,6 +112,7 @@ void SerialStream::Run()
 		return;
 	}
 #endif
+	printf("Read Serial len %d\n", len);
 	SendData(buf, len);
 }
 
