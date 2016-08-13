@@ -33,12 +33,18 @@ bool CPort::Open()
 
 	m_pThread = new std::thread([this]() {
 		int i = 0;
+		char temp[80];
+		for (; i < 80; ++i) {
+			temp[i] = 'a' + i;
+		}
 		while (!m_bAbort) {
-			if (i++ > 100)
-				break;
+			//if (i++ > 100)
+			//	break;
 
-			Sleep(1000);
-			m_Send("Hello World", strlen("Hello World"), m_ptr);
+			Sleep(50);
+
+			//m_Send("Hello World", strlen("Hello World"), m_ptr);
+			m_Send(temp, 80, m_ptr);
 		}
 
 		if (!m_bAbort)

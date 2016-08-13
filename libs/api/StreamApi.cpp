@@ -101,7 +101,9 @@ int CStreamApi::SendData(int channel, void * buf, size_t len)
 	enet_packet_resize(packet, sizeof(int) + len);
 	memcpy(packet->data + sizeof(int), buf, len);
 	int rc = enet_peer_send((ENetPeer*)m_Peer, channel, packet);
-
+	if (rc != 0) {
+		printf("Send Data returns %d\n", rc);
+	}
 	return rc;
 }
 

@@ -49,8 +49,10 @@ int StreamPortBase::SendData(void * data, size_t len)
 	ENetPacket* packet = enet_packet_create(&m_Info.Mask, sizeof(int), ENET_PACKET_FLAG_RELIABLE);
 	enet_packet_resize(packet, sizeof(int) + len);
 	memcpy(packet->data + sizeof(int), data, len);
-	enet_peer_send(m_Info.Peer, m_Info.ConnInfo.Channel, packet);
-	return 0;
+	int rc = enet_peer_send(m_Info.Peer, m_Info.ConnInfo.Channel, packet);
+	if (rc != 0)
+		printf("Send Data returns %d\n", rc);
+	return rc;
 }
 
 int StreamPortBase::FireEvent(StreamEvent se, const char* msgfmt, ...)
@@ -89,7 +91,8 @@ int StreamPortBase::_FireEvent(StreamEvent se, const char* msg)
 
 	ENetPacket* packet = enet_packet_create(ss.str().c_str(), ss.str().length(), ENET_PACKET_FLAG_RELIABLE);
 	int rc = enet_peer_send(m_Info.Peer, RC_MAX_CONNECTION, packet);
-	printf("Send StreamEvent returns %d\n", rc);
+	if (rc != 0)
+		printf("Send StreamEvent returns %d\n", rc);
 
 	return rc;
 }
