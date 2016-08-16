@@ -348,6 +348,7 @@ void CRemoteConnectorDlg::AddConnection(ConnectionInfo * info, ConnectionInfo * 
 	}
 	if (bind->Type == CT_TEST) {
 		auto dlg = new CTestPortDlg(info->Channel, *this);
+		dlg->Create(IDD_TP_DIALOG, this);
 		dlg->ShowWindow(SW_SHOW);
 		pHandler = dlg;
 	}

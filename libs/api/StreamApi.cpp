@@ -104,6 +104,7 @@ int CStreamApi::SendData(int channel, void * buf, size_t len)
 	if (rc != 0) {
 		printf("Send Data returns %d\n", rc);
 	}
+	printf("outgoingReliableCommands  %d\n", ((ENetPeer*)m_Peer)->outgoingReliableCommands);
 	return rc;
 }
 

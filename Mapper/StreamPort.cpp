@@ -50,8 +50,11 @@ int StreamPortBase::SendData(void * data, size_t len)
 	enet_packet_resize(packet, sizeof(int) + len);
 	memcpy(packet->data + sizeof(int), data, len);
 	int rc = enet_peer_send(m_Info.Peer, m_Info.ConnInfo.Channel, packet);
-	if (rc != 0)
+	if (rc != 0) {
+		//assert(false);
 		printf("Send Data returns %d\n", rc);
+	}
+	printf("packetsLost  %d\n", m_Info.Peer->packetsLost);
 	return rc;
 }
 

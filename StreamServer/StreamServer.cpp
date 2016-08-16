@@ -135,9 +135,7 @@ void run_loop(ENetHost* remote)
 			printf("errno %d\n", errno);
 			break;
 		}
-#ifdef _DEBUG
-		putc('.', stdout);
-#endif
+
 		switch (event.type)
 		{
 		case ENET_EVENT_TYPE_CONNECT:
@@ -180,13 +178,14 @@ void run_loop(ENetHost* remote)
 			int data = (long)event.peer->data;
 			int nType = ((data & 0xFFFF0000) >> 16);
 			int nIndex = (data & 0xFFFF);
-
-#ifdef _DEBUG
+#ifdef PRINT_LEN
 			printf("A packet of length %u was received from %d-%d on channel %u.\n",
 				event.packet->dataLength,
 				nType,
 				nIndex,
 				event.channelID);
+#else
+			putc('.', stdout);
 #endif
 			if (RC_MAX_CONNECTION != event.channelID && nType == MAPPER_TYPE) {
 				ENetPeer* client = ClientPeers[nIndex];
@@ -264,6 +263,7 @@ void run_loop(ENetHost* remote)
 
 		} break;
 		case ENET_EVENT_TYPE_DISCONNECT:
+		{
 			int data = (long)event.peer->data;
 			int nType = ((data & 0xFFFF0000) >> 16);
 			int nIndex = (data & 0xFFFF);
@@ -289,6 +289,10 @@ void run_loop(ENetHost* remote)
 			}
 			/* Reset the peer's client information. */
 			event.peer->data = NULL;
+		} break;
+		default:
+			printf("Unknown Event Type %d\n", event.type);
+			break;
 		}
 	}
 }
