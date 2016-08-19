@@ -128,8 +128,8 @@ void run_loop(ENetHost* remote)
 	ENetEvent event;
 	while (true)
 	{
-		/* Wait up to 5000 milliseconds for an event. */
-		int nRet = enet_host_service(remote, &event, 5000);
+		/* Wait up to 1000 milliseconds for an event. */
+		int nRet = enet_host_service(remote, &event, 1000);
 		if (nRet < 0) {
 			int nr = errno;
 			printf("errno %d\n", errno);
@@ -380,8 +380,9 @@ int main(int argc, char* argv[])
 		info.port = port;
 		sprintf(info.sip, "%s", bip.c_str());
 		if (send_add_stream(id, req, info)) {
-			std::thread hb([id, req, info] {
-				while (true) {
+			bool bStop = false;
+			std::thread* hb = new std::thread([id, req, info, bStop] {
+				while (!bStop) {
 #ifndef RDC_LINUX_SYS
 					Sleep(5000);
 #else
@@ -396,6 +397,11 @@ int main(int argc, char* argv[])
 			printf("%s\n", "Initialized!");
 
 			run_loop(remote);
+
+			bStop = true;
+			if (hb && hb->joinable())
+				hb->join();
+			delete hb;
 
 			send_remove_stream(id, req);
 		}

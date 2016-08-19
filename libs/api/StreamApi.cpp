@@ -12,6 +12,7 @@ CStreamApi::CStreamApi(IStreamHandler & Handler, int nType, int nIndex, int nStr
 	m_pThread(nullptr),
 	m_bAbort(false)
 {
+	m_pLock = new std::mutex();
 	m_nData = ((nType & 0xFFFF) << 16) + (nIndex & 0xFFFF);
 }
 
@@ -100,11 +101,12 @@ int CStreamApi::SendData(int channel, void * buf, size_t len)
 	ENetPacket* packet = enet_packet_create(&m_nStreamMask, sizeof(int), ENET_PACKET_FLAG_RELIABLE);
 	enet_packet_resize(packet, sizeof(int) + len);
 	memcpy(packet->data + sizeof(int), buf, len);
+	m_pLock->lock();
 	int rc = enet_peer_send((ENetPeer*)m_Peer, channel, packet);
+	m_pLock->unlock();
 	if (rc != 0) {
 		printf("Send Data returns %d\n", rc);
 	}
-	printf("outgoingReliableCommands  %d\n", ((ENetPeer*)m_Peer)->outgoingReliableCommands);
 	return rc;
 }
 

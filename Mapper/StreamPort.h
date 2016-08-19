@@ -2,6 +2,7 @@
 
 #include <enet/enet.h>
 #include <string>
+#include <mutex>
 #include <thread>
 #include "../api/DataDefs.h"
 
@@ -40,4 +41,5 @@ private:
 
 protected:
 	StreamPortInfo m_Info;
+	std::mutex* m_pLock;
 };

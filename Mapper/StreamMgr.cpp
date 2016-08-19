@@ -56,10 +56,11 @@ bool StreamMgr::Init()
 					OnConnected(event.peer);
 					break;
 				case ENET_EVENT_TYPE_RECEIVE:
-					printf("A packet of length %u was received from %ld on channel %u.\n",
-						event.packet->dataLength,
-						(long)event.peer->data,
-						event.channelID);
+					//printf("A packet of length %u was received from %ld on channel %u.\n",
+					//	event.packet->dataLength,
+					//	(long)event.peer->data,
+					//	event.channelID);
+					putc('+', stderr);
 					OnData(event.peer, event.channelID, event.packet->data, event.packet->dataLength);
 
 					/* Clean up the packet now that we're done using it. */

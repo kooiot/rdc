@@ -19,7 +19,7 @@ const static char* StreamEventNames[] = {
 StreamPortBase::StreamPortBase(StreamPortInfo& info)
 	: m_Info(info)
 {
-
+	m_pLock = new std::mutex();
 }
 
 
@@ -37,9 +37,9 @@ int StreamPortBase::OnClientData(void * data, size_t len)
 	char* pbuf = (char*)data;
 	pbuf += sizeof(int);
 
-	printf("Write To Port len: %d  ", len - sizeof(int));
+	//printf("Write To Port len: %d  ", len - sizeof(int));
 	int n = this->OnWrite((uint8_t*)pbuf, len - sizeof(int));
-	printf(" returns: %d\n", n);
+	//printf(" returns: %d\n", n);
 	return n;
 }
 
@@ -49,12 +49,14 @@ int StreamPortBase::SendData(void * data, size_t len)
 	ENetPacket* packet = enet_packet_create(&m_Info.Mask, sizeof(int), ENET_PACKET_FLAG_RELIABLE);
 	enet_packet_resize(packet, sizeof(int) + len);
 	memcpy(packet->data + sizeof(int), data, len);
+	m_pLock->lock();
 	int rc = enet_peer_send(m_Info.Peer, m_Info.ConnInfo.Channel, packet);
+	m_pLock->unlock();
 	if (rc != 0) {
 		//assert(false);
 		printf("Send Data returns %d\n", rc);
 	}
-	printf("packetsLost  %d\n", m_Info.Peer->packetsLost);
+	putc('.', stderr);
 	return rc;
 }
 
@@ -93,7 +95,9 @@ int StreamPortBase::_FireEvent(StreamEvent se, const char* msg)
 	j >> ss;
 
 	ENetPacket* packet = enet_packet_create(ss.str().c_str(), ss.str().length(), ENET_PACKET_FLAG_RELIABLE);
+	m_pLock->lock();
 	int rc = enet_peer_send(m_Info.Peer, RC_MAX_CONNECTION, packet);
+	m_pLock->unlock();
 	if (rc != 0)
 		printf("Send StreamEvent returns %d\n", rc);
 

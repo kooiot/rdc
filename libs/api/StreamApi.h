@@ -1,4 +1,5 @@
 #pragma once
+#include <mutex>
 #include <thread>
 #include "DataDefs.h"
 
@@ -33,6 +34,7 @@ private:
 	bool m_bAbort;
 	void* m_Peer;
 	std::thread* m_pThread;
+	std::mutex* m_pLock;
 	int m_nData;
 };
 
