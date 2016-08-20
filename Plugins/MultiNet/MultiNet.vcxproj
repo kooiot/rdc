@@ -161,15 +161,10 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Handlers.h" />
     <ClInclude Include="Port.h" />
     <ClInclude Include="PortHandler.h" />
-    <ClInclude Include="PortMgr.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="TcpClient.h" />
-    <ClInclude Include="TcpServer.h" />
-    <ClInclude Include="Udp.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -188,7 +183,6 @@
     </ClCompile>
     <ClCompile Include="Port.cpp" />
     <ClCompile Include="PortHandler.cpp" />
-    <ClCompile Include="PortMgr.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -196,9 +190,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="MultiNet.cpp" />
-    <ClCompile Include="TcpClient.cpp" />
-    <ClCompile Include="TcpServer.cpp" />
-    <ClCompile Include="Udp.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\libs\api\api.vcxproj">

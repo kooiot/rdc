@@ -1,16 +1,16 @@
 #pragma once
-#include "Handlers.h"
+#include <Handlers.h>
 #include "afxwin.h"
 
 // CTestPortDlg 对话框
 
-class CTestPortDlg : public CDialogEx, public IStreamHandler
+class CTestPortDlg : public CDialogEx, public IPort
 {
 	DECLARE_DYNAMIC(CTestPortDlg)
 
 public:
 	CTestPortDlg(RC_CHANNEL channel,
-		IPortHandler& Handler,
+		IPortHandler* Handler,
 		CWnd* pParent = NULL);   // 标准构造函数
 	virtual ~CTestPortDlg();
 
@@ -20,13 +20,12 @@ public:
 #endif
 
 protected:
-	RC_CHANNEL m_nChannel;
-	IPortHandler& m_Handler;
+	virtual bool Open() {
+		return true;
+	}
+	virtual void Close() { return; }
 
-	virtual bool Open() { return true; }
-	virtual void Close() {}
-	virtual int OnData(void* buf, size_t len);
-	virtual int OnEvent(StreamEvent evt);
+	virtual int Write(void* buf, size_t len);
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持

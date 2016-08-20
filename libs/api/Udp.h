@@ -1,23 +1,23 @@
 #pragma once
+#include "DataDefs.h"
 #include "Handlers.h"
 #include <uv.h>
 #include <string>
 
-class UVUdp : public IStreamHandler
+class Udp : public IPort
 {
 public:
-	UVUdp(uv_loop_t* uv_loop,
+	Udp(uv_loop_t* uv_loop,
 		RC_CHANNEL channel,
-		IPortHandler& Handler,
-		const UDPInfo& Info);
-	~UVUdp();
+		IPortHandler* handler,
+		const UDPInfo& info);
+	~Udp();
 
 public:
 	virtual bool Open();
 	virtual void Close();
 
-	virtual int OnData(void* buf, size_t len);
-	virtual int OnEvent(StreamEvent evt);
+	virtual int Write(void* buf, size_t len);
 
 private:
 	static void UdpRecvCB(uv_udp_t* handle,
@@ -33,8 +33,6 @@ private:
 	static void SendCB(uv_udp_send_t* req, int status);
 
 private:
-	RC_CHANNEL m_nChannel;
-	IPortHandler& m_Handler;
 	UDPInfo m_Info;
 
 	uv_loop_t * m_uv_loop;

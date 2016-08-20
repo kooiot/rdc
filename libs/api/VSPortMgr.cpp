@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "VSPortMgr.h"
 #include <fstream>
 
@@ -37,7 +36,7 @@ int VSPortMgr::Close()
 	return 0;
 }
 
-VSPort * VSPortMgr::CreatePort(RC_CHANNEL channel, IPortHandler & handler, const std::string & name)
+VSPort * VSPortMgr::CreatePort(RC_CHANNEL channel, IPortHandler *handler, const std::string & name)
 {
 	VSPort* port = new VSPort(channel, handler, name);
 	return port;

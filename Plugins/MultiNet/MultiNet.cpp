@@ -24,17 +24,17 @@ const char* GetInfo()
 }
 
 extern "C"
-long CreateHandle(char *config,
+PLUGIN_HANDLE CreateHandle(char *config,
 	PluginSendCB send,
 	PluginCloseCB close,
 	void* ptr)
 {
 	CPort* port =  new CPort(config, send, close, ptr);
-	return (long)port;
+	return port;
 }
 
 extern "C"
-int Destory(long Handle)
+int Destory(PLUGIN_HANDLE Handle)
 {
 	CPort* port = (CPort*)Handle;
 	if (port)
@@ -43,7 +43,7 @@ int Destory(long Handle)
 }
 
 extern "C"
-int Open(long Handle)
+int Open(PLUGIN_HANDLE Handle)
 {
 	CPort* port = (CPort*)Handle;
 	if (port)
@@ -52,7 +52,7 @@ int Open(long Handle)
 }
 
 extern "C"
-int Close(long Handle)
+int Close(PLUGIN_HANDLE Handle)
 {
 	CPort* port = (CPort*)Handle;
 	if (port)
@@ -61,7 +61,7 @@ int Close(long Handle)
 }
 
 extern "C"
-int Write(long Handle, const char* buf, size_t len)
+int Write(PLUGIN_HANDLE Handle, const char* buf, size_t len)
 {
 	CPort* port = (CPort*)Handle;
 	if (port)

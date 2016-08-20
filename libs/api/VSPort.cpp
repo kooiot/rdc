@@ -1,9 +1,10 @@
-#include "stdafx.h"
 #include "VSPort.h"
 
 
-VSPort::VSPort(RC_CHANNEL channel, IPortHandler& Handler, const std::string& name)
-	: m_nChannel(channel), m_Handler(Handler), m_Name(name), m_hPort(0)
+VSPort::VSPort(RC_CHANNEL channel, IPortHandler* Handler, const std::string& name)
+	: IPort(channel, Handler)
+	, m_Name(name)
+	, m_hPort(0)
 {
 }
 
@@ -67,7 +68,7 @@ void VSPort::Close()
 	}
 }
 
-int VSPort::OnData(void * buf, size_t len)
+int VSPort::Write(void * buf, size_t len)
 {
 	BOOL ret = FtVspcWrite(m_hPort, buf, len);
 	if (!ret) {
@@ -77,7 +78,7 @@ int VSPort::OnData(void * buf, size_t len)
 	return 0;
 }
 
-int VSPort::OnEvent(StreamEvent evt)
+int VSPort::Event(StreamEvent evt)
 {
 	return 0;
 }
@@ -142,7 +143,7 @@ LONG_PTR __cdecl VSPort::OnVspcPortEvents(
 				pThis->ShowError();
 				break;
 			}
-			pThis->m_Handler.Send(pThis->m_nChannel, buf, cbRead);
+			pThis->m_pHandler->Send(pThis->m_nChannel, buf, cbRead);
 			free(buf);
 		}
 	} break;
@@ -263,7 +264,6 @@ void VSPort::ShowError()
 	if (!FtVspcGetErrorMessage(ftErr, MessageBuffer, 1024))
 	{
 		sprintf(MessageBuffer, "%s", "!!!Error calling FtVspcGetErrorMessage API function!!!");
+		Error("VSPD_ERROR: %s", MessageBuffer);
 	}
-	TRACE("VSPD_ERROR: %s\n", MessageBuffer);
-	Error("%s", MessageBuffer);
 }

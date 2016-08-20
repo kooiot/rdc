@@ -1,8 +1,11 @@
-#include "stdafx.h"
 #include "PortMgr.h"
 #include "Udp.h"
 #include "TcpClient.h"
 #include "TcpServer.h"
+
+#ifndef RLOG
+#define RLOG printf
+#endif
 
 CPortMgr::CPortMgr()
 	: m_uv_loop(NULL)

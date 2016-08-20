@@ -93,7 +93,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../enet/include;../zeromq/include;../common/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../enet/include;../zeromq/include;../common/include;../libuv/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -107,7 +107,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../enet/include;../zeromq/include;../common/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../enet/include;../zeromq/include;../common/include;../libuv/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -123,7 +123,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../enet/include;../zeromq/include;../common/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../enet/include;../zeromq/include;../common/include;../libuv/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -141,7 +141,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../enet/include;../zeromq/include;../common/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../enet/include;../zeromq/include;../common/include;../libuv/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -157,18 +157,37 @@
     <ClCompile Include="DataJson.cpp" />
     <ClCompile Include="PluginApi.cpp" />
     <ClCompile Include="PluginLoader.cpp" />
+    <ClCompile Include="PluginPort.cpp" />
+    <ClCompile Include="PortMgr.cpp" />
     <ClCompile Include="ServicesApi.cpp" />
     <ClCompile Include="StreamApi.cpp" />
+    <ClCompile Include="TcpClient.cpp" />
+    <ClCompile Include="TcpServer.cpp" />
+    <ClCompile Include="Udp.cpp" />
+    <ClCompile Include="vspd\ftvspc.c" />
+    <ClCompile Include="VSPort.cpp" />
+    <ClCompile Include="VSPortMgr.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AccApi.h" />
     <ClInclude Include="DataDefs.h" />
     <ClInclude Include="DataJson.h" />
+    <ClInclude Include="Handlers.h" />
     <ClInclude Include="PluginApi.h" />
     <ClInclude Include="PluginDefs.h" />
     <ClInclude Include="PluginLoader.h" />
+    <ClInclude Include="PluginPort.h" />
+    <ClInclude Include="PortMgr.h" />
     <ClInclude Include="ServicesApi.h" />
     <ClInclude Include="StreamApi.h" />
+    <ClInclude Include="TcpClient.h" />
+    <ClInclude Include="TcpServer.h" />
+    <ClInclude Include="Udp.h" />
+    <ClInclude Include="vspd\ftvspc.h" />
+    <ClInclude Include="vspd\ftvspcstructs.h" />
+    <ClInclude Include="vspd\ftvspctypes.h" />
+    <ClInclude Include="VSPort.h" />
+    <ClInclude Include="VSPortMgr.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

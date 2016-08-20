@@ -1,6 +1,10 @@
-#include "stdafx.h"
-#include "UVTcpServer.h"
+#include "TcpServer.h"
 #include <cassert>
+#include <cstring>
+
+#ifndef RLOG
+#define RLOG printf
+#endif
 
 static void echo_alloc(uv_handle_t* handle,
 	size_t suggested_size,
@@ -14,27 +18,34 @@ static void close_cb(uv_handle_t* handle) {
 }
 
 
-UVTcpServer::UVTcpServer(uv_loop_t* uv_loop,
+TcpServer::TcpServer(uv_loop_t* uv_loop,
 	RC_CHANNEL channel,
-	IPortHandler& Handler,
-	const TCPServerInfo& Info)
-	: m_uv_loop(uv_loop), m_nChannel(channel), m_Handler(Handler), m_Info(Info),
-	m_tcp_client(NULL)
+	IPortHandler* handler,
+	const TCPServerInfo& info)
+	: IPort(channel, handler)
+	, m_uv_loop(uv_loop)
+	, m_Info(info)
+	, m_tcp_server(NULL)
+	, m_tcp_client(NULL)
 {
-	m_tcp_server = new uv_tcp_t();
+	RLOG("Create TCPServer   R:%s:%d L:%s:%d\n",
+		info.remote.sip,
+		info.remote.port,
+		info.bind.sip,
+		info.bind.port);
 }
 
 
-UVTcpServer::~UVTcpServer()
+TcpServer::~TcpServer()
 {
 }
 
-void UVTcpServer::ConnectionCB(uv_stream_t* remote, int status) {
-	UVTcpServer* pThis = (UVTcpServer*)remote->data;
+void TcpServer::ConnectionCB(uv_stream_t* remote, int status) {
+	TcpServer* pThis = (TcpServer*)remote->data;
 	pThis->_ConnectionCB(remote, status);
 }
 
-void UVTcpServer::_ConnectionCB(uv_stream_t* remote, int status)
+void TcpServer::_ConnectionCB(uv_stream_t* remote, int status)
 {
 	if (0 != status) {
 		// Failed
@@ -63,7 +74,7 @@ void UVTcpServer::_ConnectionCB(uv_stream_t* remote, int status)
 	m_tcp_client = client;
 }
 
-void UVTcpServer::ReadCB(uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf)
+void TcpServer::ReadCB(uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf)
 {
 	if (nread < 0) {
 		RLOG("read_cb error: %s\n", uv_err_name(nread));
@@ -71,17 +82,18 @@ void UVTcpServer::ReadCB(uv_stream_t * stream, ssize_t nread, const uv_buf_t * b
 		uv_close((uv_handle_t*)stream, close_cb);
 	}
 	else {
-		UVTcpServer* pThis = (UVTcpServer*)stream->data;
-		pThis->m_Handler.Send(pThis->m_nChannel, buf->base, nread);
+		TcpServer* pThis = (TcpServer*)stream->data;
+		pThis->m_pHandler->Send(pThis->m_nChannel, buf->base, nread);
 	}
 }
 
-void UVTcpServer::WriteCB(uv_write_t * req, int status)
+void TcpServer::WriteCB(uv_write_t * req, int status)
 {
+	RLOG("TCPServer WriteCB status %d\n", status);
 	delete req;
 }
 
-bool UVTcpServer::Open()
+bool TcpServer::Open()
 {
 	struct sockaddr_in addr;
 
@@ -93,6 +105,7 @@ bool UVTcpServer::Open()
 		return false;
 	}
 	
+	m_tcp_server = new uv_tcp_t();
 	rc = uv_tcp_init(m_uv_loop, m_tcp_server);
 	if (0 != rc) {
 		RLOG("Cannot Init TCP handle %d\n", rc);
@@ -109,26 +122,27 @@ bool UVTcpServer::Open()
 	rc = uv_listen((uv_stream_t*)m_tcp_server, 16, ConnectionCB);
 
 	if (0 != rc) {
-		RLOG("Cannot Connect TCP to server %d\n", rc);
+		RLOG("TCPServer Listen Failed: %d\n", rc);
 		return false;
 	}
 
 	return true;
 }
 
-void UVTcpServer::Close()
+void TcpServer::Close()
 {
 	RLOG("Close called\n");
 	if (NULL != m_tcp_client) {
 		uv_close((uv_handle_t*)m_tcp_client, close_cb);
 	}
 
-	uv_close((uv_handle_t*)m_tcp_server, close_cb);
+	if (m_tcp_server) {
+		uv_close((uv_handle_t*)m_tcp_server, close_cb);
+	}
 }
 
-int UVTcpServer::OnData(void * buf, size_t len)
+int TcpServer::Write(void * buf, size_t len)
 {
-	RLOG("OnData called len %d\n", len);
 	if (m_tcp_client == NULL) {
 		return -1;
 	}
@@ -140,11 +154,6 @@ int UVTcpServer::OnData(void * buf, size_t len)
 		&uvbuf,
 		1,
 		WriteCB);
+	RLOG("%s Send len %ld returns %d\n", __FUNCTION__, len, rc);
 	return rc;
-}
-
-int UVTcpServer::OnEvent(StreamEvent evt)
-{
-	RLOG("OnEvent evt %d\n", evt);
-	return 0;
 }

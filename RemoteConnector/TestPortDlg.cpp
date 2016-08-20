@@ -14,11 +14,10 @@
 IMPLEMENT_DYNAMIC(CTestPortDlg, CDialogEx)
 
 CTestPortDlg::CTestPortDlg(RC_CHANNEL channel,
-	IPortHandler& Handler,
+	IPortHandler* Handler,
 	CWnd* pParent /*=NULL*/)
 	: CDialogEx(IDD_TP_DIALOG, pParent)
-	, m_nChannel(channel)
-	, m_Handler(Handler)
+	, IPort(channel, Handler)
 {
 
 }
@@ -27,17 +26,11 @@ CTestPortDlg::~CTestPortDlg()
 {
 }
 
-int CTestPortDlg::OnData(void * buf, size_t len)
+int CTestPortDlg::Write(void * buf, size_t len)
 {
 	char* temp = new char[len];
 	memcpy(temp, buf, len);
 	PostMessage(WM_MSG_RECV_DATA, (WPARAM)temp, (LPARAM)len);
-	return 0;
-}
-
-int CTestPortDlg::OnEvent(StreamEvent evt)
-{
-	PostMessage(WM_MSG_RECV_DATA, 0, (LPARAM)evt);
 	return 0;
 }
 

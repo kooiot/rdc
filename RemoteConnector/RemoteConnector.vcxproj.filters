@@ -13,9 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="vspd">
-      <UniqueIdentifier>{da9c64c8-6761-4b68-be35-b80c268dbf8c}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -36,34 +33,7 @@
     <ClInclude Include="Resource.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="VSPort.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="VSPortMgr.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="vspd\ftvspc.h">
-      <Filter>vspd</Filter>
-    </ClInclude>
-    <ClInclude Include="vspd\ftvspcstructs.h">
-      <Filter>vspd</Filter>
-    </ClInclude>
-    <ClInclude Include="vspd\ftvspctypes.h">
-      <Filter>vspd</Filter>
-    </ClInclude>
     <ClInclude Include="SerialDlg.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Handlers.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="UVMgr.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="UVUdp.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="UVTcpServer.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="TCPDlg.h">
@@ -73,9 +43,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="TestPortDlg.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="PluginPort.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="PluginDlg.h">
@@ -92,25 +59,7 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="VSPort.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="VSPortMgr.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="vspd\ftvspc.c">
-      <Filter>vspd</Filter>
-    </ClCompile>
     <ClCompile Include="SerialDlg.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="UVMgr.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="UVUdp.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="UVTcpServer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="TCPDlg.cpp">
@@ -120,9 +69,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="TestPortDlg.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="PluginPort.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="PluginDlg.cpp">

@@ -3,16 +3,19 @@
 //
 
 #include "stdafx.h"
+
+#include <TcpClient.h>
+#include <TcpServer.h>
+#include <Udp.h>
+#include <PluginPort.h>
+
 #include "RemoteConnector.h"
 #include "RemoteConnectorDlg.h"
 #include "afxdialogex.h"
 #include "SerialDlg.h"
 #include "TCPDlg.h"
 #include "UDPDlg.h"
-#include "UVTcpServer.h"
-#include "UVUdp.h"
 #include <cassert>
-#include "PluginPort.h"
 #include "PluginDlg.h"
 
 #ifdef _DEBUG
@@ -271,9 +274,9 @@ void CRemoteConnectorDlg::StreamDataCallback(RC_CHANNEL channel, void * buf, siz
 void CRemoteConnectorDlg::__StreamDataCallback(RC_CHANNEL channel, void * buf, size_t len)
 {
 	TRACE("[STREAM_DATA] [%d] len %d\n", channel, len);
-	IStreamHandler* Handler = m_StreamPorts[channel];
-	if (Handler) {
-		Handler->OnData((void*)buf, len);
+	IPort* Port = m_StreamPorts[channel];
+	if (Port) {
+		Port->Write((void*)buf, len);
 	}
 }
 
@@ -340,30 +343,33 @@ void CRemoteConnectorDlg::AddConnection(ConnectionInfo * info, ConnectionInfo * 
 		delete bind;
 		return;
 	}
-	IStreamHandler* pHandler = NULL;
+	IPort* port = NULL;
 	const char* LocalType = CTNames[info->Type];
 	const char* RemoteType = CTNames[bind->Type];
 	if (bind->Type == CT_SERIAL) {
-		pHandler = m_VSPortMgr.CreatePort(info->Channel, *this, bind->Serial.dev);
+		port = m_VSPortMgr.CreatePort(info->Channel, this, bind->Serial.dev);
 	}
-	if (bind->Type == CT_TEST) {
-		auto dlg = new CTestPortDlg(info->Channel, *this);
+	else if (bind->Type == CT_TEST) {
+		auto dlg = new CTestPortDlg(info->Channel, this);
 		dlg->Create(IDD_TP_DIALOG, this);
 		dlg->ShowWindow(SW_SHOW);
-		pHandler = dlg;
+		port = dlg;
 	}
-	if (bind->Type == CT_UDP) {
-		pHandler = new UVUdp(m_UVLoop, info->Channel, *this, bind->UDP);
+	else if (bind->Type == CT_UDP) {
+		port = new Udp(m_UVLoop, info->Channel, this, bind->UDP);
 	}
-	if (bind->Type == CT_TCPS) {
-		pHandler = new UVTcpServer(m_UVLoop, info->Channel, *this, bind->TCPServer);
+	else if (bind->Type == CT_TCPS) {
+		port = new TcpServer(m_UVLoop, info->Channel, this, bind->TCPServer);
 	}
-	if (bind->Type == CT_PLUGIN) {
+	else if (bind->Type == CT_TCPS) {
+		port = new TcpServer(m_UVLoop, info->Channel, this, bind->TCPServer);
+	}
+	else if (bind->Type == CT_PLUGIN) {
 		auto api = m_PluginLoader.Find(bind->Plugin.Name);
 		if (api)
-			pHandler = new PluginPort(info->Channel, *this, bind->Plugin, api);
+			port = new PluginPort(info->Channel, this, bind->Plugin, api);
 	}
-	if (!pHandler || !pHandler->Open()) {
+	if (!port || !port->Open()) {
 		delete info;
 		delete bind;
 		return;
@@ -371,7 +377,7 @@ void CRemoteConnectorDlg::AddConnection(ConnectionInfo * info, ConnectionInfo * 
 
 	m_ConnectionInfos[info->Channel] = info;
 	m_LocalConnectionInfos[info->Channel] = bind;
-	m_StreamPorts[info->Channel] = pHandler;
+	m_StreamPorts[info->Channel] = port;
 
 	int nIndex = m_listConnections.GetItemCount();
 	nIndex = m_listConnections.InsertItem(nIndex, RemoteType);
@@ -385,15 +391,15 @@ void CRemoteConnectorDlg::RemoveConnection(RC_CHANNEL channel)
 	if (m_StreamPorts[channel] == NULL) {
 		return;
 	}
-	IStreamHandler* pHandler = m_StreamPorts[channel];
+	IPort* port = m_StreamPorts[channel];
 	ConnectionInfo * info = m_ConnectionInfos[channel];
 	ConnectionInfo * local_info = m_LocalConnectionInfos[channel];
-	pHandler->Close();
+	port->Close();
 	if (local_info->Type == CT_SERIAL) {
-		m_VSPortMgr.FreePort((VSPort*)pHandler);
+		m_VSPortMgr.FreePort((VSPort*)port);
 	}
 	else {
-		delete pHandler;
+		delete port;
 	}
 	delete local_info;
 	delete info;
@@ -548,10 +554,10 @@ void CRemoteConnectorDlg::OnBnClickedButtonDelete()
 	}
 	int nChannel = m_listConnections.GetItemData(nItem);
 
-	IStreamHandler* pHandler = m_StreamPorts[nChannel];
+	IPort* port = m_StreamPorts[nChannel];
 	ConnectionInfo* pInfo = m_ConnectionInfos[nChannel];
 	ConnectionInfo * local_info = m_LocalConnectionInfos[nChannel];
-	if (!pInfo || !pHandler)
+	if (!pInfo || !port)
 	{
 		MessageBox("Connection already close!!", "ÌבÊ¾", MB_OK | MB_ICONERROR);
 		return;

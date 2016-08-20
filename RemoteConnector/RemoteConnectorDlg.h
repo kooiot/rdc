@@ -38,7 +38,7 @@ protected:
 	DeviceInfo* m_Devices;
 	ConnectionInfo* m_ConnectionInfos[RC_MAX_CONNECTION];
 	ConnectionInfo* m_LocalConnectionInfos[RC_MAX_CONNECTION];
-	IStreamHandler* m_StreamPorts[RC_MAX_CONNECTION];
+	IPort* m_StreamPorts[RC_MAX_CONNECTION];
 	VSPortMgr m_VSPortMgr;
 	std::map<RC_HANDLE, CTestPortDlg*> m_TestPorts;
 	uv_loop_t * m_UVLoop;
@@ -72,6 +72,7 @@ protected:
 
 	virtual int OnLog(RC_CHANNEL channel, const char* type, const char* content);
 	virtual int Send(RC_CHANNEL channel, void* buf, size_t len);
+	virtual void Close() {};
 
 	void AddConnection(ConnectionInfo* info, ConnectionInfo * bind);
 	void RemoveConnection(RC_CHANNEL channel);

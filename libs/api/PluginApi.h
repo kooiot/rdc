@@ -16,6 +16,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+	typedef void* PLUGIN_HANDLE;
 	enum RDC_PLUGIN_TYPE {
 		RPT_MAPPER = 0x01,
 		RPT_CLIENT = 0x02,
@@ -26,14 +27,14 @@ extern "C" {
 
 	typedef RDC_PLUGIN_TYPE(* FGetType)();
 	typedef const char* (* FGetName)();
-	typedef long (* FCreateHandle)(char *config,
+	typedef PLUGIN_HANDLE(* FCreateHandle)(char *config,
 		PluginSendCB send,
 		PluginCloseCB close,
 		void* ptr);
-	typedef int (* FDestory)(long Handle);
-	typedef int (* FOpen)(long Handle);
-	typedef int (* FClose)(long Handle);
-	typedef int (* FWrite)(long Handle, const char* buf, size_t len);
+	typedef int (* FDestory)(PLUGIN_HANDLE Handle);
+	typedef int (* FOpen)(PLUGIN_HANDLE Handle);
+	typedef int (* FClose)(PLUGIN_HANDLE Handle);
+	typedef int (* FWrite)(PLUGIN_HANDLE Handle, const char* buf, size_t len);
 	typedef const char*(*FGetInfo)();
 
 	typedef struct _PluginApi {

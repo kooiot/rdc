@@ -1,21 +1,22 @@
 #pragma once
 
 #include "vspd/ftvspc.h"
+#include "DataDefs.h"
 #include "Handlers.h"
 #include <string>
 
-class VSPort : public IStreamHandler
+class VSPort : public IPort
 {
 protected:
 	friend class VSPortMgr;
-	VSPort(RC_CHANNEL channel, IPortHandler& Handler, const std::string& name);
+	VSPort(RC_CHANNEL channel, IPortHandler* Handler, const std::string& name);
 	~VSPort();
 
 	virtual bool Open();
 	virtual void Close();
 
-	virtual int OnData(void* buf, size_t len);
-	virtual int OnEvent(StreamEvent evt);
+	virtual int Write(void* buf, size_t len);
+	virtual int Event(StreamEvent evt);
 
 private:
 	static LONG_PTR __cdecl OnVspcPortEvents(
@@ -31,7 +32,7 @@ private:
 		va_start(args, fmt);
 		char* temp = new char[1024];
 		vsprintf(temp, fmt, args);
-		m_Handler.OnLog(m_nChannel, "ERROR", temp);
+		m_pHandler->OnLog(m_nChannel, "ERROR", temp);
 		va_end(args);
 	}
 
@@ -40,12 +41,10 @@ private:
 		va_start(args, fmt);
 		char* temp = new char[1024];
 		vsprintf(temp, fmt, args);
-		m_Handler.OnLog(m_nChannel, "INFO", temp);
+		m_pHandler->OnLog(m_nChannel, "INFO", temp);
 		va_end(args);
 	}
 private:
-	RC_CHANNEL m_nChannel;
-	IPortHandler& m_Handler;
 	std::string m_Name;
 	FTVSPCHANDLE m_hPort;
 };

@@ -19,6 +19,6 @@ protected:
 private:
 	CPluginLoader& m_Loader;
 	PluginApi* m_Plugin;
-	long m_Instance;
+	PLUGIN_HANDLE m_Instance;
 };
 

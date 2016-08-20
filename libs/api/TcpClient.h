@@ -1,11 +1,12 @@
 #pragma once
+#include "DataDefs.h"
 #include "Handlers.h"
 #include <uv.h>
 
 class TcpClient : public IPort 
 {
 public:
-	TcpClient(uv_loop_t* uv_loop, int channel, IPortHandler* handler, const TCPClientInfo& info);
+	TcpClient(uv_loop_t* uv_loop, RC_CHANNEL channel, IPortHandler* handler, const TCPClientInfo& info);
 	~TcpClient();
 
 public:

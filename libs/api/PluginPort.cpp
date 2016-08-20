@@ -1,9 +1,11 @@
-#include "stdafx.h"
 #include "PluginPort.h"
 
 
-PluginPort::PluginPort(RC_CHANNEL channel, IPortHandler& Handler, const PluginInfo& info, PluginApi* api)
-	: m_nChannel(channel), m_Handler(Handler), m_Info(info), m_Api(api), m_ApiHandle(0)
+PluginPort::PluginPort(RC_CHANNEL channel, IPortHandler* Handler, const PluginInfo& info, PluginApi* api)
+	: IPort(channel, Handler)
+	, m_Info(info)
+	, m_Api(api)
+	, m_ApiHandle(0)
 {
 }
 
@@ -34,7 +36,7 @@ void PluginPort::Close()
 	}
 }
 
-int PluginPort::OnData(void * buf, size_t len)
+int PluginPort::Write(void * buf, size_t len)
 {
 	if (m_ApiHandle == 0 || NULL == m_Api)
 		return -1;
@@ -45,7 +47,7 @@ int PluginPort::OnData(void * buf, size_t len)
 	return -1;
 }
 
-int PluginPort::OnEvent(StreamEvent evt)
+int PluginPort::Event(StreamEvent evt)
 {
 	return 0;
 }
@@ -54,11 +56,12 @@ int PluginPort::SendCB(const char * buf, size_t len, void * ptr)
 {
 	PluginPort* pThis = (PluginPort*)ptr;
 
-	return pThis->m_Handler.Send(pThis->m_nChannel, (void*)buf, len);
+	return pThis->m_pHandler->Send(pThis->m_nChannel, (void*)buf, len);
 }
 
 int PluginPort::CloseCB(void * ptr)
 {
 	PluginPort* pThis = (PluginPort*)ptr;
+	pThis->OnClose();
 	return 0;
 }

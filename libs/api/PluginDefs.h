@@ -23,6 +23,7 @@ extern "C" {
 
 #define RDC_MAX_PLUGIN_CONFIG 512
 
+	typedef void* PLUGIN_HANDLE;
 	// 插件类型
 	enum RDC_PLUGIN_TYPE {
 		RPT_MAPPER = 0x01,
@@ -39,19 +40,19 @@ extern "C" {
 	// 获取插件名称（必须保证唯一性）限制长度32
 	RDC_PLUGIN_API const char* GetName();
 	// 创建插件实例
-	RDC_PLUGIN_API long CreateHandle(char *config,
+	RDC_PLUGIN_API PLUGIN_HANDLE CreateHandle(char *config,
 		PluginSendCB send,
 		PluginCloseCB close,
 		void* ptr);
 
 	// 销毁插件实例
-	RDC_PLUGIN_API int Destory(long Handle);
+	RDC_PLUGIN_API int Destory(PLUGIN_HANDLE Handle);
 	// 开启插件插件实例
-	RDC_PLUGIN_API int Open(long Handle);
+	RDC_PLUGIN_API int Open(PLUGIN_HANDLE Handle);
 	// 停止插件插件实例
-	RDC_PLUGIN_API int Close(long Handle);
+	RDC_PLUGIN_API int Close(PLUGIN_HANDLE Handle);
 	// 往插件写入数据
-	RDC_PLUGIN_API int Write(long Handle, const char* buf, size_t len);
+	RDC_PLUGIN_API int Write(PLUGIN_HANDLE Handle, const char* buf, size_t len);
 	// 获取插件详细信息JSON(V2)
 	RDC_PLUGIN_API const char* GetInfo();
 #ifdef __cplusplus

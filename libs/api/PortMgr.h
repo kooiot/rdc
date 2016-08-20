@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Handlers.h"
 #include "DataDefs.h"
+#include "Handlers.h"
 #include <string>
 #include <thread>
 #include <uv.h>

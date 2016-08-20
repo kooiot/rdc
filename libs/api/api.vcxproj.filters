@@ -13,6 +13,15 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="UVConns">
+      <UniqueIdentifier>{d1ebecdd-8b9d-47ec-9996-5b0017c8d62d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="VSPort">
+      <UniqueIdentifier>{6194aacb-1e3c-4c82-bdc6-5598aa6567cd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="vspd">
+      <UniqueIdentifier>{9ec2e90f-71d2-4957-8fbc-c59eb0f2b188}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -34,6 +43,30 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="DataJson.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PortMgr.cpp">
+      <Filter>UVConns</Filter>
+    </ClCompile>
+    <ClCompile Include="TcpClient.cpp">
+      <Filter>UVConns</Filter>
+    </ClCompile>
+    <ClCompile Include="TcpServer.cpp">
+      <Filter>UVConns</Filter>
+    </ClCompile>
+    <ClCompile Include="Udp.cpp">
+      <Filter>UVConns</Filter>
+    </ClCompile>
+    <ClCompile Include="VSPort.cpp">
+      <Filter>VSPort</Filter>
+    </ClCompile>
+    <ClCompile Include="VSPortMgr.cpp">
+      <Filter>VSPort</Filter>
+    </ClCompile>
+    <ClCompile Include="vspd\ftvspc.c">
+      <Filter>vspd</Filter>
+    </ClCompile>
+    <ClCompile Include="PluginPort.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -60,6 +93,39 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="DataJson.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Handlers.h">
+      <Filter>UVConns</Filter>
+    </ClInclude>
+    <ClInclude Include="TcpClient.h">
+      <Filter>UVConns</Filter>
+    </ClInclude>
+    <ClInclude Include="TcpServer.h">
+      <Filter>UVConns</Filter>
+    </ClInclude>
+    <ClInclude Include="Udp.h">
+      <Filter>UVConns</Filter>
+    </ClInclude>
+    <ClInclude Include="PortMgr.h">
+      <Filter>UVConns</Filter>
+    </ClInclude>
+    <ClInclude Include="VSPort.h">
+      <Filter>VSPort</Filter>
+    </ClInclude>
+    <ClInclude Include="VSPortMgr.h">
+      <Filter>VSPort</Filter>
+    </ClInclude>
+    <ClInclude Include="vspd\ftvspc.h">
+      <Filter>vspd</Filter>
+    </ClInclude>
+    <ClInclude Include="vspd\ftvspcstructs.h">
+      <Filter>vspd</Filter>
+    </ClInclude>
+    <ClInclude Include="vspd\ftvspctypes.h">
+      <Filter>vspd</Filter>
+    </ClInclude>
+    <ClInclude Include="PluginPort.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

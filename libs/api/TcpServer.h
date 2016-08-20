@@ -1,4 +1,5 @@
 #pragma once
+#include "DataDefs.h"
 #include "Handlers.h"
 #include <uv.h>
 
@@ -6,7 +7,7 @@ class TcpServer : public IPort
 {
 public:
 	TcpServer(uv_loop_t* uv_loop,
-		int channel,
+		RC_CHANNEL channel,
 		IPortHandler* handler,
 		const TCPServerInfo& info);
 	~TcpServer();

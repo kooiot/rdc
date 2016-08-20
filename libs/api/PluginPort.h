@@ -1,21 +1,21 @@
 #pragma once
 
-#include "vspd/ftvspc.h"
+#include "DataDefs.h"
 #include "Handlers.h"
-#include <PlugInApi.h>
+#include "PlugInApi.h"
 #include <string>
 
-class PluginPort : public IStreamHandler
+class PluginPort : public IPort
 {
 public:
-	PluginPort(RC_CHANNEL channel, IPortHandler& Handler, const PluginInfo& info, PluginApi* api);
+	PluginPort(RC_CHANNEL channel, IPortHandler* Handler, const PluginInfo& info, PluginApi* api);
 	~PluginPort();
 
 	virtual bool Open();
 	virtual void Close();
 
-	virtual int OnData(void* buf, size_t len);
-	virtual int OnEvent(StreamEvent evt);
+	virtual int Write(void* buf, size_t len);
+	virtual int Event(StreamEvent evt);
 
 private:
 	static int __stdcall SendCB(const char* buf, size_t len, void* ptr);
@@ -26,7 +26,7 @@ private:
 		va_start(args, fmt);
 		char* temp = new char[1024];
 		vsprintf(temp, fmt, args);
-		m_Handler.OnLog(m_nChannel, "ERROR", temp);
+		m_pHandler->OnLog(m_nChannel, "ERROR", temp);
 		va_end(args);
 	}
 
@@ -35,14 +35,12 @@ private:
 		va_start(args, fmt);
 		char* temp = new char[1024];
 		vsprintf(temp, fmt, args);
-		m_Handler.OnLog(m_nChannel, "INFO", temp);
+		m_pHandler->OnLog(m_nChannel, "INFO", temp);
 		va_end(args);
 	}
 private:
-	RC_CHANNEL m_nChannel;
-	IPortHandler& m_Handler;
 	PluginInfo m_Info;
 	PluginApi* m_Api;
-	long m_ApiHandle;
+	PLUGIN_HANDLE m_ApiHandle;
 };
 

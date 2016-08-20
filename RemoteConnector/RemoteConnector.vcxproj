@@ -197,9 +197,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Handlers.h" />
     <ClInclude Include="PluginDlg.h" />
-    <ClInclude Include="PluginPort.h" />
     <ClInclude Include="RemoteConnector.h" />
     <ClInclude Include="RemoteConnectorDlg.h" />
     <ClInclude Include="Resource.h" />
@@ -209,18 +207,9 @@
     <ClInclude Include="TCPDlg.h" />
     <ClInclude Include="TestPortDlg.h" />
     <ClInclude Include="UDPDlg.h" />
-    <ClInclude Include="UVMgr.h" />
-    <ClInclude Include="UVTcpServer.h" />
-    <ClInclude Include="UVUdp.h" />
-    <ClInclude Include="vspd\ftvspc.h" />
-    <ClInclude Include="vspd\ftvspcstructs.h" />
-    <ClInclude Include="vspd\ftvspctypes.h" />
-    <ClInclude Include="VSPort.h" />
-    <ClInclude Include="VSPortMgr.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PluginDlg.cpp" />
-    <ClCompile Include="PluginPort.cpp" />
     <ClCompile Include="RemoteConnector.cpp" />
     <ClCompile Include="RemoteConnectorDlg.cpp" />
     <ClCompile Include="SerialDlg.cpp" />
@@ -233,17 +222,6 @@
     <ClCompile Include="TCPDlg.cpp" />
     <ClCompile Include="TestPortDlg.cpp" />
     <ClCompile Include="UDPDlg.cpp" />
-    <ClCompile Include="UVMgr.cpp" />
-    <ClCompile Include="UVTcpServer.cpp" />
-    <ClCompile Include="UVUdp.cpp" />
-    <ClCompile Include="vspd\ftvspc.c">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="VSPort.cpp" />
-    <ClCompile Include="VSPortMgr.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RemoteConnector.rc" />

@@ -22,7 +22,7 @@ CPluginLoader::~CPluginLoader()
 void CPluginLoader::Load(const char * folder)
 {
 #ifndef RDC_LINUX_SYS
-	long Handle;
+	intptr_t Handle;
 	struct _finddata_t FileInfo;
 	char temp[MAX_PATH];
 	sprintf(temp, "%s\\*.dll", folder);

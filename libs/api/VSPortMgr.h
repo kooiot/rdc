@@ -12,7 +12,7 @@ public:
 	int Init();
 	int Close();
 
-	VSPort* CreatePort(RC_CHANNEL channel, IPortHandler& handler, const std::string& name);
+	VSPort* CreatePort(RC_CHANNEL channel, IPortHandler *handler, const std::string& name);
 	void FreePort(VSPort* port);
 private:
 	static void __cdecl OnVspcControlEvents(
