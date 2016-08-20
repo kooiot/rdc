@@ -27,12 +27,16 @@ solution "rdc"
 		defines {"RDC_LINUX_SYS"}
 		location "build"
 		targetdir "bin"
-		includedirs {"libs/api", "libs/common/include"}
+		includedirs { "libs/api", "libs/common/include", "libs/libuv-v1.9.1/include" }
 		files {
 			"libs/api/**.h",
 			"libs/api/DataJson.cpp",
 			"libs/api/PluginApi.cpp",
 			"libs/api/PluginLoader.cpp",
+			"libs/api/PortMgr.cpp",
+			"libs/api/TcpServer.cpp",
+			"libs/api/TcpClient.cpp",
+			"libs/api/Udp.cpp",
 		}
 		links { "rt", "pthread"}
 
