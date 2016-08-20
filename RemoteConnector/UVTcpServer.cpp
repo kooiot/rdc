@@ -136,7 +136,7 @@ int UVTcpServer::OnData(void * buf, size_t len)
 	uv_write_t* write_req = new uv_write_t();
 	uv_buf_t uvbuf = uv_buf_init((char*)buf, len);
 	int rc = uv_write(write_req,
-		(uv_stream_t*)&m_tcp_client,
+		(uv_stream_t*)m_tcp_client,
 		&uvbuf,
 		1,
 		WriteCB);

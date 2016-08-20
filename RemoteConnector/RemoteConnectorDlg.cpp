@@ -709,6 +709,7 @@ void CRemoteConnectorDlg::OnBnClickedButtonAddPlugin()
 	}
 
 	PluginInfo& pinfo = dlg.m_Info;
+	PluginInfo& pinfo_local = dlg.m_LocalInfo;
 	RC_CHANNEL channel = RC_ConnectPlugin(m_hApi, info->SN, &pinfo);
 	if (channel < 0) {
 		MessageBox("创建Plugin连接失败", "错误", MB_OK | MB_ICONERROR);
@@ -724,7 +725,7 @@ void CRemoteConnectorDlg::OnBnClickedButtonAddPlugin()
 
 	lci->Type = CT_PLUGIN;
 	memcpy(lci->DevSN, info->SN, RC_MAX_SN_LEN);
-	lci->Plugin = pinfo;
+	lci->Plugin = pinfo_local;
 	AddConnection(ci, lci);
 }
 

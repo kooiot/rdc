@@ -53,5 +53,5 @@ int CPort::Write(const char * buf, size_t len)
 		return -1;
 
 	const char* p = buf + 1;
-	return m_Ports[index]->Write((void*)p, len);
+	return m_Ports[index]->Write((void*)p, len - 1);
 }

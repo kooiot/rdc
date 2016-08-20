@@ -86,6 +86,7 @@ void TcpServer::ReadCB(uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf
 
 void TcpServer::WriteCB(uv_write_t * req, int status)
 {
+	RLOG("TCPServer WriteCB status %d\n", status);
 	delete req;
 }
 
@@ -118,7 +119,7 @@ bool TcpServer::Open()
 	rc = uv_listen((uv_stream_t*)m_tcp_server, 16, ConnectionCB);
 
 	if (0 != rc) {
-		RLOG("Cannot Connect TCP to server %d\n", rc);
+		RLOG("TCPServer Listen Failed: %d\n", rc);
 		return false;
 	}
 
@@ -139,7 +140,7 @@ void TcpServer::Close()
 
 int TcpServer::Write(void * buf, size_t len)
 {
-	RLOG("OnData called len %d\n", len);
+	RLOG("TCPServer send len %d\n", len);
 	if (m_tcp_client == NULL) {
 		return -1;
 	}
@@ -147,7 +148,7 @@ int TcpServer::Write(void * buf, size_t len)
 	uv_write_t* write_req = new uv_write_t();
 	uv_buf_t uvbuf = uv_buf_init((char*)buf, len);
 	int rc = uv_write(write_req,
-		(uv_stream_t*)&m_tcp_client,
+		(uv_stream_t*)m_tcp_client,
 		&uvbuf,
 		1,
 		WriteCB);

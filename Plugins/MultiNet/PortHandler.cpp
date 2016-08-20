@@ -28,7 +28,7 @@ int CPortHandler::Send(int channel, void * buf, size_t len)
 	char* temp = new char[len + 1];
 	*temp = channel;
 	memcpy(temp + 1, buf, len);
-	int rc = m_Send(temp, len, m_DataPtr);
+	int rc = m_Send(temp, len + 1, m_DataPtr);
 	delete[] temp;
 	return rc;
 }

@@ -113,10 +113,10 @@ void CPluginDlg::OnBnClickedButtonSlrm()
 
 		ConnectionInfo tcp2;
 		memset(&tcp2, 0, sizeof(ConnectionInfo));
-		tcp2.Type = CT_TCPC;
+		tcp2.Type = CT_TCPS;
 		tcp2.Channel = 0;
-		tcp2.TCPServer.remote.port = 9211;
-		sprintf(tcp2.TCPServer.remote.sip, "%s", "127.0.0.1");
+		tcp2.TCPServer.bind.port = 9211;
+		sprintf(tcp2.TCPServer.bind.sip, "%s", "127.0.0.1");
 
 
 		ConnectionInfo udp1;

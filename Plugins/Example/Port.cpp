@@ -63,6 +63,6 @@ void CPort::Close()
 
 int CPort::Write(const char * buf, size_t len)
 {
-	putc('+', stderr);
+	putc('*', stderr);
 	return len;
 }

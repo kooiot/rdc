@@ -131,7 +131,7 @@ bool TcpClient::Open()
 	}
 	uv_tcp_nodelay(m_tcp_handle, 1);
 
-	return false;
+	return true;
 }
 
 void TcpClient::Close()
