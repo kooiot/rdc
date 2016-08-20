@@ -9,7 +9,7 @@ static void echo_alloc(uv_handle_t* handle,
 	size_t suggested_size,
 	uv_buf_t* buf) {
 	buf->base = (char*)malloc(suggested_size);
-	buf->len = suggested_size;
+	buf->len = (ULONG)suggested_size;
 }
 
 static void close_cb(uv_handle_t* handle) {
@@ -70,7 +70,7 @@ void TcpClient::ReadCB(uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf
 	RLOG("%s Got len %lld\n", __FUNCTION__, nread);
 	TcpClient* pThis = (TcpClient*)stream->data;
 	if (nread < 0) {
-		RLOG("read_cb error: %s\n", uv_err_name(nread));
+		RLOG("read_cb error: %s\n", uv_err_name((int)nread));
 		assert(nread == UV_ECONNRESET || nread == UV_EOF);
 		pThis->OnClose();
 	}
@@ -156,12 +156,12 @@ void TcpClient::Close()
 int TcpClient::Write(void * data, size_t len)
 {
 	uv_write_t* write_req = new uv_write_t();
-	uv_buf_t buf = uv_buf_init((char*)data, len);
+	uv_buf_t buf = uv_buf_init((char*)data, (unsigned int)len);
 	int rc = uv_write(write_req,
 		(uv_stream_t*)m_tcp_handle,
 		&buf,
 		1,
 		WriteCB);
-	RLOG("%s Send len %ld returns %d\n", __FUNCTION__, len, rc);
+	RLOG("%s Send len %llu returns %d\n", __FUNCTION__, len, rc);
 	return rc;
 }

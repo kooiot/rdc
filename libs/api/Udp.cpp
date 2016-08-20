@@ -10,7 +10,7 @@ static void echo_alloc(uv_handle_t* handle,
 	size_t suggested_size,
 	uv_buf_t* buf) {
 	buf->base = (char*)malloc(suggested_size);
-	buf->len = suggested_size;
+	buf->len = (ULONG)suggested_size;
 }
 
 static void close_cb(uv_handle_t* handle) {
@@ -99,16 +99,16 @@ void Udp::Close()
 int Udp::Write(void * buf, size_t len)
 {
 	uv_udp_send_t* send_req = new uv_udp_send_t();
-	uv_buf_t uvbuf = uv_buf_init((char*)buf, len);
+	uv_buf_t uvbuf = uv_buf_init((char*)buf, (unsigned int)len);
 	int rc = uv_udp_send(send_req, m_udp_handle, &uvbuf, 1, (const struct sockaddr*)&m_peer_addr, SendCB);
-	RLOG("%s Send len %ld returns %d\n", __FUNCTION__, len, rc);
+	RLOG("%s Send len %llu returns %d\n", __FUNCTION__, len, rc);
 	return rc;
 }
 
 void Udp::UdpRecvCB(uv_udp_t * handle, ssize_t nread, const uv_buf_t * buf, const sockaddr * addr, unsigned flags)
 {
 	if (nread < 0) {
-		RLOG("recv_cb error: %s\n", uv_err_name(nread));
+		RLOG("recv_cb error: %s\n", uv_err_name((int)nread));
 		assert(nread == UV_ECONNRESET || nread == UV_EOF);
 		uv_close((uv_handle_t*)handle, close_cb);
 	}

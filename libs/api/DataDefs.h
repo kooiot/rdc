@@ -146,10 +146,26 @@ extern "C" {
 		time_t ValidTime;
 	};
 
+	struct GroupInfo
+	{
+		int Index;
+		char Name[RC_MAX_NAME_LEN];
+		char Desc[RC_MAX_DESC_LEN];
+		time_t CreateTime;
+		time_t ValidTime;
+	};
+
+	enum UserLevel {
+		UL_USER = 1,
+		UL_ENT_USER = 10,
+		UL_ENT_ADMIN = 50,
+		UL_SYS_ADMIN = 99,
+	};
 	struct UserInfo
 	{
 		int Index;
 		int Level;
+		int Group;
 		char ID[RC_MAX_ID_LEN];
 		char Name[RC_MAX_NAME_LEN];
 		char Desc[RC_MAX_DESC_LEN];

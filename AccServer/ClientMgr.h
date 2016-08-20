@@ -30,7 +30,7 @@ struct ClientData {
 class CClientMgr
 {
 public:
-	CClientMgr(CStreamServerMgr& StreamMgr);
+	CClientMgr(CStreamServerMgr& StreamMgr, CAccDatabase& Database);
 	~CClientMgr();
 
 	void* Init(void* ctx, const char* bip, int port_rep, int port_pub);
@@ -38,6 +38,9 @@ public:
 	void OnRecv();
 
 	void OnTimer(int nTime);
+
+	void ListMappers(std::list<std::string>& list);
+	void ListClients(std::list<std::string>& list);
 
 private:
 	void HandleKZPacket(const KZPacket& cmd);
@@ -67,6 +70,6 @@ private:
 	MapperMap m_Mappers;
 
 	CStreamServerMgr& m_StreamMgr;
-	CAccDatabase m_Database;
+	CAccDatabase& m_Database;
 };
 

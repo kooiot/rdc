@@ -179,7 +179,7 @@ void run_loop(ENetHost* remote)
 			int nType = ((data & 0xFFFF0000) >> 16);
 			int nIndex = (data & 0xFFFF);
 #ifndef PRINT_LEN
-			printf("A packet of length %u was received from %d-%d on channel %u.\n",
+			printf("A packet of length %llu was received from %d-%d on channel %u.\n",
 				event.packet->dataLength,
 				nType,
 				nIndex,

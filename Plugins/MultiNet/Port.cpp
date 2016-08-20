@@ -38,6 +38,7 @@ bool CPort::Open()
 			return false;
 		}
 	}
+	return true;
 }
 
 void CPort::Close()

@@ -114,18 +114,6 @@ int RC_ListDevices(RC_HANDLE api, DeviceInfo * list, int list_len)
 }
 
 extern "C"
-int RC_ListUsers(RC_HANDLE api, UserInfo * list, int list_len)
-{
-	ApiHandle* pHandle = (ApiHandle*)api;
-	if (!pHandle)
-		return -1;
-
-	CAccApi* pApi = pHandle->Acc;
-	if (pApi)
-		return pApi->ListUsers(list, list_len);
-	return -1;
-}
-extern "C"
 int RC_SetStreamCallback(RC_HANDLE api, stream_data_callback data, stream_event_callback evt, void* prv)
 {
 	ApiHandle* pHandle = (ApiHandle*)api;

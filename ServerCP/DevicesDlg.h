@@ -25,7 +25,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 public:
-	CAccApi* m_pAccApi;
+	CAccMgrApi* m_pAccApi;
 	DeviceInfo* m_Devs;
 	int m_CurSel;
 

@@ -61,7 +61,7 @@ bool CStreamApi::Connect(const char * ip, int port)
 					m_Handler.OnEvent(-1, SE_CONNECT, "");
 					break;
 				case ENET_EVENT_TYPE_RECEIVE:
-					printf("A packet of length %u containing %s was received from %s on channel %u.\n",
+					printf("A packet of length %llu containing %s was received from %s on channel %u.\n",
 						event.packet->dataLength,
 						event.packet->data,
 						(char*)event.peer->data,

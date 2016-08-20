@@ -6,19 +6,26 @@
 #include <cassert>
 #include <zmq.h>
 #include <json.hpp>
+
 using json = nlohmann::json;
 
 #include "StreamServerMgr.h"
 #include "ClientMgr.h"
+#include "AccMgr.h"
+#include "AccDatabase.h"
 
 void* ctx = NULL;
+CAccDatabase AccDatabase;
 CStreamServerMgr StreamMgr;
-CClientMgr ClientMgr(StreamMgr);
+CClientMgr ClientMgr(StreamMgr, AccDatabase);
+CAccMgr AccMgr(ClientMgr, AccDatabase);
 
 void on_close() {
 	printf("Exit function called\n");
+	AccMgr.Close();
 	StreamMgr.Close();
 	ClientMgr.Close();
+	AccDatabase.Close();
 	zmq_ctx_term(ctx);
 }
 
@@ -97,6 +104,8 @@ int main(int argc, char* argv[])
 
 	ctx = zmq_ctx_new();
 
+	AccDatabase.Init();
+	void* acc_skt = AccMgr.Init(ctx, "127.0.0.1", 6820);
 	void* sm_skt = StreamMgr.Init(ctx, bip.c_str(), port_stream);
 	void* cli_skt = ClientMgr.Init(ctx, bip.c_str(), port_rep, port_pub);
 
@@ -104,13 +113,17 @@ int main(int argc, char* argv[])
 		zmq_pollitem_t items[] = {
 			{ sm_skt,   0, ZMQ_POLLIN, 0 },
 			{ cli_skt,   0, ZMQ_POLLIN, 0 },
+			{ acc_skt,   0, ZMQ_POLLIN, 0 },
 		};
-		zmq_poll(items, 2, 1000);
+		zmq_poll(items, 3, 1000);
 		if (items[0].revents & ZMQ_POLLIN) {
 			StreamMgr.OnRecv();
 		}
 		if (items[1].revents & ZMQ_POLLIN) {
 			ClientMgr.OnRecv();
+		}
+		if (items[2].revents & ZMQ_POLLIN) {
+			AccMgr.OnRecv();
 		}
 		ClientMgr.OnTimer(time(NULL));
 	}

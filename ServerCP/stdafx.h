@@ -53,6 +53,7 @@
 
 
 #include <AccApi.h>
+#include <AccMgrApi.h>
 #include <StreamApi.h>
 
 

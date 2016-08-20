@@ -44,8 +44,7 @@ protected:
 	koo_process* m_pStreamProcess;
 	koo_process* m_pMapperProcess;
 #endif
-	CAccApi* m_pAccApi;
-	CStreamApi* m_pStreamApi;
+	CAccMgrApi* m_pAccApi;
 	void* m_CTX;
 	UserInfo* m_Users;
 	DeviceInfo* m_Devices;

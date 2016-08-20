@@ -55,7 +55,7 @@ bool StreamMgr::Init()
 					OnConnected(event.peer);
 					break;
 				case ENET_EVENT_TYPE_RECEIVE:
-					printf("A packet of length %u was received from %ld on channel %u.\n",
+					printf("A packet of length %llu was received from %ld on channel %u.\n",
 						event.packet->dataLength,
 						(long)event.peer->data,
 						event.channelID);

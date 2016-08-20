@@ -14,7 +14,8 @@
 #endif
 
 
-CClientMgr::CClientMgr(CStreamServerMgr& StreamMgr) : m_StreamMgr(StreamMgr)
+CClientMgr::CClientMgr(CStreamServerMgr& StreamMgr, CAccDatabase& Database)
+	: m_StreamMgr(StreamMgr), m_Database(Database)
 {
 }
 
@@ -51,14 +52,12 @@ void * CClientMgr::Init(void * ctx, const char * bip, int port_rep, int port_pub
 	m_pReply = rep;
 	m_pPublish = pub;
 
-	m_Database.Init();
 
 	return rep;
 }
 
 void CClientMgr::Close()
 {
-	m_Database.Close();
 	zmq_close(m_pReply);
 	zmq_close(m_pPublish);
 }
@@ -90,7 +89,7 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 		}
 		else {
 			std::cout << "Client LOGIN: " << cmd.id() << "\t" << cmd.get("pass") << std::endl;
-		       	if (m_Database.Login(cmd.id(), cmd.get("pass")) == 0) {
+			if (m_Database.Login(cmd.id(), cmd.get("pass")) == 0) {
 				nReturn = AddClient(cmd.id());
 			}
 		}
@@ -158,49 +157,24 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 		assert(rc >= 0);
 		return;
 	}
-	else if (cmd.cmd() == "ADD_DEV") {
-		JSON_FROM_PACKET(cmd, DeviceInfo, info);
-		DbDeviceInfo dbInfo;
-		dbInfo.FromDeviceInfo(info);
-		nReturn = m_Database.AddDevice(dbInfo);
-	}
-	else if (cmd.cmd() == "MOD_DEV") {
-		JSON_FROM_PACKET(cmd, DeviceInfo, info);
-		DbDeviceInfo dbInfo;
-		dbInfo.FromDeviceInfo(info);
-		nReturn = m_Database.UpdateDevice(dbInfo);
-	}
-	else if (cmd.cmd() == "DEL_DEV") {
-		nReturn = m_Database.DeleteDevice(cmd.get("sn"));
-	}
 	else if (cmd.cmd() == "LIST_DEV") {
 		std::string type = cmd.get("type");
+		std::list<std::string> all;
 		std::list<std::string> list;
 		if (type != "ALL") {
-			MapperMap::iterator ptr = m_Mappers.begin();
-			for (; ptr != m_Mappers.end(); ++ptr) {
-				if (0 == m_Database.Access(cmd.id(), ptr->first)) {
-					list.push_back(ptr->first);
-				}
-			}
+			ListMappers(all);
 		}
 		else {
-			std::list<std::string> all;
 			m_Database.ListDevices(all);
-			for (std::list<std::string>::iterator ptr = all.begin();
-				ptr != all.end(); ++ptr) {
-				if (0 == m_Database.Access(cmd.id(), *ptr)) {
-					list.push_back(*ptr);
-				}
+		}
+		for (std::list<std::string>::iterator ptr = all.begin();
+			ptr != all.end(); ++ptr) {
+			if (0 == m_Database.Access(cmd.id(), *ptr)) {
+				list.push_back(*ptr);
 			}
 		}
 
-		std::string data;
-		std::list<std::string>::iterator ptr = list.begin();
-		for (; ptr != list.end(); ++ptr, data += "|") {
-			data += *ptr;
-		}
-		int rc = koo_zmq_send_result(m_pReply, cmd, data);
+		int rc = koo_zmq_send_result(m_pReply, cmd, KOO_GEN_JSON(list));
 		assert(rc >= 0);
 		return;
 	}
@@ -217,56 +191,6 @@ void CClientMgr::HandleKZPacket(const KZPacket& cmd)
 		if (0 == m_Database.Access(cmd.id(), dbInfo.SN)) {
 			dbInfo.ToDeviceInfo(info);
 		}
-		koo_zmq_send_result(m_pReply, cmd, KOO_GEN_JSON(info));
-		return;
-	}
-	else if (cmd.cmd() == "ADD_CLIENT") {
-		JSON_FROM_PACKET(cmd, UserInfo, info);
-		DbUserInfo dbInfo;
-		dbInfo.FromUserInfo(info);
-		nReturn = m_Database.AddUser(dbInfo, info.Passwd);
-	}
-	else if (cmd.cmd() == "MOD_CLIENT") {
-		JSON_FROM_PACKET(cmd, UserInfo, info);
-		DbUserInfo dbInfo;
-		dbInfo.FromUserInfo(info);
-		nReturn = m_Database.UpdateUser(dbInfo, info.Passwd);
-	}
-	else if (cmd.cmd() == "DEL_CLIENT") {
-		nReturn = m_Database.DeleteUser(cmd.get("client"));
-	}
-	else if (cmd.cmd() == "LIST_CLIENT") {
-		std::string type = cmd.get("type");
-		std::list<std::string> list;
-		if (type != "ALL") {
-			ClientMap::iterator ptr = m_Clients.begin();
-			for (; ptr != m_Clients.end(); ++ptr) {
-				list.push_back(ptr->first);
-			}
-		}
-		else {
-			m_Database.ListUsers(list);
-		}
-
-		std::string data;
-		std::list<std::string>::iterator ptr = list.begin();
-		for (; ptr != list.end(); ++ptr, data += "|") {
-			data += *ptr;
-		}
-		int rc = koo_zmq_send_result(m_pReply, cmd, data);
-		assert(rc >= 0);
-		return;
-	}
-	else if (cmd.cmd() == "CLIENT_INFO") {
-		std::string id = cmd.get("client");
-		DbUserInfo dbInfo;
-		int rc = m_Database.GetUser(id, dbInfo);
-		if (rc != 0) {
-			std::cerr << "Invalid User ID " << std::endl;
-		}
-		UserInfo info;
-		memset(&info, 0, sizeof(UserInfo));
-		dbInfo.ToUserInfo(info);
 		koo_zmq_send_result(m_pReply, cmd, KOO_GEN_JSON(info));
 		return;
 	}
@@ -531,5 +455,19 @@ void CClientMgr::OnTimer(int nTime)
 	lptr = rlist.begin();
 	for (; lptr != rlist.end(); ++lptr) {
 		RemoveMapper(*lptr);
+	}
+}
+
+void CClientMgr::ListMappers(std::list<std::string>& list)
+{
+	for (auto & mapper : m_Mappers) {
+		list.push_back(mapper.first);
+	}
+}
+
+void CClientMgr::ListClients(std::list<std::string>& list)
+{
+	for (auto & client : m_Clients) {
+		list.push_back(client.first);
 	}
 }

@@ -362,10 +362,6 @@ void CServerCPDlg::OnBnClickedButtonStart()
 void CServerCPDlg::OnBnClickedButtonConnect()
 {
 	if (m_pAccApi) {
-		if (m_pStreamApi)
-			m_pStreamApi->Disconnect();
-		delete m_pStreamApi;
-		m_pStreamApi = NULL;
 		if (m_pAccApi)
 			m_pAccApi->Disconnect();
 		delete m_pAccApi;
@@ -374,28 +370,12 @@ void CServerCPDlg::OnBnClickedButtonConnect()
 	}
 	else {
 		// TODO: 在此添加控件通知处理程序代码
-		m_pAccApi = new CAccApi(m_CTX);
-#ifdef CONSOLE_RUN
-		bool br = m_pAccApi->Connect(m_ServerIP.c_str(), m_ServerRepPort, "admin", "admin");
-#else
-		bool br = m_pAccApi->Connect("127.0.0.1", 6600, "admin", "admin");
-#endif
+		m_pAccApi = new CAccMgrApi(m_CTX);
+
+		bool br = m_pAccApi->Connect("127.0.0.1", 6820, "admin", "admin");
+		
 		if (br) {
 			MessageBox("Connected");
-			StreamProcess sp;
-			int rc = m_pAccApi->GetStreamServer(&sp);
-			if (rc == 0) {
-				m_pStreamApi = new CStreamApi(*this, CLIENT_TYPE, sp.Index, sp.Mask);
-				br = m_pStreamApi->Connect(sp.StreamIP, sp.Port);
-				if (br) {
-					MessageBox("Stream Connected");
-					rc = m_pStreamApi->SendData(0, (unsigned char *)"Hello World", strlen("Hello World"));
-					assert(rc >= 0);
-				}
-				else {
-					MessageBox("Stream Faied");
-				}
-			}
 		}
 		else {
 			MessageBox("Faied");

@@ -1,4 +1,4 @@
-#include "AccApi.h"
+#include "AccMgrApi.h"
 #include <sstream>
 #include <zmq.h>
 #include <cassert>
@@ -20,7 +20,7 @@ public:
 		m_Lock.unlock();
 	}
 };
-int CAccApi::SendRequest(KZPacket& packet, std::function< int(KZPacket&)> cb)
+int CAccMgrApi::SendRequest(KZPacket& packet, std::function< int(KZPacket&)> cb)
 {
 	int rc = 0;
 	{
@@ -53,15 +53,15 @@ int CAccApi::SendRequest(KZPacket& packet, std::function< int(KZPacket&)> cb)
 	return rc;
 }
 
-CAccApi::CAccApi(void* ctx) : m_CTX(ctx), m_Socket(NULL), m_pHBThread(NULL), m_bStop(false)
+CAccMgrApi::CAccMgrApi(void* ctx) : m_CTX(ctx), m_Socket(NULL)
 {
 }
 
-CAccApi::~CAccApi()
+CAccMgrApi::~CAccMgrApi()
 {
 }
 
-bool CAccApi::Connect(const char * sip, int port, const char * un, const char * pass)
+bool CAccMgrApi::Connect(const char * sip, int port, const char * un, const char * pass)
 {
 	m_Pass = pass;
 	m_User = un;
@@ -73,7 +73,7 @@ bool CAccApi::Connect(const char * sip, int port, const char * un, const char * 
 	return _Connect();
 }
 
-bool CAccApi::_Connect() 
+bool CAccMgrApi::_Connect() 
 {
 	{
 		AutoLock al(m_Lock);
@@ -101,33 +101,15 @@ bool CAccApi::_Connect()
 		zmq_close(m_Socket);
 		m_Socket = NULL;
 	}
-	if (rc == 0) {
-		m_pHBThread = new std::thread([this]() {
-			int Count = 0;
-			int MaxCount = (20 * 1000) / 500;
-			while (!m_bStop) {
-				Sleep(500);
-				if (m_bStop)
-					break;
-				if (++Count >= MaxCount) {
-					Count = 0;
-					SendHeartbeat();
-				}
-			}
-		});
-	}
+	
 	return rc == 0;
 }
 
-int CAccApi::Disconnect()
+int CAccMgrApi::Disconnect()
 {
 	KZPacket logout(m_User, "LOGOUT");
 
 	int rc = SendRequest(logout);
-	
-	m_bStop = true;
-	if (m_pHBThread && m_pHBThread->joinable())
-		m_pHBThread->join();
 
 	m_Lock.lock();
 	zmq_close(m_Socket);
@@ -136,26 +118,44 @@ int CAccApi::Disconnect()
 	return rc;
 }
 
-int CAccApi::GetStreamServer(StreamProcess * info)
+int CAccMgrApi::AddDevice(const DeviceInfo * info)
 {
-	KZPacket packet(m_User, "STREAM");
+	KZPacket packet(m_User, "ADD_DEV");
+	packet.set("info", KOO_GEN_JSON(*info));
 
-	int rc = SendRequest(packet, [info](KZPacket& data) {
-		KOO_PARSE_JSON(*info, data.get("result"));
-		return 0;
-	});
+	int rc = SendRequest(packet);
 
 	return rc;
 }
 
-int CAccApi::ListDevices(DeviceInfo * list, int list_len, bool only_online)
+int CAccMgrApi::ModifyDevice(const DeviceInfo * info)
+{
+	KZPacket packet(m_User, "MOD_DEV");
+	packet.set("info", KOO_GEN_JSON(*info));
+
+	int rc = SendRequest(packet);
+
+	return rc;
+}
+
+int CAccMgrApi::DeleteDevice(const char * sn)
+{
+	KZPacket packet(m_User, "DEL_DEV");
+	packet.set("sn", sn);
+
+	int rc = SendRequest(packet);
+
+	return rc;
+}
+
+int CAccMgrApi::ListDevices(DeviceInfo * list, int list_len, bool only_online)
 {
 	KZPacket packet(m_User, "LIST_DEV");
 	packet.set("type", only_online ? "ONLINE" : "ALL");
 
 	auto devs = new std::list<std::string>();
 	int rc = SendRequest(packet, [devs](KZPacket& data) {
-		if( KOO_PARSE_JSON(*devs, data.get("result")) )
+		if (KOO_PARSE_JSON(*devs, data.get("result")))
 			return 0;
 		return -1;
 	});
@@ -172,7 +172,7 @@ int CAccApi::ListDevices(DeviceInfo * list, int list_len, bool only_online)
 	return i;
 }
 
-int CAccApi::GetDeviceInfo(const char * sn, DeviceInfo * info)
+int CAccMgrApi::GetDeviceInfo(const char * sn, DeviceInfo * info)
 {
 	KZPacket packet(m_User, "DEV_INFO");
 	packet.set("sn", sn);
@@ -182,54 +182,70 @@ int CAccApi::GetDeviceInfo(const char * sn, DeviceInfo * info)
 			return 0;
 		return -1;
 	});
-
-	return rc;
-}
-int CAccApi::SendHeartbeat()
-{
-	KZPacket packet(m_User, "HEARTBEAT");
-	packet.set("timestamp", "");
-
-	int rc = SendRequest(packet);
-
+	
 	return rc;
 }
 
-int CAccApi::CreateConnection(const ConnectionInfo * info)
+int CAccMgrApi::AddUser(const UserInfo * info)
 {
-	KZPacket packet(m_User, "CREATE");
+	KZPacket packet(m_User, "ADD_CLIENT");
 	packet.set("info", KOO_GEN_JSON(*info));
 
 	int rc = SendRequest(packet);
 	return rc;
 }
 
-int CAccApi::DestroyConnection(int index)
+int CAccMgrApi::ModifyUser(const UserInfo * info)
 {
-	KZPacket packet(m_User, "DESTROY");
-	packet.set("channel", index);
+	KZPacket packet(m_User, "MOD_CLIENT");
+	packet.set("info", KOO_GEN_JSON(*info));
+
+	int rc = SendRequest(packet);
+
+	return rc;
+}
+
+int CAccMgrApi::DeleteUser(const char * id)
+{
+	KZPacket packet(m_User, "DEL_CLIENT");
+	packet.set("client", id);
 
 	int rc = SendRequest(packet);
 	return rc;
 }
 
-int CAccApi::ListConnection(int* channels)
+int CAccMgrApi::ListUsers(UserInfo * list, int list_len, bool only_online)
 {
-	for (int i = 0; i < RC_MAX_CONNECTION; ++i) {
-		channels[i] = -1;
-	}
+	KZPacket packet(m_User, "LIST_CLIENT");
+	packet.set("type", only_online ? "ONLINE" : "ALL");
 
-	KZPacket packet(m_User, "LIST_CHANNELS");
-	packet.set("user", m_User);
-
-	int rc = SendRequest(packet, [channels](KZPacket& data) {
-		const json list = data.get("result");
-		int i = 0;
-		for (auto & j : list) {
-			channels[i++] = j;
-		}
-		return 0;
+	auto users = new std::list<std::string>();
+	int rc = SendRequest(packet, [users](KZPacket& data) {
+		if (KOO_PARSE_JSON(*users, data.get("result")))
+			return 0;
+		return -1;
 	});
-	return rc;
+	int i = 0;
+	if (rc == 0) {
+		for (auto & user : *users) {
+			rc = GetUserInfo(user.c_str(), &list[i++]);
+			if (rc != 0)
+				break;
+		}
+	}
+	delete users;
+	return i;
 }
 
+int CAccMgrApi::GetUserInfo(const char * id, UserInfo * info)
+{
+	KZPacket packet(m_User, "CLIENT_INFO");
+	packet.set("client", id);
+	int rc = SendRequest(packet, [info](KZPacket& data) {
+		if (KOO_PARSE_JSON(*info, data.get("result")))
+			return 0;
+		return -1;
+	});
+
+	return rc;
+}

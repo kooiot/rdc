@@ -125,10 +125,26 @@ bool parse_json(DeviceInfo& info, const json& j) {
 	}
 }
 
+bool parse_json(GroupInfo &info, const json &j)
+{
+	try {
+		info.Index = j["index"];
+		GET_NODE_STRING(j, "name", info.Name, RC_MAX_NAME_LEN);
+		GET_NODE_STRING(j, "desc", info.Desc, RC_MAX_DESC_LEN);
+		GET_NODE_TIME(j, "create_time", info.CreateTime);
+		GET_NODE_TIME(j, "valid_time", info.ValidTime);
+		return true;
+	}
+	catch (...) {
+		return false;
+	}
+}
+
 bool parse_json(UserInfo& info, const json& j) {
 	try {
 		info.Index = j["index"];
 		info.Level = j["level"];
+		info.Group = j["group"];
 		GET_NODE_STRING(j, "id", info.ID, RC_MAX_ID_LEN);
 		GET_NODE_STRING(j, "name", info.Name, RC_MAX_NAME_LEN);
 		GET_NODE_STRING(j, "desc", info.Desc, RC_MAX_DESC_LEN);
@@ -205,10 +221,24 @@ bool parse_json(StreamEventPacket & p, const json & j)
 	}
 }
 
+bool parse_json(std::list<std::string>& list, const json &j)
+{
+	try {
+		for (auto & node : j) {
+			list.push_back(node);
+		}
+		return true;
+	}
+	catch (...) {
+		return false;
+	}
+}
+
 json generate_json(const UserInfo& info) {
 	json j;
 	j["index"] = info.Index;
 	j["level"] = info.Level;
+	j["group"] = info.Group;
 	j["id"] = info.ID;
 	j["name"] = info.Name;
 	j["desc"] = info.Desc;
@@ -224,6 +254,17 @@ json generate_json(const DeviceInfo& info) {
 	json j;
 	j["index"] = info.Index;
 	j["sn"] = info.SN;
+	j["name"] = info.Name;
+	j["desc"] = info.Desc;
+	j["create_time"] = time2str(&info.CreateTime);
+	j["valid_time"] = time2str(&info.ValidTime);
+	return j;
+}
+
+json generate_json(const GroupInfo &info)
+{
+	json j;
+	j["index"] = info.Index;
 	j["name"] = info.Name;
 	j["desc"] = info.Desc;
 	j["create_time"] = time2str(&info.CreateTime);
@@ -336,6 +377,16 @@ json generate_json(const StreamEventPacket &p)
 	j["event"] = (int)p.event;
 	j["channel"] = p.channel;
 	j["msg"] = p.msg;
+	return j;
+}
+
+json generate_json(const std::list<std::string>& list)
+{
+	json j;
+	int i = 0;
+	for (auto & ptr : list) {
+		j[i++] = ptr;
+	}
 	return j;
 }
 

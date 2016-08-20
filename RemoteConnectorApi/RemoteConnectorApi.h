@@ -27,8 +27,6 @@ extern "C" {
 
 	// Return device count (-1 for error)
 	REMOTECONNECTORAPI_API int RC_ListDevices(RC_HANDLE api, DeviceInfo* list, int list_len);
-	// Return user count (-1 for error)
-	REMOTECONNECTORAPI_API int RC_ListUsers(RC_HANDLE api, UserInfo* list, int list_len);
 
 	REMOTECONNECTORAPI_API int RC_SetStreamCallback(RC_HANDLE api, stream_data_callback data, stream_event_callback evt, void* prv);
 	// Return sent bytes (-1 for error

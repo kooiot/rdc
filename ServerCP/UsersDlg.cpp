@@ -56,8 +56,8 @@ BOOL CUsersDlg::OnInitDialog()
 	CDialogEx::OnInitDialog();
 
 	m_boxLevel.AddString("普通用户");
-	m_boxLevel.AddString("企业账户");
-	m_boxLevel.AddString("管理员");
+	m_boxLevel.AddString("企业用户");
+	m_boxLevel.AddString("企业管理员");
 	m_boxLevel.AddString("系统管理员");
 
 	m_listUsers.InsertColumn(0, "ID", LVCFMT_LEFT, 60);
@@ -124,11 +124,11 @@ void CUsersDlg::BindUser(int nCur, bool bEdit)
 	m_editDesc.SetWindowText(info.Desc);
 	m_editEmail.SetWindowText(info.Email);
 	m_editPhone.SetWindowText(info.Phone);
-	if (info.Level >= 99)
+	if (info.Level >= UL_SYS_ADMIN)
 		m_boxLevel.SetCurSel(3);
-	else if (info.Level > 10)
+	else if (info.Level >= UL_ENT_ADMIN)
 		m_boxLevel.SetCurSel(2);
-	else if (info.Level > 1)
+	else if (info.Level >= UL_ENT_USER)
 		m_boxLevel.SetCurSel(1);
 	else
 		m_boxLevel.SetCurSel(0);
@@ -160,13 +160,13 @@ void CUsersDlg::DumpUser(int nCur)
 	m_editPhone.GetWindowText(info.Phone, RC_MAX_PHONE_LEN);
 
 	if (m_boxLevel.GetCurSel() == 3)
-		info.Level = 99;
+		info.Level = UL_SYS_ADMIN;
 	if (m_boxLevel.GetCurSel() == 2)
-		info.Level = 10;
+		info.Level = UL_ENT_ADMIN;
 	if (m_boxLevel.GetCurSel() == 1)
-		info.Level = 2;
+		info.Level = UL_ENT_USER;
 	if (m_boxLevel.GetCurSel() == 0)
-		info.Level = 1;
+		info.Level = UL_USER;
 
 	if (info.Index == -1)
 		info.CreateTime = time(NULL);

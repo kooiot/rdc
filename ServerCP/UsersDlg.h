@@ -24,7 +24,7 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 public:
-	CAccApi* m_pAccApi;
+	CAccMgrApi* m_pAccApi;
 	UserInfo* m_Users;
 	int m_CurSel;
 protected:
