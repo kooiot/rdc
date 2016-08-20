@@ -321,7 +321,7 @@ int CRemoteConnectorDlg::OnLog(RC_CHANNEL channel, const char * type, const char
 	return 0;
 }
 
-int CRemoteConnectorDlg::Send(RC_CHANNEL channel, void * buf, size_t len)
+int CRemoteConnectorDlg::OnRecv(RC_CHANNEL channel, void * buf, size_t len)
 {
 	return RC_StreamSend(m_hApi, channel, buf, len);
 }

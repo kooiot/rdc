@@ -10,14 +10,14 @@ CPort::CPort(char *config,
 	PluginCloseCB close,
 	void* ptr)
 {
+	CPortHandler* m_PortHandler = new CPortHandler(send, close, ptr);
 	m_Mgr.Init();
 	json list = json::parse(config);
 	int i = 0;
 	for (auto & j : list) {
 		ConnectionInfo info;
 		if (KOO_PARSE_JSON(info, j)) {
-			CPortHandler* handler = new CPortHandler(send, close, ptr);
-			IPort* port = m_Mgr.Create(i++, handler, info);
+			IPort* port = m_Mgr.Create(i++, m_PortHandler, info);
 			m_Ports.push_back(port);
 		}
 	}
@@ -28,6 +28,7 @@ CPort::CPort(char *config,
 CPort::~CPort()
 {
 	m_Mgr.Close();
+	delete m_PortHandler;
 }
 
 bool CPort::Open()

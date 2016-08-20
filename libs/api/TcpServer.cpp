@@ -83,7 +83,7 @@ void TcpServer::ReadCB(uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf
 	}
 	else {
 		TcpServer* pThis = (TcpServer*)stream->data;
-		pThis->m_pHandler->Send(pThis->m_nChannel, buf->base, nread);
+		pThis->m_pHandler->OnRecv(pThis->m_nChannel, buf->base, nread);
 	}
 }
 
@@ -102,6 +102,7 @@ bool TcpServer::Open()
 	int rc = uv_ip4_addr(m_Info.bind.sip, m_Info.bind.port, &addr);
 	if (0 != rc) {
 		RLOG("Incorrect TCP server address %d\n", rc);
+		m_pHandler->OnOpen(m_nChannel, false);
 		return false;
 	}
 	
@@ -109,6 +110,7 @@ bool TcpServer::Open()
 	rc = uv_tcp_init(m_uv_loop, m_tcp_server);
 	if (0 != rc) {
 		RLOG("Cannot Init TCP handle %d\n", rc);
+		m_pHandler->OnOpen(m_nChannel, false);
 		return false;
 	}
 	m_tcp_server->data = this;
@@ -116,6 +118,8 @@ bool TcpServer::Open()
 	rc = uv_tcp_bind(m_tcp_server, (const struct sockaddr*)&addr, 0);
 	if (0 != rc) {
 		RLOG("Cannot Bind TCP to bind ip %d\n", rc);
+		uv_close((uv_handle_t*)m_tcp_server, close_cb);
+		m_pHandler->OnOpen(m_nChannel, false);
 		return false;
 	}
 
@@ -123,9 +127,12 @@ bool TcpServer::Open()
 
 	if (0 != rc) {
 		RLOG("TCPServer Listen Failed: %d\n", rc);
+		uv_close((uv_handle_t*)m_tcp_server, close_cb);
+		m_pHandler->OnOpen(m_nChannel, false);
 		return false;
 	}
 
+	m_pHandler->OnOpen(m_nChannel, true);
 	return true;
 }
 

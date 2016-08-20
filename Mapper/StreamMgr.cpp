@@ -2,9 +2,8 @@
 #include <cassert>
 #include "SerialStream.h"
 #include "TestStream.h"
-#include "TcpClientStream.h"
-#include "UdpStream.h"
 #include "PluginStream.h"
+#include "NetStream.h"
 
 extern CPluginLoader g_PluginLoader;
 
@@ -56,11 +55,11 @@ bool StreamMgr::Init()
 					OnConnected(event.peer);
 					break;
 				case ENET_EVENT_TYPE_RECEIVE:
-					//printf("A packet of length %u was received from %ld on channel %u.\n",
-					//	event.packet->dataLength,
-					//	(long)event.peer->data,
-					//	event.channelID);
-					putc('+', stderr);
+					printf("A packet of length %u was received from %ld on channel %u.\n",
+						event.packet->dataLength,
+						(long)event.peer->data,
+						event.channelID);
+					//putc('+', stderr);
 					OnData(event.peer, event.channelID, event.packet->data, event.packet->dataLength);
 
 					/* Clean up the packet now that we're done using it. */
@@ -76,6 +75,8 @@ bool StreamMgr::Init()
 		}
 		enet_host_destroy(m_ClientHost);
 	});
+
+	m_PortMgr.Init();
 
 	return true;
 }
@@ -223,11 +224,9 @@ int StreamMgr::Create(const StreamProcess& StreamServer, const ConnectionInfo & 
 		printf("Serial Port\n");
 		break;
 	case CT_TCPC:
-		pPort = new TcpClientStream(m_UVLoop, spi);
-		printf("TCPC Port\n");
-		break;
+	case CT_TCPS:
 	case CT_UDP:
-		pPort = new UdpStream(m_UVLoop, spi);
+		pPort = new NetStream(m_PortMgr, spi);
 		printf("UDP Port\n");
 		break;
 	case CT_PLUGIN:

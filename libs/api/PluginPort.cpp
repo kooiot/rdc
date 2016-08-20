@@ -56,7 +56,7 @@ int PluginPort::SendCB(const char * buf, size_t len, void * ptr)
 {
 	PluginPort* pThis = (PluginPort*)ptr;
 
-	return pThis->m_pHandler->Send(pThis->m_nChannel, (void*)buf, len);
+	return pThis->m_pHandler->OnRecv(pThis->m_nChannel, (void*)buf, len);
 }
 
 int PluginPort::CloseCB(void * ptr)

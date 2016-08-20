@@ -17,13 +17,13 @@ CPortHandler::~CPortHandler()
 {
 }
 
-int CPortHandler::OnLog(int channel, const char * type, const char * content)
+int CPortHandler::OnLog(RC_CHANNEL channel, const char * type, const char * content)
 {
 	printf("Channel %d type %s content %s\n", channel, type, content);
 	return 0;
 }
 
-int CPortHandler::Send(int channel, void * buf, size_t len)
+int CPortHandler::OnRecv(RC_CHANNEL channel, void * buf, size_t len)
 {
 	char* temp = new char[len + 1];
 	*temp = channel;
@@ -33,7 +33,12 @@ int CPortHandler::Send(int channel, void * buf, size_t len)
 	return rc;
 }
 
-void CPortHandler::Close()
+void CPortHandler::OnClose(RC_CHANNEL channel)
 {
 	m_Close(m_DataPtr);
+}
+
+void CPortHandler::OnOpen(RC_CHANNEL channel, bool open)
+{
+	printf("Channel %d OnOpen %s\n", channel, open ? "True" : "False");
 }

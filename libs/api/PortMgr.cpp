@@ -43,7 +43,7 @@ void CPortMgr::Close()
 		m_thread->join();
 	}
 }
-IPort * CPortMgr::Create(int channel, IPortHandler* handler, const ConnectionInfo& info)
+IPort * CPortMgr::Create(RC_CHANNEL channel, IPortHandler* handler, const ConnectionInfo& info)
 {
 	IPort* port = nullptr;
 	switch (info.Type) {

@@ -50,16 +50,19 @@ void TcpClient::_ConnectCB(uv_connect_t * req, int status)
 
 	if (0 != status) {
 		RLOG("Connect to TCP server failed, status %d\n", status);
+		m_pHandler->OnOpen(m_nChannel, false);
 		OnClose();
 		return;
 	}
 	if (0 != uv_read_start(handle, echo_alloc, ReadCB)) {
 		RLOG("Connect Start Read on socket\n");
+		m_pHandler->OnOpen(m_nChannel, false);
 		OnClose();
 		return;
 	}
 	RLOG("Connect to TCP server sucessed\n");
 	m_bConnected = true;
+	m_pHandler->OnOpen(m_nChannel, true);
 }
 
 void TcpClient::ReadCB(uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf)
@@ -72,7 +75,7 @@ void TcpClient::ReadCB(uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf
 		pThis->OnClose();
 	}
 	else {
-		pThis->m_pHandler->Send(pThis->m_nChannel, buf->base, nread);
+		pThis->m_pHandler->OnRecv(pThis->m_nChannel, buf->base, nread);
 	}
 }
 
@@ -95,6 +98,7 @@ bool TcpClient::Open()
 	int rc = uv_ip4_addr(m_Info.remote.sip, m_Info.remote.port, &addr);
 	if (0 != rc) {
 		RLOG("Incorrect TCP server address %d\n", rc);
+		m_pHandler->OnOpen(m_nChannel, false);
 		return false;
 	}
 	
@@ -104,6 +108,7 @@ bool TcpClient::Open()
 		delete m_tcp_handle;
 		m_tcp_handle = NULL;
 		RLOG("Cannot Init TCP handle %d\n", rc);
+		m_pHandler->OnOpen(m_nChannel, false);
 		return false;
 	}
 	m_tcp_handle->data = this;
@@ -114,12 +119,14 @@ bool TcpClient::Open()
 		if (0 != rc) {
 			uv_close((uv_handle_t*)m_tcp_handle, close_cb);
 			RLOG("Incorrect TCP bind address %d\n", rc);
+			m_pHandler->OnOpen(m_nChannel, false);
 			return false;
 		}
 		rc = uv_tcp_bind(m_tcp_handle, (const struct sockaddr*)&bind_addr, 0);
 		if (0 != rc) {
 			uv_close((uv_handle_t*)m_tcp_handle, close_cb);
 			RLOG("Cannot Bind TCP to bind ip %d\n", rc);
+			m_pHandler->OnOpen(m_nChannel, false);
 			return false;
 		}
 	}
@@ -130,6 +137,7 @@ bool TcpClient::Open()
 	if (0 != rc) {
 		uv_close((uv_handle_t*)m_tcp_handle, close_cb);
 		RLOG("Cannot Connect TCP to server %d\n", rc);
+		m_pHandler->OnOpen(m_nChannel, false);
 		return false;
 	}
 	uv_tcp_nodelay(m_tcp_handle, 1);

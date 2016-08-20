@@ -36,13 +36,10 @@
     <ClInclude Include="TestStream.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="TcpClientStream.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="UdpStream.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="PluginStream.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="NetStream.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -65,13 +62,10 @@
     <ClCompile Include="StreamPort.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="TcpClientStream.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="UdpStream.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="PluginStream.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="NetStream.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

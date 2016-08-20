@@ -43,6 +43,7 @@ bool Udp::Open()
 		int rc = uv_ip4_addr(m_Info.remote.sip, m_Info.remote.port, &m_peer_addr);
 		if (0 != rc) {
 			RLOG("Incorrect UDP server address %d\n", rc);
+			m_pHandler->OnOpen(m_nChannel, false);
 			return false;
 		}
 	}
@@ -51,6 +52,7 @@ bool Udp::Open()
 	int rc = uv_ip4_addr(m_Info.bind.sip, m_Info.bind.port, &addr);
 	if (0 != rc) {
 		RLOG("Incorrect UDP server address %d\n", rc);
+		m_pHandler->OnOpen(m_nChannel, false);
 		return false;
 	}
 
@@ -59,6 +61,7 @@ bool Udp::Open()
 	if (0 != rc) {
 		delete m_udp_handle;
 		RLOG("Cannot init UDP handle %d\n", rc);
+		m_pHandler->OnOpen(m_nChannel, false);
 		return false;
 	}
 
@@ -68,6 +71,7 @@ bool Udp::Open()
 	if (0 != rc) {
 		uv_close((uv_handle_t*)m_udp_handle, close_cb);
 		RLOG("Cannot bind UDP bind address %d\n", rc);
+		m_pHandler->OnOpen(m_nChannel, false);
 		return false;
 	}
 
@@ -75,10 +79,12 @@ bool Udp::Open()
 	if (0 != rc) {
 		uv_close((uv_handle_t*)m_udp_handle, close_cb);
 		RLOG("Cannot start UDP recv callback %d\n", rc);
+		m_pHandler->OnOpen(m_nChannel, false);
 		return false;
 	}
 	RLOG("Start UDP Done!\n");
 
+	m_pHandler->OnOpen(m_nChannel, true);
 	return true;
 }
 
@@ -127,7 +133,7 @@ void Udp::_UdpRecvCB(uv_udp_t * handle, ssize_t nread, const uv_buf_t * buf, con
 	else {
 		memcpy(&m_peer_addr, (struct sockaddr_in*)addr, sizeof(sockaddr_in));
 	}
-	m_pHandler->Send(m_nChannel, buf->base, nread);
+	m_pHandler->OnRecv(m_nChannel, buf->base, nread);
 }
 
 

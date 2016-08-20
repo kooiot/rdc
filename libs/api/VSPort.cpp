@@ -143,7 +143,7 @@ LONG_PTR __cdecl VSPort::OnVspcPortEvents(
 				pThis->ShowError();
 				break;
 			}
-			pThis->m_pHandler->Send(pThis->m_nChannel, buf, cbRead);
+			pThis->m_pHandler->OnRecv(pThis->m_nChannel, buf, cbRead);
 			free(buf);
 		}
 	} break;

@@ -17,7 +17,7 @@ public:
 	int Init();
 	void Close();
 
-	IPort* Create(int channel, IPortHandler* handler, const ConnectionInfo& info);
+	IPort* Create(RC_CHANNEL channel, IPortHandler* handler, const ConnectionInfo& info);
 	void Destory(IPort* port);
 
 private:

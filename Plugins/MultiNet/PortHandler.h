@@ -10,9 +10,10 @@ public:
 		void* ptr);
 	~CPortHandler();
 
-	virtual int OnLog(int channel, const char* type, const char* content);
-	virtual int Send(int channel, void* buf, size_t len);
-	virtual void Close();
+	virtual int OnLog(RC_CHANNEL channel, const char* type, const char* content);
+	virtual int OnRecv(RC_CHANNEL channel, void* buf, size_t len);
+	virtual void OnClose(RC_CHANNEL channel);
+	virtual void OnOpen(RC_CHANNEL channel, bool open);
 
 private:
 	PluginSendCB m_Send;

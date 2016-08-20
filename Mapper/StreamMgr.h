@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../api/DataDefs.h"
+#include <DataDefs.h>
+#include <PortMgr.h>
 #include <map>
 #include <list>
 #include <thread>
@@ -31,6 +32,7 @@ private:
 	int _CloseStream(IStreamPort* port);
 	int ProcessPending();
 private:
+	CPortMgr m_PortMgr;
 	uv_loop_t * m_UVLoop;
 	ENetHost* m_ClientHost;
 	std::thread* m_pThread;

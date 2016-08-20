@@ -178,7 +178,7 @@ void run_loop(ENetHost* remote)
 			int data = (long)event.peer->data;
 			int nType = ((data & 0xFFFF0000) >> 16);
 			int nIndex = (data & 0xFFFF);
-#ifdef PRINT_LEN
+#ifndef PRINT_LEN
 			printf("A packet of length %u was received from %d-%d on channel %u.\n",
 				event.packet->dataLength,
 				nType,
@@ -291,7 +291,8 @@ void run_loop(ENetHost* remote)
 			event.peer->data = NULL;
 		} break;
 		default:
-			printf("Unknown Event Type %d\n", event.type);
+			if (event.type != ENET_EVENT_TYPE_NONE)
+				printf("Unknown Event Type %d\n", event.type);
 			break;
 		}
 	}
