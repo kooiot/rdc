@@ -26,6 +26,7 @@ protected:
 public:
 	CAccMgrApi* m_pAccApi;
 	UserInfo* m_Users;
+	GroupInfo* m_Groups;
 	int m_CurSel;
 protected:
 	// User lists control
@@ -53,4 +54,6 @@ protected:
 	afx_msg void OnBnClickedButtonSave();
 	afx_msg void OnNMDblclkListUsers(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnLvnItemchangedListUsers(NMHDR *pNMHDR, LRESULT *pResult);
+public:
+	CComboBox m_cbGroup;
 };

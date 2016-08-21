@@ -249,3 +249,107 @@ int CAccMgrApi::GetUserInfo(const char * id, UserInfo * info)
 
 	return rc;
 }
+
+int CAccMgrApi::AddGroup(const GroupInfo * info)
+{
+	KZPacket packet(m_User, "ADD_GROUP");
+	packet.set("info", KOO_GEN_JSON(*info));
+
+	int rc = SendRequest(packet);
+	return rc;
+}
+
+int CAccMgrApi::ModifyGroup(const GroupInfo * info)
+{
+	KZPacket packet(m_User, "MOD_GROUP");
+	packet.set("info", KOO_GEN_JSON(*info));
+
+	int rc = SendRequest(packet);
+
+	return rc;
+}
+
+int CAccMgrApi::DeleteGroup(const char * name)
+{
+	KZPacket packet(m_User, "DEL_GROUP");
+	packet.set("group", name);
+
+	int rc = SendRequest(packet);
+	return rc;
+}
+
+int CAccMgrApi::ListGroups(GroupInfo * list, int list_len)
+{
+	KZPacket packet(m_User, "LIST_GROUP");
+
+	auto groups = new std::list<std::string>();
+	int rc = SendRequest(packet, [groups](KZPacket& data) {
+		if (KOO_PARSE_JSON(*groups, data.get("result")))
+			return 0;
+		return -1;
+	});
+	int i = 0;
+	if (rc == 0) {
+		for (auto & g : *groups) {
+			rc = GetGroupInfo(g.c_str(), &list[i++]);
+			if (rc != 0)
+				break;
+		}
+	}
+	delete groups;
+	return i;
+}
+
+int CAccMgrApi::GetGroupInfo(const char * name, GroupInfo * info)
+{
+	KZPacket packet(m_User, "GROUP_INFO");
+	packet.set("group", name);
+	int rc = SendRequest(packet, [info](KZPacket& data) {
+		if (KOO_PARSE_JSON(*info, data.get("result")))
+			return 0;
+		return -1;
+	});
+
+	return rc;
+}
+
+int CAccMgrApi::ListGroupDevices(int group, int * list, int list_len)
+{
+	KZPacket packet(m_User, "LIST_GROUP_DEVICES");
+	packet.set("group", group);
+
+	auto devices = new std::list<int>();
+	int rc = SendRequest(packet, [devices](KZPacket& data) {
+		if (KOO_PARSE_JSON(*devices, data.get("result")))
+			return 0;
+		return -1;
+	});
+	int i = 0;
+	if (rc == 0) {
+		for (auto & dev : *devices) {
+			list[i++] = dev;
+		}
+	}
+	delete devices;
+	return i;
+}
+
+int CAccMgrApi::AddDeviceToGroup(int group, int device)
+{
+	KZPacket packet(m_User, "ADD_DEV_TO_GROUP");
+	packet.set("group", group);
+	packet.set("device", device);
+
+	int rc = SendRequest(packet);
+	return rc;
+}
+
+int CAccMgrApi::RemoveDeviceToGroup(int group, int device)
+{
+	KZPacket packet(m_User, "REMOVE_DEV_TO_GROUP");
+	packet.set("group", group);
+	packet.set("device", device);
+
+	int rc = SendRequest(packet);
+	return rc;
+}

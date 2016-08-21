@@ -427,7 +427,7 @@ int CClientMgr::ListStream(const std::string & id, std::vector<int> channels)
 	return 0;
 }
 
-void CClientMgr::OnTimer(int nTime)
+void CClientMgr::OnTimer(time_t nTime)
 {
 	std::list<std::string> rlist;
 	// Check Clients

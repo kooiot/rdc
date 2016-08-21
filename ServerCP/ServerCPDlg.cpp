@@ -15,6 +15,7 @@
 #include "UsersDlg.h"
 #include "DevicesDlg.h"
 #include "ServicesDlg.h"
+#include "GroupsDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -100,6 +101,7 @@ BEGIN_MESSAGE_MAP(CServerCPDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_RUSERS, &CServerCPDlg::OnBnClickedButtonRusers)
 	ON_NOTIFY(TCN_SELCHANGE, IDC_TAB1, &CServerCPDlg::OnTcnSelchangeTab1)
 	ON_BN_CLICKED(IDC_BUTTON_SM, &CServerCPDlg::OnBnClickedButtonSm)
+	ON_BN_CLICKED(IDC_BUTTON_GROUPS, &CServerCPDlg::OnBnClickedButtonGroups)
 END_MESSAGE_MAP()
 
 
@@ -448,5 +450,13 @@ void CServerCPDlg::OnTcnSelchangeTab1(NMHDR *pNMHDR, LRESULT *pResult)
 void CServerCPDlg::OnBnClickedButtonSm()
 {
 	CServicesDlg dlg(m_CTX);
+	dlg.DoModal();
+}
+
+
+void CServerCPDlg::OnBnClickedButtonGroups()
+{
+	CGroupsDlg dlg;
+	dlg.m_pAccApi = m_pAccApi;
 	dlg.DoModal();
 }

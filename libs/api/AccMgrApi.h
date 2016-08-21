@@ -30,6 +30,17 @@ public:
 	int ListUsers(UserInfo* list, int list_len, bool only_online = true);
 	int GetUserInfo(const char * id, UserInfo* info);
 
+
+	// Return Group Index Where Add
+	int AddGroup(const GroupInfo* info);
+	int ModifyGroup(const GroupInfo* info);
+	int DeleteGroup(const char* name);
+	int ListGroups(GroupInfo* list, int list_len);
+	int GetGroupInfo(const char * name, GroupInfo* info);
+
+	int ListGroupDevices(int group, int* list, int list_len);
+	int AddDeviceToGroup(int group, int device);
+	int RemoveDeviceToGroup(int group, int device);
 private:
 	bool _Connect();
 	int SendRequest(KZPacket& packet, std::function< int(KZPacket&)> cb = nullptr);

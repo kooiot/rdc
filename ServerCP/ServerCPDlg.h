@@ -76,4 +76,5 @@ public:
 	afx_msg void OnTcnSelchangeTab1(NMHDR *pNMHDR, LRESULT *pResult);
 	CEdit m_editServerInfo;
 	afx_msg void OnBnClickedButtonSm();
+	afx_msg void OnBnClickedButtonGroups();
 };

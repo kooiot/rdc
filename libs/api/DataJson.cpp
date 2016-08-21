@@ -26,13 +26,16 @@ time_t str2time(const std::string &strTime)
 }
 
 const std::string time2str(const time_t *_Time = NULL) {
-	char buffer[80];
 	time_t now = _Time != NULL ? *_Time : time(NULL);
 
 	struct tm * timeinfo = localtime(&now);
-	strftime(buffer, 80, "%F %T", timeinfo);
+	if (timeinfo) {
+		char buffer[80];
+		strftime(buffer, 80, "%F %T", timeinfo);
 
-	return std::string(buffer);
+		return std::string(buffer);
+	}
+	return "";
 }
 
 bool parse_json(SerialInfo& info, const json& j) {
@@ -234,6 +237,18 @@ bool parse_json(std::list<std::string>& list, const json &j)
 	}
 }
 
+bool parse_json(std::list<int>& list, const json &j)
+{
+	try {
+		for (auto & node : j) {
+			list.push_back(node);
+		}
+		return true;
+	}
+	catch (...) {
+		return false;
+	}
+}
 json generate_json(const UserInfo& info) {
 	json j;
 	j["index"] = info.Index;
@@ -389,5 +404,13 @@ json generate_json(const std::list<std::string>& list)
 	}
 	return j;
 }
-
+json generate_json(const std::list<int>& list)
+{
+	json j;
+	int i = 0;
+	for (auto & ptr : list) {
+		j[i++] = ptr;
+	}
+	return j;
+}
 }

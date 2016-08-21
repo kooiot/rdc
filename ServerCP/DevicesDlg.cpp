@@ -51,14 +51,11 @@ BOOL CDevicesDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
-	// TODO:  在此添加额外的初始化
-
 	m_listDevs.InsertColumn(0, "Name", LVCFMT_LEFT, 120);
 	m_listDevs.InsertColumn(1, "SN", LVCFMT_LEFT, 240);
 	m_listDevs.InsertColumn(2, "Desc", LVCFMT_LEFT, 240);
 	m_listDevs.SetExtendedStyle(m_listDevs.GetExtendedStyle() | LVS_EX_FULLROWSELECT);
 
-	// TODO:  在此添加额外的初始化
 	memset(m_Devs, 0, sizeof(DeviceInfo) * 2048);
 	int num = m_pAccApi->ListDevices(m_Devs, 2048, false);
 
@@ -195,9 +192,9 @@ void CDevicesDlg::OnBnClickedButtonDel()
 
 	DeviceInfo& info = m_Devs[m_CurSel];
 	if (info.Index != -1) {
-		int rc = m_pAccApi->DeleteUser(info.SN);
+		int rc = m_pAccApi->DeleteDevice(info.SN);
 		if (rc != 0) {
-			MessageBox("Delete User Failed");
+			MessageBox("Delete Device Failed");
 			return;
 		}
 	}
@@ -224,7 +221,7 @@ void CDevicesDlg::OnBnClickedButtonSave()
 
 	DeviceInfo& info = m_Devs[m_CurSel];
 	if (info.Index == -1) {
-		// New User
+		// New Device
 		info.Index = m_pAccApi->AddDevice(&info);
 		if (info.Index == -1) {
 			MessageBox("Add Device Failed");

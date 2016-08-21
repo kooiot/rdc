@@ -130,17 +130,17 @@ void CAccMgr::HandleKZPacket(const KZPacket& cmd)
 		nReturn = m_Database.UpdateGroup(dbInfo);
 	}
 	else if (cmd.cmd() == "DEL_GROUP") {
-		nReturn = m_Database.DeleteGroup(cmd.get("name"));
+		nReturn = m_Database.DeleteGroup(cmd.get("group"));
 	}
 	else if (cmd.cmd() == "LIST_GROUP") {
 		std::list<std::string> all;
-		m_Database.ListDevices(all);
+		m_Database.ListGroups(all);
 		int rc = koo_zmq_send_result(m_pReply, cmd, KOO_GEN_JSON(all));
 		assert(rc >= 0);
 		return;
 	}
 	else if (cmd.cmd() == "GROUP_INFO") {
-		std::string name = cmd.get("name");
+		std::string name = cmd.get("group");
 		DbGroupInfo dbInfo;
 		int rc = m_Database.GetGroup(name, dbInfo);
 		if (rc != 0) {
@@ -152,6 +152,25 @@ void CAccMgr::HandleKZPacket(const KZPacket& cmd)
 		dbInfo.ToGroupInfo(info);
 		koo_zmq_send_result(m_pReply, cmd, KOO_GEN_JSON(info));
 		return;
+	}
+	else if (cmd.cmd() == "LIST_GROUP_DEVICES") {
+		int group = cmd.get("group");
+		std::list<int> list;
+		m_Database.ListGroupDevices(group, list);
+
+		int rc = koo_zmq_send_result(m_pReply, cmd, KOO_GEN_JSON(list));
+		assert(rc >= 0);
+		return;
+	}
+	else if (cmd.cmd() == "ADD_DEV_TO_GROUP") {
+		int group = cmd.get("group");
+		int device = cmd.get("device");
+		nReturn = m_Database.AddDeviceToGroup(group, device);
+	}
+	else if (cmd.cmd() == "REMOVE_DEV_TO_GROUP") {
+		int group = cmd.get("group");
+		int device = cmd.get("device");
+		nReturn = m_Database.RemoveDeviceToGroup(group, device);
 	}
 	else if (cmd.cmd() == "ADD_CLIENT") {
 		JSON_FROM_PACKET(cmd, UserInfo, info);

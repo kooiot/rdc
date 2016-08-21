@@ -206,6 +206,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DevicesDlg.h" />
+    <ClInclude Include="GroupsDlg.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ServerCP.h" />
     <ClInclude Include="ServerCPDlg.h" />
@@ -216,6 +217,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DevicesDlg.cpp" />
+    <ClCompile Include="GroupsDlg.cpp" />
     <ClCompile Include="ServerCP.cpp" />
     <ClCompile Include="ServerCPDlg.cpp" />
     <ClCompile Include="ServicesDlg.cpp" />

@@ -37,7 +37,7 @@ public:
 	void Close();
 	void OnRecv();
 
-	void OnTimer(int nTime);
+	void OnTimer(time_t nTime);
 
 	void ListMappers(std::list<std::string>& list);
 	void ListClients(std::list<std::string>& list);

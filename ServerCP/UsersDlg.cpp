@@ -15,11 +15,13 @@ CUsersDlg::CUsersDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(IDD_USERS_DIALOG, pParent)
 {
 	m_Users = new UserInfo[2048];
+	m_Groups = new GroupInfo[2048];
 }
 
 CUsersDlg::~CUsersDlg()
 {
 	delete[] m_Users;
+	delete[] m_Groups;
 }
 
 void CUsersDlg::DoDataExchange(CDataExchange* pDX)
@@ -36,6 +38,7 @@ void CUsersDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_DATETIMEPICKER_VALID, m_dtValid);
 	DDX_Control(pDX, IDC_EDIT_PASSWD, m_editPasswd);
 	DDX_Control(pDX, IDC_CHECK_VALID, m_chkValid);
+	DDX_Control(pDX, IDC_COMBO_GROUP, m_cbGroup);
 }
 
 BEGIN_MESSAGE_MAP(CUsersDlg, CDialogEx)
@@ -64,9 +67,14 @@ BOOL CUsersDlg::OnInitDialog()
 	m_listUsers.InsertColumn(1, "Name", LVCFMT_LEFT, 120);
 	m_listUsers.InsertColumn(2, "Desc", LVCFMT_LEFT, 120);
 
-	// TODO:  在此添加额外的初始化
+	memset(m_Groups, 0, sizeof(GroupInfo) * 2048);
+	int num = m_pAccApi->ListGroups(m_Groups, 2048);
+	for (int i = 0; i < num; ++i) {
+		m_cbGroup.AddString(m_Groups[i].Name);
+	}
+
 	memset(m_Users, 0, sizeof(UserInfo) * 2048);
-	int num = m_pAccApi->ListUsers(m_Users, 2048, false);
+	num = m_pAccApi->ListUsers(m_Users, 2048, false);
 
 	for (int i = 0; i < num; ++i) {
 		int n = m_listUsers.InsertItem(i, m_Users[i].ID);
