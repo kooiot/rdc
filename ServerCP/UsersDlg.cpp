@@ -62,19 +62,21 @@ BOOL CUsersDlg::OnInitDialog()
 	m_boxLevel.AddString("企业用户");
 	m_boxLevel.AddString("企业管理员");
 	m_boxLevel.AddString("系统管理员");
+	m_boxLevel.SetCurSel(0);
 
 	m_listUsers.InsertColumn(0, "ID", LVCFMT_LEFT, 60);
 	m_listUsers.InsertColumn(1, "Name", LVCFMT_LEFT, 120);
 	m_listUsers.InsertColumn(2, "Desc", LVCFMT_LEFT, 120);
 
 	memset(m_Groups, 0, sizeof(GroupInfo) * 2048);
-	int num = m_pAccApi->ListGroups(m_Groups, 2048);
-	for (int i = 0; i < num; ++i) {
+	m_GroupCount = m_pAccApi->ListGroups(m_Groups, 2048);
+	for (int i = 0; i < m_GroupCount; ++i) {
 		m_cbGroup.AddString(m_Groups[i].Name);
 	}
+	m_cbGroup.SetCurSel(0);
 
 	memset(m_Users, 0, sizeof(UserInfo) * 2048);
-	num = m_pAccApi->ListUsers(m_Users, 2048, false);
+	int num = m_pAccApi->ListUsers(m_Users, 2048, false);
 
 	for (int i = 0; i < num; ++i) {
 		int n = m_listUsers.InsertItem(i, m_Users[i].ID);

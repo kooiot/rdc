@@ -926,9 +926,12 @@ int CAccDatabase::Access(const std::string & id, const std::string & sn)
 {
 	if (!m_pDB)
 		return -AUTH_ERROR;
-	int uid = GetUserIndex(id);
-	if (uid == INVALID_INDEX)
+
+	DbUserInfo info;
+	if (GetUser(id.c_str(), info) != 0) {
 		return -AUTH_ERROR;
+	}
+
 	int devid = GetDeviceIndex(sn);
 	if (devid == INVALID_INDEX)
 		return -AUTH_ERROR;
@@ -936,8 +939,11 @@ int CAccDatabase::Access(const std::string & id, const std::string & sn)
 	if (GetUserLevel(id) >= UL_SYS_ADMIN)
 		return 0;
 
-	// FIXME:
-	return 0;
+	if (0 == CheckDeviceInGroup(info.Group, devid))
+	{
+		return 0;
+	}
+	return -AUTH_ERROR;
 }
 
 int CAccDatabase::GetUserIndex(const std::string & id)
@@ -1070,12 +1076,19 @@ int CAccDatabase::CheckDeviceInGroup(int group, int device)
 	m_Lock.lock();
 
 	std::stringstream sql;
-	sql << "select `index` from group_devices where grpid=" << group << " and devid=" << device;
+	sql << "select devid from group_devices where grpid=" << group << " and devid=" << device;
 
-	std::string valid_time;
+	int nID = -1;
 	int rc = sqlite3_exec(m_pDB, sql.str().c_str(), [](void* data, int row, char** vals, char** cols) {
+		int* nID = (int*)data;
+		if (vals[0] != NULL) {
+			*nID = atoi(vals[0]);
+		}
+		else {
+			*nID = INVALID_INDEX;
+		}
 		return 0;
-	}, &valid_time, NULL);
+	}, &nID, NULL);
 
 	if (rc != SQLITE_OK) {
 		std::cerr << "SQL Error: " << sqlite3_errmsg(m_pDB) << std::endl;
@@ -1084,5 +1097,7 @@ int CAccDatabase::CheckDeviceInGroup(int group, int device)
 
 	m_Lock.unlock();
 
-	return rc;
+	if (nID == device)
+		return 0;
+	return -1;
 }
