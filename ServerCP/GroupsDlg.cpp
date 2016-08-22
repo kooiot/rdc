@@ -69,7 +69,7 @@ BOOL CGroupsDlg::OnInitDialog()
 	m_listDevices.SetExtendedStyle(m_listDevices.GetExtendedStyle() | LVS_EX_FULLROWSELECT | LVS_EX_CHECKBOXES);
 
 	memset(m_Devs, 0, sizeof(DeviceInfo) * 2048);
-	int num = m_pAccApi->ListDevices(m_Devs, 2048);
+	int num = m_pAccApi->ListDevices(m_Devs, 2048, false);
 	for (int i = 0; i < num; ++i) {
 		int n = m_listDevices.InsertItem(i, m_Devs[i].Name);
 		m_listDevices.SetItemText(n, 1, m_Devs[i].SN);
@@ -133,7 +133,12 @@ void CGroupsDlg::BindGroup(int nCur, bool bEdit)
 	}
 	
 	memset(m_GroupDevices, 0, sizeof(int) * 2048);
-	int num = m_pAccApi->ListGroupDevices(info.Index, m_GroupDevices, 2048);
+
+	int num = 0;
+	if (info.Index > 0)
+		num = m_pAccApi->ListGroupDevices(info.Index, m_GroupDevices, 2048);
+	else
+		m_listDevices.EnableWindow(FALSE);
 
 	for (int i = 0; i < m_listDevices.GetItemCount(); ++i) {
 		BOOL check = FALSE;
@@ -144,7 +149,9 @@ void CGroupsDlg::BindGroup(int nCur, bool bEdit)
 			}
 		}
 		m_listDevices.SetCheck(i, check);
+		m_listDevices.SetItemData(i, check);
 	}
+	m_GroupDeviceCount = num;
 }
 
 void CGroupsDlg::DumpGroup(int nCur)
@@ -271,9 +278,17 @@ void CGroupsDlg::OnLvnItemchangedListGroups(NMHDR *pNMHDR, LRESULT *pResult)
 void CGroupsDlg::OnLvnItemchangedListDevices(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
-	if (m_listDevices.GetCheck(pNMLV->iItem))
-		MessageBox("Select");
-	else
-		MessageBox("UnSelect");
+
+	int nCur = pNMLV->iItem;
+	if (nCur >= 0 && m_CurSel >= 0) {
+		BOOL check = m_listDevices.GetCheck(nCur);
+		if (check != (BOOL)m_listDevices.GetItemData(nCur))
+		{
+			if (check)
+				m_pAccApi->AddDeviceToGroup(m_Groups[m_CurSel].Index, m_Devs[nCur].Index);
+			else
+				m_pAccApi->RemoveDeviceToGroup(m_Groups[m_CurSel].Index, m_Devs[nCur].Index);
+		}
+	}
 	*pResult = 0;
 }

@@ -202,6 +202,13 @@ BOOL CServerCPDlg::OnInitDialog()
 
 #endif
 
+	GetDlgItem(IDC_BUTTON_USERS)->EnableWindow(FALSE);
+	GetDlgItem(IDC_BUTTON_DEVS)->EnableWindow(FALSE);
+	GetDlgItem(IDC_BUTTON_RD)->EnableWindow(FALSE);
+	GetDlgItem(IDC_BUTTON_RUSERS)->EnableWindow(FALSE);
+	GetDlgItem(IDC_BUTTON_SM)->EnableWindow(FALSE);
+	GetDlgItem(IDC_BUTTON_GROUPS)->EnableWindow(FALSE);
+
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -369,6 +376,13 @@ void CServerCPDlg::OnBnClickedButtonConnect()
 		delete m_pAccApi;
 		m_pAccApi = NULL;
 		GetDlgItem(IDC_BUTTON_CONNECT)->SetWindowText("Connect");
+
+		GetDlgItem(IDC_BUTTON_USERS)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_DEVS)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_RD)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_RUSERS)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_SM)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_GROUPS)->EnableWindow(FALSE);
 	}
 	else {
 		// TODO: 在此添加控件通知处理程序代码
@@ -381,8 +395,17 @@ void CServerCPDlg::OnBnClickedButtonConnect()
 		}
 		else {
 			MessageBox("Faied");
+			delete m_pAccApi;
+			return;
 		}
 		GetDlgItem(IDC_BUTTON_CONNECT)->SetWindowText("Disconnect");
+
+		GetDlgItem(IDC_BUTTON_USERS)->EnableWindow(TRUE);
+		GetDlgItem(IDC_BUTTON_DEVS)->EnableWindow(TRUE);
+		GetDlgItem(IDC_BUTTON_RD)->EnableWindow(TRUE);
+		GetDlgItem(IDC_BUTTON_RUSERS)->EnableWindow(TRUE);
+		GetDlgItem(IDC_BUTTON_SM)->EnableWindow(TRUE);
+		GetDlgItem(IDC_BUTTON_GROUPS)->EnableWindow(TRUE);
 	}
 }
 

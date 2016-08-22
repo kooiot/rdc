@@ -142,6 +142,13 @@ void CUsersDlg::BindUser(int nCur, bool bEdit)
 		m_boxLevel.SetCurSel(0);
 	m_editCreateTime.SetWindowText(time2str(&info.CreateTime).c_str());
 
+	for (int i = 0; i < m_GroupCount; ++i) {
+		if (m_Groups[i].Index == info.Group)
+		{
+			m_cbGroup.SetCurSel(i);
+			break;
+		}
+	}
 
 	CTime valid(info.ValidTime);
 	m_dtValid.SetTime(&valid);
@@ -188,6 +195,7 @@ void CUsersDlg::DumpUser(int nCur)
 	else {
 		info.ValidTime = 0;
 	}
+	info.Group = m_Groups[m_cbGroup.GetCurSel()].Index;
 
 	m_listUsers.SetItemText(nCur, 0, info.ID);
 	m_listUsers.SetItemText(nCur, 1, info.Name);

@@ -29,6 +29,7 @@ public:
 	GroupInfo* m_Groups;
 	DeviceInfo* m_Devs;
 	int* m_GroupDevices;
+	int m_GroupDeviceCount;
 	int m_CurSel;
 
 private:

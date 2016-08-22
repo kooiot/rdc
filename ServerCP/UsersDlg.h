@@ -27,6 +27,7 @@ public:
 	CAccMgrApi* m_pAccApi;
 	UserInfo* m_Users;
 	GroupInfo* m_Groups;
+	int m_GroupCount;
 	int m_CurSel;
 protected:
 	// User lists control
