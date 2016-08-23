@@ -875,7 +875,7 @@ int CAccDatabase::AddDeviceToGroup(int group, int device)
 		return AUTH_ERROR;
 
 	int rc = CheckDeviceInGroup(group, device);
-	if (rc != 0)
+	if (rc == 0)
 		return rc;
 
 	m_Lock.lock();

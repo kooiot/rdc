@@ -168,7 +168,7 @@ void CDevicesDlg::OnBnClickedButtonAdd()
 	int nCur = m_listDevs.GetItemCount();
 	const char* uuid = newGUID();
 	int n = m_listDevs.InsertItem(nCur, "");
-	m_listDevs.SetItemText(n, 0, uuid);
+	m_listDevs.SetItemText(n, 1, uuid);
 	ASSERT(m_Devs[n].Index == 0 && m_Devs[n].CreateTime == 0);
 	m_Devs[n].Index = -1;
 	m_Devs[n].CreateTime = time(NULL);
