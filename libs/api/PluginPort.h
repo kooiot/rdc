@@ -2,8 +2,9 @@
 
 #include "DataDefs.h"
 #include "Handlers.h"
-#include "PlugInApi.h"
+#include "PluginApi.h"
 #include <string>
+#include <cstdarg>
 
 class PluginPort : public IPort
 {

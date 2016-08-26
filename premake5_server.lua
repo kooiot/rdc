@@ -49,6 +49,7 @@ project "api"
 	includedirs {"libs/api", "libs/common/include", "libs/enet/include", "libs/zeromq/include" }
 
 	files {"libs/api/**.h", "libs/api/**.cpp" }
+	removefiles {"libs/api/vspd/**.h", "libs/api/vspd/**.cpp", "libs/api/VS**"}
 
 	filter "configurations:Debug"
 		defines { "DEBUG" }
