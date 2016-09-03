@@ -96,7 +96,13 @@ void CPluginDlg::OnBnClickedButtonSlrm()
 		j[1] = KOO_GEN_JSON(tcp2);
 		j[2] = KOO_GEN_JSON(udp1);
 
-		m_editConfig.SetWindowText(j.dump(0).c_str());
+		std::stringstream ss;
+		j >> ss;
+
+		std::string str = j.dump('\n');
+		//str = str.replace("\n", "\r\n");
+
+		m_editConfig.SetWindowText(ss.str().c_str());
 	}
 
 	{
@@ -128,6 +134,9 @@ void CPluginDlg::OnBnClickedButtonSlrm()
 		j[1] = KOO_GEN_JSON(tcp2);
 		j[2] = KOO_GEN_JSON(udp1);
 
-		m_edtConfigLocal.SetWindowText(j.dump(0).c_str());
+		std::stringstream ss;
+		j >> ss;
+
+		m_edtConfigLocal.SetWindowText(ss.str().c_str());
 	}
 }

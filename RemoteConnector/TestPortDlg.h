@@ -23,7 +23,7 @@ protected:
 	virtual bool Open() {
 		return true;
 	}
-	virtual void Close() { return; }
+	virtual void Close() { PostMessage(WM_CLOSE); }
 
 	virtual int Write(void* buf, size_t len);
 
@@ -35,6 +35,8 @@ public:
 	LRESULT OnShowRecvData(WPARAM wParam, LPARAM lParam);
 	LRESULT OnShowRecvEvent(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnBnClickedButtonSend();
+	afx_msg void OnClose();
+
 	CEdit m_editRecv;
 	CEdit m_editSend;
 };

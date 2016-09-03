@@ -44,6 +44,8 @@ void CTestPortDlg::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CTestPortDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_SEND, &CTestPortDlg::OnBnClickedButtonSend)
+	ON_WM_CLOSE()
+	ON_MESSAGE(WM_MSG_RECV_DATA, &CTestPortDlg::OnShowRecvData)
 END_MESSAGE_MAP()
 
 
@@ -57,6 +59,7 @@ LRESULT CTestPortDlg::OnShowRecvData(WPARAM wParam, LPARAM lParam)
 
 	CString str;
 	m_editRecv.GetWindowText(str);
+	str += "\r\n";
 	str += buf;
 	m_editRecv.SetWindowText(str);
 	return 0L;
@@ -69,5 +72,15 @@ LRESULT CTestPortDlg::OnShowRecvEvent(WPARAM wParam, LPARAM lParam)
 
 void CTestPortDlg::OnBnClickedButtonSend()
 {
-	// TODO: 在此添加控件通知处理程序代码
+	CString str;
+	m_editSend.GetWindowText(str);
+	m_pHandler->OnRecv(m_nChannel, str.GetBuffer(), str.GetLength());
+}
+
+
+void CTestPortDlg::OnClose()
+{
+	// TODO: 在此添加消息处理程序代码和/或调用默认值
+	IPort::OnClose();
+	CDialogEx::OnClose();
 }
