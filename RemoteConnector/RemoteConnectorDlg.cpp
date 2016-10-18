@@ -312,6 +312,13 @@ void CRemoteConnectorDlg::__StreamEventCallback(RC_CHANNEL channel, StreamEvent 
 		if (rc == 0) {
 			RemoveConnection(channel);
 		}
+
+		for (int i = 0; i < m_listConnections.GetItemCount(); ++i) {
+			if (channel == m_listConnections.GetItemData(i)) {
+				m_listConnections.DeleteItem(i);
+				break;
+			}
+		}
 	}
 }
 
