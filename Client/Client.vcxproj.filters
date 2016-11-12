@@ -48,6 +48,12 @@
     <ClInclude Include="CalendarBar.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="DeviceTreeCtrl.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="NewChannelDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -72,6 +78,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="CalendarBar.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DeviceTreeCtrl.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="NewChannelDlg.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

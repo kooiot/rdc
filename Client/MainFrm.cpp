@@ -35,6 +35,8 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_CAPTION_BAR, &CMainFrame::OnUpdateViewCaptionBar)
 	ON_UPDATE_COMMAND_UI(ID_DISCONNECT, &CMainFrame::OnUpdateCmdDisconnect)
 	ON_UPDATE_COMMAND_UI_RANGE(ID_CONNECT, ID_EDIT_PASSWD, &CMainFrame::OnUpdateCmdConnect)
+	ON_UPDATE_COMMAND_UI_RANGE(ID_NEW_SERIAL_CHN, ID_NEW_TEST_CHN, &CMainFrame::OnUpdateCmdDisconnect)
+	ON_COMMAND_RANGE(ID_NEW_SERIAL_CHN, ID_NEW_TEST_CHN, &CMainFrame::OnNewDeviceChannel)
 	ON_COMMAND(ID_TOOLS_OPTIONS, &CMainFrame::OnOptions)
 	ON_WM_SETTINGCHANGE()
 END_MESSAGE_MAP()
@@ -65,6 +67,22 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	{
 		TRACE0("未能创建状态栏\n");
 		return -1;      // 未能创建
+	}
+	CMFCRibbonEdit* pEdit = DYNAMIC_DOWNCAST(CMFCRibbonEdit, m_wndRibbonBar.FindByID(ID_EDIT_SRV_IP));
+	if (pEdit)
+		pEdit->SetEditText(AfxGetApp()->GetProfileString("Login", "ServerIP", "kooiot.com"));
+	pEdit = DYNAMIC_DOWNCAST(CMFCRibbonEdit, m_wndRibbonBar.FindByID(ID_EDIT_SRV_PORT));
+	if (pEdit)
+		pEdit->SetEditText(AfxGetApp()->GetProfileString("Login", "ServerPort", "6600"));
+	pEdit = DYNAMIC_DOWNCAST(CMFCRibbonEdit, m_wndRibbonBar.FindByID(ID_EDIT_USERNAME));
+	if (pEdit)
+		pEdit->SetEditText(AfxGetApp()->GetProfileString("Login", "UserName", "User1"));
+	pEdit = DYNAMIC_DOWNCAST(CMFCRibbonEdit, m_wndRibbonBar.FindByID(ID_EDIT_PASSWD));
+	if (pEdit) {
+		pEdit->SetEditText(AfxGetApp()->GetProfileString("Login", "Password", "Password"));
+		//pEdit->Get
+		//pEdit->SetPasswordChar('*');    //一定要
+		//BOOL b = pEdit->ModifyStyle(0, ES_PASSWORD);
 	}
 
 	CString strTitlePane1;
@@ -482,4 +500,8 @@ void CMainFrame::OnSettingChange(UINT uFlags, LPCTSTR lpszSection)
 {
 	CFrameWndEx::OnSettingChange(uFlags, lpszSection);
 	m_wndOutput.UpdateFonts();
+}
+
+void CMainFrame::OnNewDeviceChannel(UINT id)
+{
 }

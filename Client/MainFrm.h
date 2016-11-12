@@ -16,6 +16,7 @@
 #include "OutputWnd.h"
 #include "PropertiesWnd.h"
 #include "CalendarBar.h"
+#include "DeviceTreeCtrl.h"
 #include "Resource.h"
 
 class COutlookBar : public CMFCOutlookBar
@@ -59,9 +60,9 @@ protected:  // 控件条嵌入成员
 	COutlookBar       m_wndNavigationBar;
 	//CMFCShellTreeCtrl m_wndTree;
 	//CCalendarBar      m_wndCalendar;
-	CTreeCtrl		m_wndOnlineTree;
-	CTreeCtrl		m_wndOfflineTree;
-	CTreeCtrl		m_wndOutdateTree;
+	CDeviceTreeCtrl		m_wndOnlineTree;
+	CDeviceTreeCtrl		m_wndOfflineTree;
+	CDeviceTreeCtrl		m_wndOutdateTree;
 	HTREEITEM		m_treeOnlineRoot;
 	HTREEITEM		m_treeOfflineRoot;
 	HTREEITEM		m_treeOutdateRoot;
@@ -81,6 +82,7 @@ protected:
 	afx_msg void OnCmdDisconnect();
 	afx_msg void OnOptions();
 	afx_msg void OnSettingChange(UINT uFlags, LPCTSTR lpszSection);
+	afx_msg void CMainFrame::OnNewDeviceChannel(UINT id);
 	DECLARE_MESSAGE_MAP()
 
 	BOOL CreateDockingWindows();

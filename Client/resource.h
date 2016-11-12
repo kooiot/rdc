@@ -78,8 +78,14 @@
 #define IDS_OUTDATE_DEVICES             310
 #define IDS_OFFLINE_DEVICES             311
 #define IDB_BITMAP1                     312
+#define IDS_DEVICE_MENU                 312
 #define IDB_DEVICES                     313
 #define IDD_DIALOG1                     314
+#define IDD_NEW_CHANEL_DLG              314
+#define IDR_CHN_MENU                    317
+#define IDR_DEVICE_MENU                 317
+#define IDC_MFCPROPERTYGRID2            1001
+#define IDC_CHANNEL_PROPS               1001
 #define ID_WRITE_PASTEASHYPERLINK       32770
 #define ID_CONNECT                      32771
 #define ID_EDIT_SRV_IP                  32772
@@ -87,15 +93,19 @@
 #define ID_EDIT_USERNAME                32774
 #define ID_EDIT_PASSWD                  32775
 #define ID_DISCONNECT                   32776
-#define ID_BUTTON5                      32792
+#define ID_NEW_SERIAL_CHN               32790
+#define ID_NEW_TCP_CHN                  32791
+#define ID_NEW_UDP_CHN                  32792
+#define ID_NEW_PLUGIN_CHN               32793
+#define ID_NEW_TEST_CHN                 32794
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        317
-#define _APS_NEXT_COMMAND_VALUE         32793
-#define _APS_NEXT_CONTROL_VALUE         1000
+#define _APS_NEXT_RESOURCE_VALUE        320
+#define _APS_NEXT_COMMAND_VALUE         32795
+#define _APS_NEXT_CONTROL_VALUE         1002
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif

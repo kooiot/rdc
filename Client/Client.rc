@@ -264,6 +264,18 @@ BEGIN
     MENUITEM "Windows 7(&D)",               ID_VIEW_APPLOOK_WINDOWS_7
 END
 
+IDR_DEVICE_MENU MENU
+BEGIN
+    POPUP "设备右键菜单"
+    BEGIN
+        MENUITEM "串口通道",                        ID_NEW_SERIAL_CHN
+        MENUITEM "TCP通道",                       ID_NEW_TCP_CHN
+        MENUITEM "UDP通道",                       ID_NEW_UDP_CHN
+        MENUITEM "插件通道",                        ID_NEW_PLUGIN_CHN
+        MENUITEM "测试通道",                        ID_NEW_TEST_CHN
+    END
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -304,13 +316,14 @@ BEGIN
     DEFPUSHBUTTON   "确定",IDOK,113,41,50,14,WS_GROUP
 END
 
-IDD_DIALOG1 DIALOGEX 0, 0, 309, 177
+IDD_NEW_CHANEL_DLG DIALOGEX 0, 0, 311, 223
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Dialog"
+CAPTION "新建通道"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "确定",IDOK,198,156,50,14
-    PUSHBUTTON      "取消",IDCANCEL,252,156,50,14
+    DEFPUSHBUTTON   "确定",IDOK,198,202,50,14
+    PUSHBUTTON      "取消",IDCANCEL,254,202,50,14
+    CONTROL         "",IDC_CHANNEL_PROPS,"MfcPropertyGrid",0x100,7,7,297,189
 END
 
 
@@ -369,12 +382,12 @@ BEGIN
         BOTTOMMARGIN, 55
     END
 
-    IDD_DIALOG1, DIALOG
+    IDD_NEW_CHANEL_DLG, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 302
+        RIGHTMARGIN, 304
         TOPMARGIN, 7
-        BOTTOMMARGIN, 170
+        BOTTOMMARGIN, 216
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -393,8 +406,44 @@ IDR_RIBBON              RT_RIBBON_XML           "res\\ribbon.mfcribbon-ms"
 // AFX_DIALOG_LAYOUT
 //
 
-IDD_DIALOG1 AFX_DIALOG_LAYOUT
+IDD_NEW_CHANEL_DLG AFX_DIALOG_LAYOUT
 BEGIN
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog Info
+//
+
+IDD_NEW_CHANEL_DLG DLGINIT
+BEGIN
+    IDC_CHANNEL_PROPS, 0x37c, 414, 0
+0x4d3c, 0x4346, 0x7250, 0x706f, 0x7265, 0x7974, 0x7247, 0x6469, 0x485f, 
+0x6165, 0x6564, 0x4372, 0x7274, 0x3e6c, 0x4146, 0x534c, 0x3c45, 0x4d2f, 
+0x4346, 0x7250, 0x706f, 0x7265, 0x7974, 0x7247, 0x6469, 0x485f, 0x6165, 
+0x6564, 0x4372, 0x7274, 0x3e6c, 0x4d3c, 0x4346, 0x7250, 0x706f, 0x7265, 
+0x7974, 0x7247, 0x6469, 0x445f, 0x7365, 0x7263, 0x7069, 0x6974, 0x6e6f, 
+0x7241, 0x6165, 0x543e, 0x5552, 0x3c45, 0x4d2f, 0x4346, 0x7250, 0x706f, 
+0x7265, 0x7974, 0x7247, 0x6469, 0x445f, 0x7365, 0x7263, 0x7069, 0x6974, 
+0x6e6f, 0x7241, 0x6165, 0x3c3e, 0x464d, 0x5043, 0x6f72, 0x6570, 0x7472, 
+0x4779, 0x6972, 0x5f64, 0x6c41, 0x6870, 0x6261, 0x7465, 0x6369, 0x6f4d, 
+0x6564, 0x463e, 0x4c41, 0x4553, 0x2f3c, 0x464d, 0x5043, 0x6f72, 0x6570, 
+0x7472, 0x4779, 0x6972, 0x5f64, 0x6c41, 0x6870, 0x6261, 0x7465, 0x6369, 
+0x6f4d, 0x6564, 0x3c3e, 0x464d, 0x5043, 0x6f72, 0x6570, 0x7472, 0x4779, 
+0x6972, 0x5f64, 0x6f4d, 0x6964, 0x6966, 0x6465, 0x7250, 0x706f, 0x7265, 
+0x6974, 0x7365, 0x463e, 0x4c41, 0x4553, 0x2f3c, 0x464d, 0x5043, 0x6f72, 
+0x6570, 0x7472, 0x4779, 0x6972, 0x5f64, 0x6f4d, 0x6964, 0x6966, 0x6465, 
+0x7250, 0x706f, 0x7265, 0x6974, 0x7365, 0x3c3e, 0x464d, 0x5043, 0x6f72, 
+0x6570, 0x7472, 0x4779, 0x6972, 0x5f64, 0x5356, 0x6f44, 0x4e74, 0x7465, 
+0x6f4c, 0x6b6f, 0x543e, 0x5552, 0x3c45, 0x4d2f, 0x4346, 0x7250, 0x706f, 
+0x7265, 0x7974, 0x7247, 0x6469, 0x565f, 0x4453, 0x746f, 0x654e, 0x4c74, 
+0x6f6f, 0x3e6b, 0x4d3c, 0x4346, 0x7250, 0x706f, 0x7265, 0x7974, 0x7247, 
+0x6469, 0x445f, 0x7365, 0x7263, 0x7069, 0x6974, 0x6e6f, 0x6f52, 0x7377, 
+0x333e, 0x2f3c, 0x464d, 0x5043, 0x6f72, 0x6570, 0x7472, 0x4779, 0x6972, 
+0x5f64, 0x6544, 0x6373, 0x6972, 0x7470, 0x6f69, 0x526e, 0x776f, 0x3e73, 
+
     0
 END
 
@@ -567,6 +616,7 @@ BEGIN
     IDS_ONLINE_DEVICES      "在线设备"
     IDS_OUTDATE_DEVICES     "过期设备"
     IDS_OFFLINE_DEVICES     "离线设备"
+    IDS_DEVICE_MENU         "设备菜单"
 END
 
 STRINGTABLE
@@ -577,6 +627,15 @@ BEGIN
     ID_EDIT_USERNAME        "你的用户名"
     ID_EDIT_PASSWD          "你的密码"
     ID_DISCONNECT           "断开服务器连接"
+END
+
+STRINGTABLE
+BEGIN
+    ID_NEW_SERIAL_CHN       "新建串口通道"
+    ID_NEW_TCP_CHN          "新建TCP通道"
+    ID_NEW_UDP_CHN          "新建UDP通道"
+    ID_NEW_PLUGIN_CHN       "新建插件通道"
+    ID_NEW_TEST_CHN         "新建测试通道"
 END
 
 #endif    // 中文(简体，中国) resources

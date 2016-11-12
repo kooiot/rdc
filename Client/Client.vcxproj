@@ -189,7 +189,9 @@
     <ClInclude Include="Client.h" />
     <ClInclude Include="ClientDoc.h" />
     <ClInclude Include="ClientView.h" />
+    <ClInclude Include="DeviceTreeCtrl.h" />
     <ClInclude Include="MainFrm.h" />
+    <ClInclude Include="NewChannelDlg.h" />
     <ClInclude Include="OutputWnd.h" />
     <ClInclude Include="PropertiesWnd.h" />
     <ClInclude Include="Resource.h" />
@@ -201,7 +203,9 @@
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="ClientDoc.cpp" />
     <ClCompile Include="ClientView.cpp" />
+    <ClCompile Include="DeviceTreeCtrl.cpp" />
     <ClCompile Include="MainFrm.cpp" />
+    <ClCompile Include="NewChannelDlg.cpp" />
     <ClCompile Include="OutputWnd.cpp" />
     <ClCompile Include="PropertiesWnd.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -249,4 +253,9 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties RESOURCE_FILE="Client.rc" />
+    </VisualStudio>
+  </ProjectExtensions>
 </Project>
