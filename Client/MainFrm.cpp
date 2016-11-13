@@ -504,4 +504,7 @@ void CMainFrame::OnSettingChange(UINT uFlags, LPCTSTR lpszSection)
 
 void CMainFrame::OnNewDeviceChannel(UINT id)
 {
+	auto doc = GetActiveDocument();
+	auto view = GetActiveView();
+	view->GetDocument();
 }

@@ -186,6 +186,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CalendarBar.h" />
+    <ClInclude Include="ChannelGrid.h" />
     <ClInclude Include="Client.h" />
     <ClInclude Include="ClientDoc.h" />
     <ClInclude Include="ClientView.h" />
@@ -193,6 +194,7 @@
     <ClInclude Include="MainFrm.h" />
     <ClInclude Include="NewChannelDlg.h" />
     <ClInclude Include="OutputWnd.h" />
+    <ClInclude Include="PluginPropDlg.h" />
     <ClInclude Include="PropertiesWnd.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
@@ -200,6 +202,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CalendarBar.cpp" />
+    <ClCompile Include="ChannelGrid.cpp" />
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="ClientDoc.cpp" />
     <ClCompile Include="ClientView.cpp" />
@@ -207,6 +210,7 @@
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="NewChannelDlg.cpp" />
     <ClCompile Include="OutputWnd.cpp" />
+    <ClCompile Include="PluginPropDlg.cpp" />
     <ClCompile Include="PropertiesWnd.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
