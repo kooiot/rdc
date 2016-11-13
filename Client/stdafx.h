@@ -63,3 +63,4 @@
 //#endif
 
 
+#define WM_USER_DOC_OPENED WM_USER + 0x101

@@ -82,7 +82,8 @@ protected:
 	afx_msg void OnCmdDisconnect();
 	afx_msg void OnOptions();
 	afx_msg void OnSettingChange(UINT uFlags, LPCTSTR lpszSection);
-	afx_msg void CMainFrame::OnNewDeviceChannel(UINT id);
+	afx_msg void OnNewDeviceChannel(UINT id);
+	afx_msg LRESULT OnDocOpened(WPARAM wParam, LPARAM lParam);
 	DECLARE_MESSAGE_MAP()
 
 	BOOL CreateDockingWindows();

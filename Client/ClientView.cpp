@@ -61,7 +61,16 @@ void CClientView::OnInitialUpdate()
 	CTreeView::OnInitialUpdate();
 
 	CTreeCtrl& ctrl = this->GetTreeCtrl();
-	//ctrl.InsertItem("AAAA");
+	ctrl.ModifyStyle(0, TVS_HASLINES | TVS_LINESATROOT | TVS_HASBUTTONS);
+
+	HTREEITEM root = ctrl.InsertItem("Login", 0, 0);
+
+	auto login = GetDocument()->GetLoginInfo();
+	HTREEITEM item = ctrl.InsertItem(login.strSrvIP, 0, 0, root);
+	ctrl.InsertItem(login.strSrvPort, root);
+	ctrl.InsertItem(login.strUserName, root);
+	ctrl.InsertItem(login.strPasswd, root);
+	ctrl.Expand(root, TVE_EXPAND);
 }
 
 void CClientView::OnRButtonUp(UINT /* nFlags */, CPoint point)

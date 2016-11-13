@@ -40,11 +40,19 @@ END_MESSAGE_MAP()
 CClientDoc::CClientDoc()
 {
 	// TODO: 在此添加一次性构造代码
-
+	m_LoginInfo.strSrvIP = "kooiot.com";
+	m_LoginInfo.strSrvPort = "6600";
+	m_LoginInfo.strUserName = "User1";
+	m_LoginInfo.strPasswd = "Password";
 }
 
 CClientDoc::~CClientDoc()
 {
+}
+
+const CClientLogin & CClientDoc::GetLoginInfo() const
+{
+	return m_LoginInfo;
 }
 
 BOOL CClientDoc::OnNewDocument()
@@ -54,10 +62,23 @@ BOOL CClientDoc::OnNewDocument()
 
 	// TODO: 在此添加重新初始化代码
 	// (SDI 文档将重用该文档)
+	auto wnd = theApp.GetMainWnd();
+	wnd->PostMessage(WM_USER_DOC_OPENED);
 
 	return TRUE;
 }
 
+BOOL CClientDoc::OnOpenDocument(LPCTSTR lpszPathName)
+{
+	if (!CDocument::OnOpenDocument(lpszPathName))
+		return FALSE;
+
+	// TODO:  在此添加您专用的创建代码
+	auto wnd = theApp.GetMainWnd();
+	wnd->PostMessage(WM_USER_DOC_OPENED);
+
+	return TRUE;
+}
 
 
 
@@ -68,10 +89,18 @@ void CClientDoc::Serialize(CArchive& ar)
 	if (ar.IsStoring())
 	{
 		// TODO: 在此添加存储代码
+		ar << m_LoginInfo.strSrvIP;
+		ar << m_LoginInfo.strSrvPort;
+		ar << m_LoginInfo.strUserName;
+		ar << m_LoginInfo.strPasswd;
 	}
 	else
 	{
 		// TODO: 在此添加加载代码
+		ar >> m_LoginInfo.strSrvIP;
+		ar >> m_LoginInfo.strSrvPort;
+		ar >> m_LoginInfo.strUserName;
+		ar >> m_LoginInfo.strPasswd;
 	}
 }
 
@@ -145,3 +174,4 @@ void CClientDoc::Dump(CDumpContext& dc) const
 
 
 // CClientDoc 命令
+

@@ -16,6 +16,7 @@
 #include "Client.h"
 
 #include "MainFrm.h"
+#include "ClientDoc.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -39,6 +40,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 	ON_COMMAND_RANGE(ID_NEW_SERIAL_CHN, ID_NEW_TEST_CHN, &CMainFrame::OnNewDeviceChannel)
 	ON_COMMAND(ID_TOOLS_OPTIONS, &CMainFrame::OnOptions)
 	ON_WM_SETTINGCHANGE()
+	ON_MESSAGE(WM_USER_DOC_OPENED, &CMainFrame::OnDocOpened)
 END_MESSAGE_MAP()
 
 // CMainFrame 构造/析构
@@ -68,23 +70,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		TRACE0("未能创建状态栏\n");
 		return -1;      // 未能创建
 	}
-	CMFCRibbonEdit* pEdit = DYNAMIC_DOWNCAST(CMFCRibbonEdit, m_wndRibbonBar.FindByID(ID_EDIT_SRV_IP));
-	if (pEdit)
-		pEdit->SetEditText(AfxGetApp()->GetProfileString("Login", "ServerIP", "kooiot.com"));
-	pEdit = DYNAMIC_DOWNCAST(CMFCRibbonEdit, m_wndRibbonBar.FindByID(ID_EDIT_SRV_PORT));
-	if (pEdit)
-		pEdit->SetEditText(AfxGetApp()->GetProfileString("Login", "ServerPort", "6600"));
-	pEdit = DYNAMIC_DOWNCAST(CMFCRibbonEdit, m_wndRibbonBar.FindByID(ID_EDIT_USERNAME));
-	if (pEdit)
-		pEdit->SetEditText(AfxGetApp()->GetProfileString("Login", "UserName", "User1"));
-	pEdit = DYNAMIC_DOWNCAST(CMFCRibbonEdit, m_wndRibbonBar.FindByID(ID_EDIT_PASSWD));
-	if (pEdit) {
-		pEdit->SetEditText(AfxGetApp()->GetProfileString("Login", "Password", "Password"));
-		//pEdit->Get
-		//pEdit->SetPasswordChar('*');    //一定要
-		//BOOL b = pEdit->ModifyStyle(0, ES_PASSWORD);
-	}
-
+	
 	CString strTitlePane1;
 	CString strTitlePane2;
 	bNameValid = strTitlePane1.LoadString(IDS_STATUS_PANE1);
@@ -237,6 +223,7 @@ BOOL CMainFrame::CreateOutlookBar(CMFCOutlookBar& bar, UINT uiID, int nInitialWi
 	bNameValid = strTemp.LoadString(IDS_ONLINE_DEVICES);
 	ASSERT(bNameValid);
 	m_treeOnlineRoot = m_wndOnlineTree.InsertItem(strTemp, 0, 0);
+	//m_wndOnlineTree.InsertItem(strTemp, 0, 0, m_treeOnlineRoot);
 	bNameValid = strTemp.LoadString(IDS_OFFLINE_DEVICES);
 	ASSERT(bNameValid);
 	m_treeOfflineRoot = m_wndOfflineTree.InsertItem(strTemp, 0, 0);
@@ -507,4 +494,36 @@ void CMainFrame::OnNewDeviceChannel(UINT id)
 	auto doc = GetActiveDocument();
 	auto view = GetActiveView();
 	view->GetDocument();
+}
+
+LRESULT CMainFrame::OnDocOpened(WPARAM wParam, LPARAM lParam)
+{
+	auto doc = dynamic_cast<CClientDoc*>(GetActiveDocument());
+	if (doc) {
+		auto info = doc->GetLoginInfo();
+		CMFCRibbonEdit* pEdit = DYNAMIC_DOWNCAST(CMFCRibbonEdit, m_wndRibbonBar.FindByID(ID_EDIT_SRV_IP));
+		if (pEdit) pEdit->SetEditText(info.strSrvIP);
+		pEdit = DYNAMIC_DOWNCAST(CMFCRibbonEdit, m_wndRibbonBar.FindByID(ID_EDIT_SRV_PORT));
+		if (pEdit) pEdit->SetEditText(info.strSrvPort);
+		pEdit = DYNAMIC_DOWNCAST(CMFCRibbonEdit, m_wndRibbonBar.FindByID(ID_EDIT_USERNAME));
+		if (pEdit) pEdit->SetEditText(info.strUserName);
+		pEdit = DYNAMIC_DOWNCAST(CMFCRibbonEdit, m_wndRibbonBar.FindByID(ID_EDIT_PASSWD));
+		if (pEdit) pEdit->SetEditText(info.strPasswd);
+	}
+/*
+	CMFCRibbonEdit* pEdit = DYNAMIC_DOWNCAST(CMFCRibbonEdit, m_wndRibbonBar.FindByID(ID_EDIT_SRV_IP));
+	if (pEdit)
+		pEdit->SetEditText(AfxGetApp()->GetProfileString("Login", "ServerIP", "kooiot.com"));
+	pEdit = DYNAMIC_DOWNCAST(CMFCRibbonEdit, m_wndRibbonBar.FindByID(ID_EDIT_SRV_PORT));
+	if (pEdit)
+		pEdit->SetEditText(AfxGetApp()->GetProfileString("Login", "ServerPort", "6600"));
+	pEdit = DYNAMIC_DOWNCAST(CMFCRibbonEdit, m_wndRibbonBar.FindByID(ID_EDIT_USERNAME));
+	if (pEdit)
+		pEdit->SetEditText(AfxGetApp()->GetProfileString("Login", "UserName", "User1"));
+	pEdit = DYNAMIC_DOWNCAST(CMFCRibbonEdit, m_wndRibbonBar.FindByID(ID_EDIT_PASSWD));
+	if (pEdit) {
+		pEdit->SetEditText(AfxGetApp()->GetProfileString("Login", "Password", "Password"));
+	}*/
+
+	return 1L;
 }
