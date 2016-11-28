@@ -7,8 +7,12 @@ class ChannelGrid
 public:
 	ChannelGrid();
 	~ChannelGrid();
+	static CMFCPropertyGridProperty* CreateLocal();
+	static CMFCPropertyGridProperty* CreateRemote();
 	static CMFCPropertyGridProperty* CreateSerial();
-	static CMFCPropertyGridProperty* CreateTcp();
+	static CMFCPropertyGridProperty* CreateSerialLocal();
+	static CMFCPropertyGridProperty* CreateTcpClient();
+	static CMFCPropertyGridProperty* CreateTcpServer();
 	static CMFCPropertyGridProperty* CreateUdp();
 	static CMFCPropertyGridProperty* CreatePlugin();
 };

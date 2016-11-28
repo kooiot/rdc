@@ -29,9 +29,9 @@
 
 // CClientView
 
-IMPLEMENT_DYNCREATE(CClientView, CTreeView)
+IMPLEMENT_DYNCREATE(CClientView, CListView)
 
-BEGIN_MESSAGE_MAP(CClientView, CTreeView)
+BEGIN_MESSAGE_MAP(CClientView, CListView)
 	ON_WM_CONTEXTMENU()
 	ON_WM_RBUTTONUP()
 END_MESSAGE_MAP()
@@ -53,24 +53,35 @@ BOOL CClientView::PreCreateWindow(CREATESTRUCT& cs)
 	// TODO: 在此处通过修改
 	//  CREATESTRUCT cs 来修改窗口类或样式
 
-	return CTreeView::PreCreateWindow(cs);
+	return CListView::PreCreateWindow(cs);
 }
 
 void CClientView::OnInitialUpdate()
 {
-	CTreeView::OnInitialUpdate();
+	CListView::OnInitialUpdate();
 
-	CTreeCtrl& ctrl = this->GetTreeCtrl();
-	ctrl.ModifyStyle(0, TVS_HASLINES | TVS_LINESATROOT | TVS_HASBUTTONS);
+	CListCtrl& list = GetListCtrl();
 
-	HTREEITEM root = ctrl.InsertItem("Login", 0, 0);
+	CImageList* pImageList = new CImageList();
 
-	auto login = GetDocument()->GetLoginInfo();
-	HTREEITEM item = ctrl.InsertItem(login.strSrvIP, 0, 0, root);
-	ctrl.InsertItem(login.strSrvPort, root);
-	ctrl.InsertItem(login.strUserName, root);
-	ctrl.InsertItem(login.strPasswd, root);
-	ctrl.Expand(root, TVE_EXPAND);
+	pImageList->Create(16, 16, ILC_COLOR32 | ILC_MASK, 0, 4);
+	CBitmap bmp;
+	bmp.LoadBitmap(IDB_PAGES_SMALL_HC);
+	pImageList->Add(&bmp, RGB(255, 0, 255));
+	list.SetImageList(pImageList, LVSIL_SMALL);
+
+	list.ModifyStyle(0, LVS_REPORT | LVS_ALIGNLEFT | WS_TABSTOP);
+	//list.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_CHECKBOXES | LVS_EX_ONECLICKACTIVATE);
+	list.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_ONECLICKACTIVATE);
+	
+	list.InsertColumn(0, "ICON", LVCFMT_LEFT, 40);//插入列
+	list.InsertColumn(1, "ID", LVCFMT_LEFT, 120);//插入列
+	list.InsertColumn(2, "NAME", LVCFMT_LEFT, 200);
+	int nRow = list.InsertItem(0, "0");//插入行
+	list.SetItem(nRow, 0, LVIF_IMAGE, NULL, 1, 0, 0, 0);
+	list.SetItemText(nRow, 1, "jacky");//设置数据
+	nRow = list.InsertItem(1, "222");//插入行
+	list.SetItemText(nRow, 1, "Dirk");//设置数据
 }
 
 void CClientView::OnRButtonUp(UINT /* nFlags */, CPoint point)
@@ -92,12 +103,12 @@ void CClientView::OnContextMenu(CWnd* /* pWnd */, CPoint point)
 #ifdef _DEBUG
 void CClientView::AssertValid() const
 {
-	CTreeView::AssertValid();
+	CListView::AssertValid();
 }
 
 void CClientView::Dump(CDumpContext& dc) const
 {
-	CTreeView::Dump(dc);
+	CListView::Dump(dc);
 }
 
 CClientDoc* CClientView::GetDocument() const // 非调试版本是内联的
@@ -107,5 +118,3 @@ CClientDoc* CClientView::GetDocument() const // 非调试版本是内联的
 }
 #endif //_DEBUG
 
-
-// CClientView 消息处理程序

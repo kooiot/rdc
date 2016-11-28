@@ -15,26 +15,27 @@
 #pragma once
 
 
-class CClientView : public CTreeView
+
+class CClientView : public CListView
 {
 protected: // 仅从序列化创建
 	CClientView();
 	DECLARE_DYNCREATE(CClientView)
 
-// 特性
+	// 特性
 public:
 	CClientDoc* GetDocument() const;
 
-// 操作
+	// 操作
 public:
 
-// 重写
+	// 重写
 public:
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 protected:
 	virtual void OnInitialUpdate(); // 构造后第一次调用
 
-// 实现
+									// 实现
 public:
 	virtual ~CClientView();
 #ifdef _DEBUG
@@ -44,7 +45,7 @@ public:
 
 protected:
 
-// 生成的消息映射函数
+	// 生成的消息映射函数
 protected:
 	afx_msg void OnFilePrintPreview();
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
@@ -52,8 +53,10 @@ protected:
 	DECLARE_MESSAGE_MAP()
 };
 
-#ifndef _DEBUG  // ClientView.cpp 中的调试版本
-inline CClientDoc* CClientView::GetDocument() const
-   { return reinterpret_cast<CClientDoc*>(m_pDocument); }
+#ifndef _DEBUG  // MFCApplication1View.cpp 中的调试版本
+inline CMFCApplication1Doc* CClientView::GetDocument() const
+{
+	return reinterpret_cast<CMFCApplication1Doc*>(m_pDocument);
+}
 #endif
 

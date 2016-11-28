@@ -202,7 +202,7 @@ BOOL CMainFrame::CreateOutlookBar(CMFCOutlookBar& bar, UINT uiID, int nInitialWi
 	static UINT uiPageID = 1;
 
 	// 可浮动，可自动隐藏，可调整大小，但不能关闭
-	DWORD dwStyle = AFX_CBRS_FLOAT | AFX_CBRS_AUTOHIDE | AFX_CBRS_RESIZE;
+	DWORD dwStyle = AFX_CBRS_AUTOHIDE | AFX_CBRS_RESIZE;
 
 	CRect rectDummy(0, 0, 0, 0);
 	const DWORD dwTreeStyle = WS_CHILD | WS_VISIBLE | TVS_HASLINES | TVS_LINESATROOT | TVS_HASBUTTONS;
@@ -223,22 +223,21 @@ BOOL CMainFrame::CreateOutlookBar(CMFCOutlookBar& bar, UINT uiID, int nInitialWi
 	bNameValid = strTemp.LoadString(IDS_ONLINE_DEVICES);
 	ASSERT(bNameValid);
 	m_treeOnlineRoot = m_wndOnlineTree.InsertItem(strTemp, 0, 0);
-	//m_wndOnlineTree.InsertItem(strTemp, 0, 0, m_treeOnlineRoot);
+	pOutlookBar->AddControl(&m_wndOnlineTree, strTemp, 2, TRUE, dwStyle);
+
+	m_wndOnlineTree.Expand(m_treeOnlineRoot, TVE_EXPAND);
+	auto h = m_wndOnlineTree.InsertItem(strTemp, 0, 0, m_treeOnlineRoot);
+	m_wndOnlineTree.InsertItem(strTemp, 0, 0, h);
+
+
 	bNameValid = strTemp.LoadString(IDS_OFFLINE_DEVICES);
 	ASSERT(bNameValid);
 	m_treeOfflineRoot = m_wndOfflineTree.InsertItem(strTemp, 0, 0);
+	pOutlookBar->AddControl(&m_wndOfflineTree, strTemp, 2, TRUE, dwStyle);
+
 	bNameValid = strTemp.LoadString(IDS_OUTDATE_DEVICES);
 	ASSERT(bNameValid);
 	m_treeOutdateRoot = m_wndOutdateTree.InsertItem(strTemp, 0, 0);
-
-	bNameValid = strTemp.LoadString(IDS_ONLINE_DEVICES);
-	ASSERT(bNameValid);
-	pOutlookBar->AddControl(&m_wndOnlineTree, strTemp, 2, TRUE, dwStyle);
-	bNameValid = strTemp.LoadString(IDS_OFFLINE_DEVICES);
-	ASSERT(bNameValid);
-	pOutlookBar->AddControl(&m_wndOfflineTree, strTemp, 2, TRUE, dwStyle);
-	bNameValid = strTemp.LoadString(IDS_OUTDATE_DEVICES);
-	ASSERT(bNameValid);
 	pOutlookBar->AddControl(&m_wndOutdateTree, strTemp, 2, TRUE, dwStyle);
 	
 

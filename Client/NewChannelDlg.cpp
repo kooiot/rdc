@@ -68,23 +68,35 @@ void CNewChannelDlg::InitPropList()
 	m_wndPropList.SetVSDotNetLook();
 	m_wndPropList.MarkModifiedProperties();
 
-	CMFCPropertyGridProperty* pGroup1 = new CMFCPropertyGridProperty(_T("信道类型"));
-
-	CMFCPropertyGridProperty* pProp = new CMFCPropertyGridProperty(_T("类型"), _T("串口"), _T("信道类型选择"));
-	pProp->AddOption(_T("串口"));
-	pProp->AddOption(_T("TCP连接"));
-	pProp->AddOption(_T("UDP"));
-	pProp->AddOption(_T("插件"));
-	pProp->AddOption(_T("测试"));
-	pProp->AllowEdit(FALSE);
-
-	pGroup1->AddSubItem(pProp);
-	m_wndPropList.AddProperty(pGroup1);
-
+	auto pLocal = ChannelGrid::CreateLocal();
+	pLocal->AddSubItem(ChannelGrid::CreateSerial());
+	pLocal->AddSubItem(ChannelGrid::CreateTcpClient());
+	pLocal->AddSubItem(ChannelGrid::CreateTcpServer());
+	pLocal->AddSubItem(ChannelGrid::CreateUdp());
+	pLocal->AddSubItem(ChannelGrid::CreatePlugin());
+	m_wndPropList.AddProperty(pLocal);
+	/*
 	m_wndPropList.AddProperty(ChannelGrid::CreateSerial());
-	m_wndPropList.AddProperty(ChannelGrid::CreateTcp());
+	m_wndPropList.AddProperty(ChannelGrid::CreateTcpClient());
+	m_wndPropList.AddProperty(ChannelGrid::CreateTcpServer());
+	m_wndPropList.AddProperty(ChannelGrid::CreateUdp());
+	m_wndPropList.AddProperty(ChannelGrid::CreatePlugin());*/
+
+
+	auto pRemote = ChannelGrid::CreateRemote();
+	pRemote->AddSubItem(ChannelGrid::CreateSerial());
+	pRemote->AddSubItem(ChannelGrid::CreateTcpClient());
+	pRemote->AddSubItem(ChannelGrid::CreateTcpServer());
+	pRemote->AddSubItem(ChannelGrid::CreateUdp());
+	pRemote->AddSubItem(ChannelGrid::CreatePlugin());
+	m_wndPropList.AddProperty(pRemote);
+	/*
+	m_wndPropList.AddProperty(ChannelGrid::CreateSerial());
+	m_wndPropList.AddProperty(ChannelGrid::CreateTcpClient());
+	m_wndPropList.AddProperty(ChannelGrid::CreateTcpServer());
 	m_wndPropList.AddProperty(ChannelGrid::CreateUdp());
 	m_wndPropList.AddProperty(ChannelGrid::CreatePlugin());
+	*/
 }
 
 void CNewChannelDlg::SetPropListFont()
